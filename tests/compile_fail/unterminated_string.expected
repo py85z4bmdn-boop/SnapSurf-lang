@@ -1,0 +1,1 @@
+tests/compile_fail/unterminated_string/src/main.snapsurf:4:36 E0101 unterminated string literal

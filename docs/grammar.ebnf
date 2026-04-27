@@ -1,0 +1,34 @@
+SourceFile
+    = UseDecl Newline* MainFn EOF ;
+
+UseDecl
+    = "use" "core" "/" "io" ;
+
+MainFn
+    = "fn" "main" "->" "i32" Newline*
+      MainStmt* "end" ;
+
+MainStmt
+    = IoWrite
+    | RetZero ;
+
+IoWrite
+    = "io" "." "write" IntLiteral StringLiteral IntLiteral ;
+
+RetZero
+    = "ret" "0" ;
+
+PackageFile
+    = "package" Ident
+      "version" SemVer
+      "type" "executable"
+      "target" "linux-x86_64"
+      "runtime" "tiny"
+      "entry" "main"
+      RequiresLine
+      DepLine*
+      "end" ;
+
+RequiresLine
+    = "requires" "syscall" | "requires" "none" ;
+

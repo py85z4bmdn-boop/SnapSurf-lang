@@ -1,0 +1,1 @@
+tests/compile_fail/wrong_extension/src/main.surf:1:1 E0003 source file must use .snapsurf extension

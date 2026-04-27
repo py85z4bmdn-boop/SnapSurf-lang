@@ -1,0 +1,10 @@
+unsafe fn dangerous -> i32
+    ret 0
+end
+
+fn main -> i32
+    unsafe ->
+        ret dangerous
+    end
+end
+

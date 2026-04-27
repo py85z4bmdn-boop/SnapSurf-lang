@@ -1,0 +1,9 @@
+fn main -> i32
+    let x i32 = 7
+    if x > 0 ->
+        ret x
+    else ->
+        ret 0
+    end
+end
+

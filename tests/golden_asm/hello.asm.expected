@@ -1,0 +1,25 @@
+default rel
+global _start
+section .text
+_start:
+    call main
+    mov edi, eax
+    mov eax, 60
+    syscall
+
+main:
+    push rbp
+    mov rbp, rsp
+    mov rax, 1
+    mov rdi, 1
+    lea rsi, [rel .Lstr0]
+    mov rdx, 15
+    syscall
+    mov eax, 0
+    mov rsp, rbp
+    pop rbp
+    ret
+
+section .rodata
+.Lstr0:
+    db 72, 101, 108, 108, 111, 32, 83, 110, 97, 112, 83, 117, 114, 102, 10
