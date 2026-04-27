@@ -1,0 +1,1 @@
+tests/compile_fail/invalid_escape/src/main.snapsurf:4:23 E0102 invalid escape sequence

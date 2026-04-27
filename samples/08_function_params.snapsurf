@@ -1,0 +1,8 @@
+fn add a i32 b i32 -> i32
+    ret a + b
+end
+
+fn main -> i32
+    ret add 2 3
+end
+

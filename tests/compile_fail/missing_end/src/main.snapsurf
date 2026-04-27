@@ -1,0 +1,6 @@
+use core/io
+
+fn main -> i32
+    io.write 1 "Hello SnapSurf\n" 15
+    ret 0
+

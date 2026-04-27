@@ -1,0 +1,7 @@
+use core/io
+
+fn main -> i32
+    io.write 1 "SnapSurf ASM\n" 13
+    ret 0
+end
+

@@ -1,0 +1,7 @@
+fn main -> i32
+    loop ->
+        break
+    end
+    ret 0
+end
+

@@ -1,0 +1,1 @@
+tests/compile_fail/missing_main/src/main.snapsurf:1:1 E0906 executable package requires src/main.snapsurf

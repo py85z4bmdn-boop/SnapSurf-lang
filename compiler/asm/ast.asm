@@ -1,0 +1,153 @@
+; Status: PARTIAL.
+; Real AST arena for the hello-world foundation subset.
+
+ast_reset:
+    mov byte [has_io_write], 0
+    mov qword [parsed_str_len], 0
+    mov qword [parsed_io_len], 0
+    mov qword [parsed_ret_value], 0
+    mov qword [ast_count], 0
+    mov qword [ast_root], 0
+    mov qword [ast_main_fn], 0
+    mov qword [ast_block_node], 0
+    mov qword [ast_call_stmt], 0
+    mov qword [ast_ret_stmt], 0
+    mov qword [ast_error_flag], 0
+    ret
+
+ast_new:
+    mov r10, [ast_count]
+    cmp r10, AST_CAP
+    jae .overflow
+    inc r10
+    mov [ast_count], r10
+    mov r11, r10
+    dec r11
+    imul r11, AST_SIZE
+    mov [ast_buf + r11 + AST_KIND], rdi
+    mov [ast_buf + r11 + AST_SPAN_START], rsi
+    mov [ast_buf + r11 + AST_SPAN_END], rdx
+    mov [ast_buf + r11 + AST_CHILD_OR_DATA], rcx
+    mov [ast_buf + r11 + AST_NEXT_OR_EXTRA], r8
+    mov rax, r10
+    ret
+.overflow:
+    mov rdi, src_path
+    mov rsi, err_ast_overflow
+    call print_diag
+    mov qword [ast_error_flag], 1
+    xor rax, rax
+    ret
+
+ast_addr:
+    mov rax, rdi
+    dec rax
+    imul rax, AST_SIZE
+    add rax, ast_buf
+    ret
+
+ast_append_child:
+    test rdi, rdi
+    jz .done
+    test rsi, rsi
+    jz .done
+    push rbx
+    push r12
+    mov r12, rsi
+    call ast_addr
+    mov rbx, [rax + AST_CHILD_OR_DATA]
+    test rbx, rbx
+    jz .first
+.walk:
+    mov rdi, rbx
+    call ast_addr
+    mov rbx, [rax + AST_NEXT_OR_EXTRA]
+    test rbx, rbx
+    jz .set_next
+    jmp .walk
+.set_next:
+    mov [rax + AST_NEXT_OR_EXTRA], r12
+    jmp .out
+.first:
+    mov [rax + AST_CHILD_OR_DATA], r12
+.out:
+    pop r12
+    pop rbx
+.done:
+    ret
+
+dump_ast:
+    xor r12, r12
+    inc r12
+.loop:
+    cmp r12, [ast_count]
+    ja .done
+    mov rdi, r12
+    call ast_addr
+    mov rdi, [rax + AST_KIND]
+    call ast_name_ptr
+    mov rdi, rax
+    call print_stdout_z
+    inc r12
+    jmp .loop
+.done:
+    ret
+
+ast_name_ptr:
+    cmp rdi, AST_SOURCE_FILE
+    je .source
+    cmp rdi, AST_USE_DECL
+    je .use
+    cmp rdi, AST_FN_DECL
+    je .fn
+    cmp rdi, AST_BLOCK
+    je .block
+    cmp rdi, AST_RET_STMT
+    je .ret
+    cmp rdi, AST_CALL_STMT
+    je .call
+    cmp rdi, AST_INT_LIT
+    je .int
+    cmp rdi, AST_STR_LIT
+    je .str
+    cmp rdi, AST_IDENT
+    je .ident
+    cmp rdi, AST_PATH
+    je .path
+    cmp rdi, AST_ERROR
+    je .err
+    mov rax, ast_name_unknown
+    ret
+.source:
+    mov rax, ast_name_source
+    ret
+.use:
+    mov rax, ast_name_use
+    ret
+.fn:
+    mov rax, ast_name_fn
+    ret
+.block:
+    mov rax, ast_name_block
+    ret
+.ret:
+    mov rax, ast_name_ret
+    ret
+.call:
+    mov rax, ast_name_call
+    ret
+.int:
+    mov rax, ast_name_int
+    ret
+.str:
+    mov rax, ast_name_str
+    ret
+.ident:
+    mov rax, ast_name_ident
+    ret
+.path:
+    mov rax, ast_name_path
+    ret
+.err:
+    mov rax, ast_name_error
+    ret
