@@ -1,0 +1,27 @@
+section .data
+tok_name_eof: db "TokEof", 10, 0
+tok_name_ident: db "TokIdent", 10, 0
+tok_name_int: db "TokIntLit", 10, 0
+tok_name_str: db "TokStrLit", 10, 0
+tok_name_error: db "TokError", 10, 0
+tok_name_use: db "TokUse", 10, 0
+tok_name_fn: db "TokFn", 10, 0
+tok_name_ret: db "TokRet", 10, 0
+tok_name_end: db "TokEnd", 10, 0
+tok_name_true: db "TokTrue", 10, 0
+tok_name_false: db "TokFalse", 10, 0
+tok_name_let: db "TokLet", 10, 0
+tok_name_mut: db "TokMut", 10, 0
+tok_name_arrow: db "TokArrow", 10, 0
+tok_name_dot: db "TokDot", 10, 0
+tok_name_slash: db "TokSlash", 10, 0
+tok_name_comma: db "TokComma", 10, 0
+tok_name_eq: db "TokEq", 10, 0
+tok_name_plus: db "TokPlus", 10, 0
+tok_name_minus: db "TokMinus", 10, 0
+tok_name_star: db "TokStar", 10, 0
+tok_name_percent: db "TokPercent", 10, 0
+tok_name_lparen: db "TokLParen", 10, 0
+tok_name_rparen: db "TokRParen", 10, 0
+tok_name_newline: db "TokNewline", 10, 0
+tok_name_unknown: db "TokUnknown", 10, 0

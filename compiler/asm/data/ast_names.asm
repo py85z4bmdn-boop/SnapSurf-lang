@@ -1,0 +1,24 @@
+section .data
+ast_name_source: db "AstSourceFile", 10, 0
+ast_name_use: db "AstUseDecl", 10, 0
+ast_name_fn: db "AstFnDecl", 10, 0
+ast_name_block: db "AstBlock", 10, 0
+ast_name_ret: db "AstRetStmt", 10, 0
+ast_name_call: db "AstCallStmt", 10, 0
+ast_name_int: db "AstIntLit", 10, 0
+ast_name_str: db "AstStrLit", 10, 0
+ast_name_ident: db "AstIdent", 10, 0
+ast_name_path: db "AstPath", 10, 0
+ast_name_error: db "AstError", 10, 0
+ast_name_let: db "AstLetStmt", 10, 0
+ast_name_mut: db "AstMutStmt", 10, 0
+ast_name_assign: db "AstAssignStmt", 10, 0
+ast_name_var: db "AstVarRef", 10, 0
+ast_name_bool: db "AstBoolLit", 10, 0
+ast_name_add: db "AstBinAdd", 10, 0
+ast_name_sub: db "AstBinSub", 10, 0
+ast_name_mul: db "AstBinMul", 10, 0
+ast_name_div: db "AstBinDiv", 10, 0
+ast_name_mod: db "AstBinMod", 10, 0
+ast_name_neg: db "AstUnaryNeg", 10, 0
+ast_name_unknown: db "AstUnknown", 10, 0
