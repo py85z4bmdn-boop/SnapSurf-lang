@@ -1,7 +1,7 @@
 # SnapSurf AST Layout
 
-ASM foundation status: PARTIAL AST arena implemented for the hello-world
-foundation subset.
+ASM foundation status: PARTIAL AST arena implemented for the foundation v0
+expression/local subset.
 
 AST node layout:
 
@@ -28,6 +28,17 @@ Implemented node kinds:
 - `AstIdent`
 - `AstPath`
 - `AstError`
+- `AstLetStmt`
+- `AstMutStmt`
+- `AstAssignStmt`
+- `AstVarRef`
+- `AstBoolLit`
+- `AstBinAdd`
+- `AstBinSub`
+- `AstBinMul`
+- `AstBinDiv`
+- `AstBinMod`
+- `AstUnaryNeg`
 
 Foundation debug command:
 

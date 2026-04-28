@@ -19,7 +19,13 @@ Implemented by the ASM foundation slice:
 - `E0401` main function not found
 - `E0402` invalid main signature
 - `E0403` return type mismatch
-- `E0404` unsupported expression in foundation
+- `E0404` unsupported token or AST in foundation
+- `E0501` type mismatch
+- `E0502` duplicate definition
+- `E0503` undefined symbol
+- `E0504` cannot assign immutable binding
+- `E0505` symbol table overflow
+- `E0506` scope depth exceeded
 - `E0801` missing required capability
 - `E0802` syscall used without requires syscall
 - `E0901` surf.pkg not found

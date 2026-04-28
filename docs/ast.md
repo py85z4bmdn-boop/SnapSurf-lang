@@ -1,43 +1,39 @@
 # SnapSurf Foundation AST
 
-Every AST node carries:
+Implemented AST node layout:
 
-- `node_kind`
+- `kind`
 - `span_start`
 - `span_end`
-- `source_file_id`
+- `first_child_or_data`
+- `next_sibling_or_extra`
 
-No AST node has an optional span. Parser recovery may create error statements,
-but error nodes must not reach code generation.
+Parser recovery remains minimal. Error nodes must not reach code generation.
 
 Foundation nodes:
 
 - `SourceFile`
 - `UseDecl`
 - `FnDecl`
-- `Param`
 - `Block`
 - `LetStmt`
 - `MutStmt`
 - `AssignStmt`
 - `RetStmt`
-- `IfStmt`
-- `LoopStmt`
-- `WhileStmt`
-- `BreakStmt`
-- `ContinueStmt`
-- `UnsafeBlock`
-- `ExprStmt`
-- `BinaryExpr`
-- `UnaryExpr`
-- `CallExpr`
-- `IdentExpr`
-- `PathExpr`
-- `IntLitExpr`
-- `StrLitExpr`
-- `BoolLitExpr`
-- `TypeName`
+- `CallStmt`
+- `Path`
+- `Ident`
+- `VarRef`
+- `IntLit`
+- `StrLit`
+- `BoolLit`
+- `BinAdd`
+- `BinSub`
+- `BinMul`
+- `BinDiv`
+- `BinMod`
+- `UnaryNeg`
 
-The AST separates items, statements, expressions, and type references. Syntax
-that exists only for parser convenience is not encoded as semantic structure.
-
+The AST separates implemented items, statements, and expressions. Full
+functions, parameters, control flow, user types, and type references are not
+implemented in the ASM foundation AST yet.

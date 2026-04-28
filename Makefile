@@ -12,6 +12,8 @@ ASM_COMPILER_SOURCES = \
 	compiler/asm/capability.asm \
 	compiler/asm/emitter_nasm.asm \
 	compiler/inc/constants.inc \
+	compiler/inc/types.inc \
+	compiler/inc/calling_conv.inc \
 	compiler/inc/errors.inc \
 	compiler/inc/tokens.inc \
 	compiler/inc/ast.inc \

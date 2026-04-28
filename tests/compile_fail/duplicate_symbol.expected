@@ -1,0 +1,1 @@
+tests/compile_fail/duplicate_symbol/src/main.snapsurf:3:9 E0502 duplicate definition

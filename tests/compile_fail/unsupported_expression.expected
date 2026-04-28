@@ -1,1 +1,1 @@
-tests/compile_fail/unsupported_expression/src/main.snapsurf:2:5 E0404 unsupported expression in foundation
+tests/compile_fail/unsupported_expression/src/main.snapsurf:2:5 E0404 unsupported token in foundation: TokTrue

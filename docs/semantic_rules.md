@@ -3,7 +3,7 @@
 Foundation semantic checks run before code generation. Code generation refuses
 any AST with errors.
 
-Required checks:
+Implemented checks:
 
 - `main` exists for executable packages.
 - Foundation executable `main` signature is exactly `fn main -> i32`.
@@ -11,19 +11,22 @@ Required checks:
 - Shadowing and redeclaration in a scope are forbidden.
 - `let` variables cannot be assigned.
 - All variables are initialized at declaration.
-- `if` and `while` conditions must be `bool`.
-- Return expressions must match the function return type.
-- Non-void functions must return on all control paths.
-- `break` and `continue` are valid only inside loops.
-- Function call targets must exist or be recognized foundation builtins.
-- Argument count and basic argument types must match.
+- Return expressions must be `i32`.
+- `main` must contain at least one return statement.
+- The implemented arithmetic operators require `i32` operands.
+- The implemented local declarations are `i32` only.
+- Mutable declarations use the standalone `mut x i32 = expr` form; `let mut`
+  is rejected in the ASM foundation grammar.
+- Symbol table entries store explicit type tags from `compiler/inc/types.inc`.
+- Primitive type descriptors are pre-populated in `type_table`, and arithmetic
+  operators route through `type_check_binary`.
+- The fixed-capacity symbol table rejects insertion past `SYM_CAP` with `E0505`.
+- A fixed-capacity scope stack exists and rejects insertion past `SCOPE_CAP`
+  with `E0506`; current source syntax has only the function-root scope.
+- The only recognized call target is the foundation builtin `io.write`.
+- `io.write` string length must match the explicit length argument.
 - `io.write` requires package capability `syscall`.
-- `mem.alloc` requires package capability `heap` and an unsafe context in the
-  foundation bootstrap.
-- Calling an unsafe function requires an `unsafe -> ... end` block.
-- Unsafe code still type checks and still obeys package capabilities.
 
-Foundation deliberately does not claim a Rust-level borrow checker. The checker
-is conservative: if safe behavior cannot be proven, safe code is rejected or an
-unsafe scope is required.
-
+Not implemented: control-flow return analysis, function calls beyond
+`io.write`, nested block syntax, user-defined types, trait checks, unsafe
+semantics, lifetimes, and borrow checking.

@@ -10,6 +10,17 @@
 %define AST_IDENT 9
 %define AST_PATH 10
 %define AST_ERROR 11
+%define AST_LET_STMT 12
+%define AST_MUT_STMT 13
+%define AST_ASSIGN_STMT 14
+%define AST_VAR_REF 15
+%define AST_BOOL_LIT 16
+%define AST_BIN_ADD 17
+%define AST_BIN_SUB 18
+%define AST_BIN_MUL 19
+%define AST_BIN_DIV 20
+%define AST_BIN_MOD 21
+%define AST_UNARY_NEG 22
 
 %define AST_CAP 1024
 %define AST_KIND 0
@@ -18,4 +29,3 @@
 %define AST_CHILD_OR_DATA 24
 %define AST_NEXT_OR_EXTRA 32
 %define AST_SIZE 40
-

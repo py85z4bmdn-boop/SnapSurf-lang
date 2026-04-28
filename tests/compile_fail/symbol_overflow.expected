@@ -1,0 +1,1 @@
+tests/compile_fail/symbol_overflow/src/main.snapsurf:66:9 E0505 symbol table overflow

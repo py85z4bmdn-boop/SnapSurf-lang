@@ -5,12 +5,13 @@ Status: in progress.
 The root foundation path is now NASM/x86_64 only:
 
 - `make` builds `build/surf` from `compiler/asm/main.asm`.
-- `build/surf` implements the minimal hello-world compiler subset in assembly.
+- `build/surf` implements the foundation v0 expression/local compiler subset
+  in assembly.
 - `build/surf` emits `build/main.asm`.
 - `build/surf build examples/hello` invokes `nasm` and `ld` to produce
   `build/hello`.
 
-This is not self-hosting and not foundation complete. It is the first real
+This is not self-hosting and not foundation complete. It is a real but narrow
 ASM/NASM foundation slice.
 
 Implemented in ASM/NASM:
@@ -22,15 +23,31 @@ Implemented in ASM/NASM:
 - strict UTF-8 validation
 - real source token buffer for the implemented subset
 - AST arena for the implemented subset
-- minimal source parser for:
+- source parser for:
   - `use core/io`
   - `fn main -> i32`
   - `io.write 1 "..." len`
-  - `ret 0`
+  - `let x i32 = expr`
+  - `mut x i32 = expr`
+  - `x = expr`
+  - `ret expr`
   - `end`
+- Pratt expression parsing for integer literals, variable references,
+  parentheses, unary `-`, and `+ - * / %`
+- fixed-capacity single-function symbol table for local `i32` bindings
+- fixed-capacity scope stack primitives for future nested blocks
+- duplicate symbol, undefined symbol, immutable-assignment, and symbol-table
+  overflow diagnostics
+- explicit type ID and descriptor table in `compiler/inc/types.inc`
+- binary arithmetic type compatibility routed through `type_check_binary`
+- internal register convention documented in `compiler/inc/calling_conv.inc`
 - capability check for `io.write` requiring `requires syscall`
-- semantic checks read AST nodes for `io.write`, `ret`, string length, and return value
-- deterministic NASM emission for hello world
+- semantic checks read AST nodes for `io.write`, local declarations,
+  assignment, arithmetic expressions, string length, and return type
+- deterministic NASM emission for hello world plus small stack-local integer
+  programs
+- expression code generation still uses a simple push/pop evaluation stack; no
+  register allocator or stack-depth analysis exists yet
 - tiny runtime logic emitted into generated assembly
 - anti-hardcode test proves changing the source string changes generated ASM
   and executable output
@@ -41,8 +58,10 @@ Still scaffold or intentionally narrow:
 
 - full token stream beyond the implemented foundation subset
 - full AST layout beyond the implemented foundation subset
-- full Pratt expression parser
-- full semantic checker
+- control flow and multi-function parsing/codegen
+- full semantic checker and resolver
+- dynamic symbol table and nested block syntax
+- register allocation or a non-stack expression lowering strategy
 - full package dependency resolver
 - lockfile handling
 - registry/workspace/toolchain manager

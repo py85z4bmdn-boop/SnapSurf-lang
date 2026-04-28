@@ -6,6 +6,10 @@ Foundation subset implemented by the ASM compiler:
 - `fn`
 - `ret`
 - `end`
+- `let`
+- `mut`
+- `true`
+- `false`
 - identifiers
 - decimal integer literals
 - string literals
@@ -14,8 +18,15 @@ Foundation subset implemented by the ASM compiler:
 - `.`
 - `,`
 - `=`
+- `+`
+- `-`
+- `*`
+- `%`
+- `(`
+- `)`
 - newline
 - EOF
+- `//` and `/* ... */` comments are skipped
 
 The source lexer stores tokens in a fixed token buffer:
 

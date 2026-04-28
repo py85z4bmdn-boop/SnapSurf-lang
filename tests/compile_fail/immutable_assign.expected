@@ -1,0 +1,1 @@
+tests/compile_fail/immutable_assign/src/main.snapsurf:3:5 E0504 cannot assign immutable binding

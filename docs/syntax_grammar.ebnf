@@ -1,21 +1,11 @@
 SourceFile
-    = (Newline | Comment | Item)* EOF ;
-
-Item
-    = UseDecl
-    | FnDecl ;
+    = (Newline | Comment)* UseDecl* MainFn (Newline | Comment)* EOF ;
 
 UseDecl
-    = "use" Path Newline* ;
+    = "use" "core" "/" "io" Newline* ;
 
-FnDecl
-    = UnsafeOpt "fn" Ident ParamList "->" TypeName Newline* Block "end" ;
-
-UnsafeOpt
-    = "unsafe" | empty ;
-
-ParamList
-    = (Ident TypeName)* ;
+MainFn
+    = "fn" "main" "->" "i32" Newline* Block "end" ;
 
 Block
     = Statement* ;
@@ -25,83 +15,44 @@ Statement
     | MutDecl
     | AssignStmt
     | RetStmt
-    | IfStmt
-    | LoopStmt
-    | WhileStmt
-    | BreakStmt
-    | ContinueStmt
-    | UnsafeBlock
-    | ExprStmt ;
+    | IoWriteStmt ;
 
 LetDecl
-    = "let" Ident TypeName "=" Expr Newline* ;
+    = "let" Ident "i32" "=" Expr Newline* ;
 
 MutDecl
-    = "mut" Ident TypeName "=" Expr Newline* ;
+    = "mut" Ident "i32" "=" Expr Newline* ;
 
 AssignStmt
     = Ident "=" Expr Newline* ;
 
 RetStmt
-    = "ret" Expr? Newline* ;
+    = "ret" Expr Newline* ;
 
-IfStmt
-    = "if" Expr "->" Newline* Block ElseOpt "end" ;
-
-ElseOpt
-    = "else" "->" Newline* Block | empty ;
-
-LoopStmt
-    = "loop" "->" Newline* Block "end" ;
-
-WhileStmt
-    = "while" Expr "->" Newline* Block "end" ;
-
-BreakStmt
-    = "break" Newline* ;
-
-ContinueStmt
-    = "continue" Newline* ;
-
-UnsafeBlock
-    = "unsafe" "->" Newline* Block "end" ;
-
-ExprStmt
-    = Expr Newline* ;
+IoWriteStmt
+    = "io" "." "write" IntLit StrLit IntLit Newline* ;
 
 Expr
     = PrattExpression ;
 
 Pratt precedence, high to low:
 
-1. command-style function call
-2. unary `not`, unary `-`
-3. `*`, `/`, `%`
-4. `+`, `-`
-5. `<`, `<=`, `>`, `>=`
-6. `==`, `!=`
-7. `and`
-8. `or`
+1. unary `-`
+2. `*`, `/`, `%`
+3. `+`, `-`
 
 Primary
     = IntLit
-    | StrLit
+    | Ident
     | "true"
     | "false"
-    | Path
     | "(" Expr ")" ;
-
-Path
-    = Ident ("/" Ident | "." Ident)* ;
-
-TypeName
-    = Ident | "*" Ident ;
 
 PackageFile
     = PackageField VersionField TypeField TargetField RuntimeField PackageLine* "end" ;
 
 PackageLine
-    = EntryField | RequiresField | DepField | PanicField | BudgetField | LinkField ;
+    = EntryField | RequiresField | DepField ;
 
 PackageField
     = "package" Ident ;
@@ -110,11 +61,18 @@ VersionField
     = "version" SemVer ;
 
 TypeField
-    = "type" ("executable" | "library" | "build-script") ;
+    = "type" "executable" ;
 
 TargetField
-    = "target" ("linux-x86_64" | "host") ;
+    = "target" "linux-x86_64" ;
 
 RuntimeField
-    = "runtime" ("tiny" | "none") ;
+    = "runtime" "tiny" ;
 
+Implemented limits:
+
+- only one `fn main -> i32`
+- only single-function `i32` locals
+- mutable declarations use `mut x i32 = expr`; `let mut x ...` is rejected
+- no nested scopes, if/loop/while, parameters, user functions, user types, MIR,
+  borrow checking, traits, macros, or stdlib

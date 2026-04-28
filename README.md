@@ -6,12 +6,12 @@ Current truthful status:
 
 - ASM/NASM foundation is in progress.
 - `build/surf` is now built from NASM/x86_64 assembly in [compiler/asm](compiler/asm).
-- The ASM compiler supports the minimal hello-world foundation subset.
+- The ASM compiler supports the foundation v0 expression/local subset.
 - The Rust Stage 0 compiler remains isolated in [prototypes/rust_stage0](prototypes/rust_stage0) and is not used by root `make` or `make test`.
 
 Correct current claim:
 
-> ASM/NASM foundation slice can compile the hello-world package through NASM/ld.
+> ASM/NASM foundation slice can compile hello-world and small integer/local packages through NASM/ld.
 
 Still forbidden:
 
@@ -48,9 +48,15 @@ Hello SnapSurf
 - strict UTF-8 validation
 - token buffer for the source lexer, with spans and `TokEof`
 - AST arena for the parsed source subset
-- parser subset for `use core/io`, `fn main -> i32`, `io.write`, `ret 0`, `end`
+- parser subset for `use core/io`, `fn main -> i32`, `io.write`, `let`, `mut`, assignment, `ret expr`, and `end`
+- Pratt expression parser for integer literals, variable references, parentheses, unary `-`, and `+ - * / %`
+- fixed-capacity single-function symbol table for local bindings, duplicate detection, undefined-symbol detection, immutable-assignment rejection, and fail-closed overflow diagnostics
+- explicit foundation type ID and descriptor table in [compiler/inc/types.inc](compiler/inc/types.inc); only `i32` locals are accepted today
+- fixed-capacity scope stack primitives exist for future nested blocks, but source syntax still has only the function-root scope
+- documented internal register convention in [compiler/inc/calling_conv.inc](compiler/inc/calling_conv.inc)
 - semantic/capability checks read AST nodes, not raw-source global flags
-- deterministic `build/main.asm` generation from AST-derived string, length, and return literal data
+- deterministic `build/main.asm` generation from AST-derived string data, stack locals, load/store operations, arithmetic instructions, and return expressions
+- mutable declarations use `mut x i32 = expr`; `let mut x ...` is intentionally rejected in v0
 - ELF64 hello binary through `nasm` and `ld`
 - default `make test` includes a source-string anti-hardcode check and binary
   origin checks against Cargo/Rust/prototype references
@@ -59,9 +65,11 @@ Hello SnapSurf
 ## Not Complete
 
 The project is not self-hosting and the foundation is not complete. Remaining
-major gaps include full token stream, full AST arena, real Pratt expression
-parser, broader semantic checker, ownership checker, lockfile resolver, package
-registry, formatter, optimizer, LSP, and self-hosting.
+major gaps include full token stream, full AST arena, control flow, functions
+with parameters, nested block syntax, structs/enums, module resolution, richer
+type checking, MIR, register allocation or non-stack expression lowering,
+ownership checker, lockfile resolver, package registry, formatter, optimizer,
+LSP, and self-hosting.
 
 The Rust prototype is still useful as a reference only:
 

@@ -1,31 +1,29 @@
 # SnapSurf Token Types v0.1 Foundation
 
-Keyword tokens:
+Implemented source keyword tokens:
 
-`TokFn`, `TokLet`, `TokMut`, `TokConst`, `TokStatic`, `TokRet`, `TokIf`,
-`TokElse`, `TokLoop`, `TokWhile`, `TokBreak`, `TokContinue`, `TokUse`,
-`TokModule`, `TokPackage`, `TokVersion`, `TokType`, `TokTarget`, `TokRuntime`,
-`TokEntry`, `TokRequires`, `TokDep`, `TokEnd`, `TokUnsafe`, `TokExtern`,
-`TokAsm`, `TokTrue`, `TokFalse`, `TokAnd`, `TokOr`, `TokNot`.
+`TokFn`, `TokLet`, `TokMut`, `TokRet`, `TokUse`, `TokEnd`, `TokTrue`,
+`TokFalse`.
 
 Literal tokens:
 
-`TokIdent`, `TokIntLit`, `TokStrLit`, `TokByteLit`.
+`TokIdent`, `TokIntLit`, `TokStrLit`.
 
 Operator tokens:
 
 `TokPlus`, `TokMinus`, `TokStar`, `TokSlash`, `TokPercent`, `TokEq`,
-`TokEqEq`, `TokBangEq`, `TokLt`, `TokLtEq`, `TokGt`, `TokGtEq`, `TokArrow`.
+`TokArrow`.
 
 Delimiter tokens:
 
-`TokLParen`, `TokRParen`, `TokLBracket`, `TokRBracket`, `TokComma`, `TokDot`,
-`TokColon`.
+`TokLParen`, `TokRParen`, `TokComma`, `TokDot`.
 
 Special tokens:
 
-`TokNewline`, `TokEof`, `TokError`, `TokComment`.
+`TokNewline`, `TokEof`, `TokError`.
 
 Boolean literals are represented by `TokTrue` and `TokFalse`, not by a generic
 boolean literal token.
 
+Package-file keywords are still validated by the package parser, not by the
+source token stream.

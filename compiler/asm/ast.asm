@@ -116,6 +116,28 @@ ast_name_ptr:
     je .path
     cmp rdi, AST_ERROR
     je .err
+    cmp rdi, AST_LET_STMT
+    je .let
+    cmp rdi, AST_MUT_STMT
+    je .mut
+    cmp rdi, AST_ASSIGN_STMT
+    je .assign
+    cmp rdi, AST_VAR_REF
+    je .var
+    cmp rdi, AST_BOOL_LIT
+    je .bool
+    cmp rdi, AST_BIN_ADD
+    je .add
+    cmp rdi, AST_BIN_SUB
+    je .sub
+    cmp rdi, AST_BIN_MUL
+    je .mul
+    cmp rdi, AST_BIN_DIV
+    je .div
+    cmp rdi, AST_BIN_MOD
+    je .mod
+    cmp rdi, AST_UNARY_NEG
+    je .neg
     mov rax, ast_name_unknown
     ret
 .source:
@@ -150,4 +172,37 @@ ast_name_ptr:
     ret
 .err:
     mov rax, ast_name_error
+    ret
+.let:
+    mov rax, ast_name_let
+    ret
+.mut:
+    mov rax, ast_name_mut
+    ret
+.assign:
+    mov rax, ast_name_assign
+    ret
+.var:
+    mov rax, ast_name_var
+    ret
+.bool:
+    mov rax, ast_name_bool
+    ret
+.add:
+    mov rax, ast_name_add
+    ret
+.sub:
+    mov rax, ast_name_sub
+    ret
+.mul:
+    mov rax, ast_name_mul
+    ret
+.div:
+    mov rax, ast_name_div
+    ret
+.mod:
+    mov rax, ast_name_mod
+    ret
+.neg:
+    mov rax, ast_name_neg
     ret

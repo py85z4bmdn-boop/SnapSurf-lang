@@ -1,0 +1,1 @@
+tests/compile_fail/let_mut_rejected/src/main.snapsurf:2:9 E0404 unsupported token in foundation: TokMut

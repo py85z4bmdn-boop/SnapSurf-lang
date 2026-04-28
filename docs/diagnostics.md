@@ -1,62 +1,47 @@
-# SnapSurf Diagnostics and Error Registry
+# SnapSurf Diagnostics
 
-Every diagnostic contains:
+Current ASM foundation diagnostics are printed as:
 
-- error code
-- severity
-- message
-- file path
-- source file id
-- byte span
-- line and column span
-- optional note
-- optional help
-- optional related span
+```text
+path:line:column ERROR_CODE message
+```
 
-Default max errors: 100. After that the compiler emits `E9999`.
+Implemented foundation codes:
 
-Registered foundation codes:
+- `E0001` UTF-8 BOM is not allowed
+- `E0002` invalid UTF-8 sequence
+- `E0003` source file must use `.snapsurf` extension
+- `E0101` unterminated string literal
+- `E0102` invalid escape sequence
+- `E0103` invalid character
+- `E0104` unexpected EOF
+- `E0105` token buffer overflow
+- `E0201` expected token
+- `E0202` missing end
+- `E0203` unexpected end
+- `E0204` invalid function declaration
+- `E0205` invalid use declaration
+- `E0301` AST arena overflow
+- `E0401` main function not found
+- `E0402` invalid main signature
+- `E0403` return type mismatch
+- `E0404` unsupported token or AST in foundation
+- `E0501` type mismatch
+- `E0502` duplicate definition
+- `E0503` undefined symbol
+- `E0504` cannot assign immutable binding
+- `E0505` symbol table overflow
+- `E0506` scope depth exceeded
+- `E0801` missing required capability
+- `E0802` syscall used without requires syscall
+- `E0901` surf.pkg not found
+- `E0902` invalid surf.pkg
+- `E0903` missing required package field
+- `E0904` unsupported target
+- `E0905` unsupported runtime
+- `E0906` executable package requires src/main.snapsurf
+- `E1001` NASM emit failed
+- `E1002` build artifact path error
 
-- `E0001`: UTF-8 BOM is not allowed
-- `E0002`: invalid UTF-8 sequence
-- `E0003`: SnapSurf source file must use `.snapsurf` extension
-- `E0004`: source path is not valid UTF-8
-- `E0101`: unterminated block comment
-- `E0102`: invalid character
-- `E1001`: invalid escape sequence
-- `E1002`: unterminated string literal
-- `E1003`: invalid integer literal
-- `E0201`: missing function name
-- `E0202`: missing return type
-- `E0203`: expected `end`
-- `E0204`: unexpected `end`
-- `E0205`: `else` without matching `if`
-- `E0206`: invalid expression
-- `E0207`: parser made no progress
-- `E0301`: error node reached validation boundary
-- `E0401`: undeclared variable
-- `E0402`: type mismatch
-- `E0403`: function call target does not exist
-- `E0404`: argument count mismatch
-- `E4001`: integer literal does not fit in target type
-- `E4101`: not all control paths return required type
-- `E4201`: cannot assign to immutable variable
-- `E4202`: variable shadowing is forbidden in foundation
-- `E4301`: condition must be bool
-- `E0501`: break outside loop
-- `E0502`: continue outside loop
-- `E0701`: unsafe operation requires unsafe scope
-- `E0801`: package capability is missing
-- `E0901`: missing `surf.pkg`
-- `E0902`: invalid `surf.pkg` schema
-- `E0903`: missing package source entry
-- `E0904`: unsupported package target or runtime
-- `E1000`: external tool failed
-- `E2001`: package declares insufficient capability for `core/io` syscall use
-- `E9999`: too many errors, stopping
-
-Design decision for an internal spec conflict: the registry keeps the normal
-capability range at `E0800-E0899`, but also reserves `E2001` because the
-foundation spec explicitly mandates that code for `core/io` syscall capability
-leaks. The compiler uses `E2001` for `io.write` without `requires syscall`.
-
+Multi-error recovery, notes, help text, related spans, and max-error handling
+are not implemented in the ASM foundation compiler yet.

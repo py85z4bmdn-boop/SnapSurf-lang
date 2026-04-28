@@ -1,5 +1,5 @@
 SourceFile
-    = UseDecl Newline* MainFn EOF ;
+    = UseDecl* Newline* MainFn Newline* EOF ;
 
 UseDecl
     = "use" "core" "/" "io" ;
@@ -10,13 +10,42 @@ MainFn
 
 MainStmt
     = IoWrite
-    | RetZero ;
+    | LetStmt
+    | MutStmt
+    | AssignStmt
+    | RetStmt ;
 
 IoWrite
     = "io" "." "write" IntLiteral StringLiteral IntLiteral ;
 
-RetZero
-    = "ret" "0" ;
+LetStmt
+    = "let" Ident "i32" "=" Expr ;
+
+MutStmt
+    = "mut" Ident "i32" "=" Expr ;
+
+AssignStmt
+    = Ident "=" Expr ;
+
+RetStmt
+    = "ret" Expr ;
+
+Expr
+    = PrattExpression ;
+
+Pratt precedence, low to high:
+
+1. `+`, `-`
+2. `*`, `/`, `%`
+3. unary `-`
+4. primary
+
+Primary
+    = IntLiteral
+    | Ident
+    | "true"
+    | "false"
+    | "(" Expr ")" ;
 
 PackageFile
     = "package" Ident
@@ -31,4 +60,3 @@ PackageFile
 
 RequiresLine
     = "requires" "syscall" | "requires" "none" ;
-

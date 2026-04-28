@@ -1,5 +1,7 @@
 %include "compiler/inc/syscalls.inc"
+%include "compiler/inc/calling_conv.inc"
 %include "compiler/inc/constants.inc"
+%include "compiler/inc/types.inc"
 %include "compiler/inc/errors.inc"
 %include "compiler/inc/tokens.inc"
 %include "compiler/inc/ast.inc"
@@ -458,8 +460,15 @@ err_bad_use: db "E0205 invalid use declaration", 0
 err_no_main: db "E0401 main function not found", 0
 err_bad_main: db "E0402 invalid main signature", 0
 err_ret: db "E0403 return type mismatch", 0
-err_unsup_expr: db "E0404 unsupported expression in foundation", 0
+err_unsup_expr: db "E0404 unsupported token in foundation: ", 0
+err_unsup_ast: db "E0404 unsupported AST in foundation", 0
 err_len_mismatch: db "E0404 string literal length does not match explicit io.write length", 0
+err_type: db "E0501 type mismatch", 0
+err_duplicate: db "E0502 duplicate definition", 0
+err_undefined: db "E0503 undefined symbol", 0
+err_immutable: db "E0504 cannot assign immutable binding", 0
+err_symbol_overflow: db "E0505 symbol table overflow", 0
+err_scope_overflow: db "E0506 scope depth exceeded", 0
 err_ast_overflow: db "E0301 AST arena overflow", 0
 err_cap: db "E0801 missing required capability", 0
 err_syscall_cap: db "E0802 syscall used without requires syscall", 0
@@ -479,14 +488,40 @@ newline_z: db 10, 0
 
 asm_pre: db "default rel",10,"global _start",10,"section .text",10,"_start:",10,"    call main",10,"    mov edi, eax",10,"    mov eax, 60",10,"    syscall",10,10,"main:",10,"    push rbp",10,"    mov rbp, rsp",10
 asm_pre_len: equ $ - asm_pre
+asm_stack_pre: db "    sub rsp, "
+asm_stack_pre_len: equ $ - asm_stack_pre
 asm_write_pre: db "    mov rax, 1",10,"    mov rdi, 1",10,"    lea rsi, [rel .Lstr0]",10,"    mov rdx, "
 asm_write_pre_len: equ $ - asm_write_pre
 asm_write_post: db 10,"    syscall",10
 asm_write_post_len: equ $ - asm_write_post
-asm_ret_pre: db "    mov eax, "
-asm_ret_pre_len: equ $ - asm_ret_pre
-asm_ret_post: db 10,"    mov rsp, rbp",10,"    pop rbp",10,"    ret",10,10,"section .rodata",10,".Lstr0:",10,"    db "
-asm_ret_post_len: equ $ - asm_ret_post
+asm_mov_rax_pre: db "    mov rax, "
+asm_mov_rax_pre_len: equ $ - asm_mov_rax_pre
+asm_store_local_pre: db "    mov [rbp - "
+asm_store_local_pre_len: equ $ - asm_store_local_pre
+asm_store_local_post: db "], rax",10
+asm_store_local_post_len: equ $ - asm_store_local_post
+asm_load_local_pre: db "    mov rax, [rbp - "
+asm_load_local_pre_len: equ $ - asm_load_local_pre
+asm_load_local_post: db "]",10
+asm_load_local_post_len: equ $ - asm_load_local_post
+asm_push_rax: db "    push rax",10
+asm_push_rax_len: equ $ - asm_push_rax
+asm_add_rax: db "    pop rcx",10,"    add rax, rcx",10
+asm_add_rax_len: equ $ - asm_add_rax
+asm_sub_rax: db "    mov rcx, rax",10,"    pop rax",10,"    sub rax, rcx",10
+asm_sub_rax_len: equ $ - asm_sub_rax
+asm_mul_rax: db "    pop rcx",10,"    imul rax, rcx",10
+asm_mul_rax_len: equ $ - asm_mul_rax
+asm_div_rax: db "    mov rcx, rax",10,"    pop rax",10,"    cqo",10,"    idiv rcx",10
+asm_div_rax_len: equ $ - asm_div_rax
+asm_mod_rax: db "    mov rcx, rax",10,"    pop rax",10,"    cqo",10,"    idiv rcx",10,"    mov rax, rdx",10
+asm_mod_rax_len: equ $ - asm_mod_rax
+asm_neg_rax: db "    neg rax",10
+asm_neg_rax_len: equ $ - asm_neg_rax
+asm_ret_epilogue: db "    mov rsp, rbp",10,"    pop rbp",10,"    ret",10
+asm_ret_epilogue_len: equ $ - asm_ret_epilogue
+asm_rodata_pre: db 10,"section .rodata",10,".Lstr0:",10,"    db "
+asm_rodata_pre_len: equ $ - asm_rodata_pre
 asm_final_newline: db 10
 comma_space: db ", "
 text_core: db "core", 0
@@ -506,11 +541,19 @@ tok_name_ret: db "TokRet", 10, 0
 tok_name_end: db "TokEnd", 10, 0
 tok_name_true: db "TokTrue", 10, 0
 tok_name_false: db "TokFalse", 10, 0
+tok_name_let: db "TokLet", 10, 0
+tok_name_mut: db "TokMut", 10, 0
 tok_name_arrow: db "TokArrow", 10, 0
 tok_name_dot: db "TokDot", 10, 0
 tok_name_slash: db "TokSlash", 10, 0
 tok_name_comma: db "TokComma", 10, 0
 tok_name_eq: db "TokEq", 10, 0
+tok_name_plus: db "TokPlus", 10, 0
+tok_name_minus: db "TokMinus", 10, 0
+tok_name_star: db "TokStar", 10, 0
+tok_name_percent: db "TokPercent", 10, 0
+tok_name_lparen: db "TokLParen", 10, 0
+tok_name_rparen: db "TokRParen", 10, 0
 tok_name_newline: db "TokNewline", 10, 0
 tok_name_unknown: db "TokUnknown", 10, 0
 
@@ -525,6 +568,17 @@ ast_name_str: db "AstStrLit", 10, 0
 ast_name_ident: db "AstIdent", 10, 0
 ast_name_path: db "AstPath", 10, 0
 ast_name_error: db "AstError", 10, 0
+ast_name_let: db "AstLetStmt", 10, 0
+ast_name_mut: db "AstMutStmt", 10, 0
+ast_name_assign: db "AstAssignStmt", 10, 0
+ast_name_var: db "AstVarRef", 10, 0
+ast_name_bool: db "AstBoolLit", 10, 0
+ast_name_add: db "AstBinAdd", 10, 0
+ast_name_sub: db "AstBinSub", 10, 0
+ast_name_mul: db "AstBinMul", 10, 0
+ast_name_div: db "AstBinDiv", 10, 0
+ast_name_mod: db "AstBinMod", 10, 0
+ast_name_neg: db "AstUnaryNeg", 10, 0
 ast_name_unknown: db "AstUnknown", 10, 0
 
 section .bss
@@ -561,5 +615,21 @@ tmp_payload: resq 1
 tmp_ast_a: resq 1
 tmp_ast_b: resq 1
 tmp_ast_c: resq 1
+tmp_token: resq 1
+tmp_diag_kind: resq 1
 parsed_ret_value: resq 1
+sym_count: resq 1
+local_count: resq 1
+slot_cursor: resq 1
+scope_depth: resq 1
+return_seen: resb 1
+sym_start: resq SYM_CAP
+sym_len: resq SYM_CAP
+sym_mut: resq SYM_CAP
+sym_type: resq SYM_CAP
+sym_slot: resq SYM_CAP
+scope_sym_base: resq SCOPE_CAP
+scope_slot_base: resq SCOPE_CAP
+type_count: resq 1
+type_table: resb TYPE_TBL_CAP * TYPE_DESC_SIZE
 ast_buf: resb AST_CAP * AST_SIZE

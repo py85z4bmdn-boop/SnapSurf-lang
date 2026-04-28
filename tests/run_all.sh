@@ -75,6 +75,27 @@ fi
 ./build/hello > build/test-output/anti_alt.out
 diff -u tests/expected/anti_hardcode.out build/test-output/anti_alt.out
 
+run_exit() {
+    name="$1"
+    expected="$2"
+    ./build/surf build "tests/pass/$name" > "build/test-output/$name.build"
+    set +e
+    ./build/hello > "build/test-output/$name.out"
+    code="$?"
+    set -e
+    if [ "$code" != "$expected" ]; then
+        echo "unexpected exit for $name: got $code expected $expected"
+        exit 1
+    fi
+}
+
+run_exit let_integer 10
+run_exit mut_arithmetic 16
+run_exit precedence 7
+run_exit paren_expr 9
+run_exit div_mod 8
+run_exit unary_minus 2
+
 run_fail() {
     name="$1"
     if ./build/surf check "tests/compile_fail/$name" > "build/test-output/$name.out" 2>&1; then
@@ -96,5 +117,11 @@ run_fail invalid_escape
 run_fail invalid_use
 run_fail invalid_main_signature
 run_fail unsupported_expression
+run_fail immutable_assign
+run_fail undefined_symbol
+run_fail duplicate_symbol
+run_fail symbol_overflow
+run_fail let_mut_rejected
+run_fail bool_arithmetic
 
 echo "foundation asm tests passed"

@@ -15,7 +15,7 @@ main:
     lea rsi, [rel .Lstr0]
     mov rdx, 15
     syscall
-    mov eax, 0
+    mov rax, 0
     mov rsp, rbp
     pop rbp
     ret

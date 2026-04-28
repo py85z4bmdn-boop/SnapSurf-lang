@@ -1,0 +1,1 @@
+tests/compile_fail/bool_arithmetic/src/main.snapsurf:2:9 E0501 type mismatch

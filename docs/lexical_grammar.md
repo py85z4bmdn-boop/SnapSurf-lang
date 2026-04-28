@@ -22,23 +22,19 @@ Unicode identifiers are forbidden in foundation.
 Integer literal:
 
 ```ebnf
-DecInt = Digit (("_"? Digit))* ;
-HexInt = "0x" HexDigit (("_"? HexDigit))* ;
-BinInt = "0b" BinDigit (("_"? BinDigit))* ;
-OctInt = "0o" OctDigit (("_"? OctDigit))* ;
-IntLit = DecInt | HexInt | BinInt | OctInt ;
+DecInt = Digit+ ;
+IntLit = DecInt ;
 ```
 
-Underscores are allowed only between digits. `_100`, `100_`, `1__000`, and
-`0x_ff` are invalid.
+Hex, binary, octal, suffixes, and `_` separators are not implemented in the ASM
+foundation lexer yet.
 
 String literal:
 
 ```ebnf
 StrLit   = '"' StrChar* '"' ;
 StrChar  = NonQuoteBackslashNewline | Escape ;
-Escape   = "\\n" | "\\t" | "\\r" | "\\\\" | "\\\"" | "\\'" | "\\0" | HexEsc ;
-HexEsc   = "\\x" HexDigit HexDigit ;
+Escape   = "\\n" | "\\t" | "\\r" | "\\\\" | "\\\"" | "\\0" ;
 ```
 
 Comments:
@@ -49,5 +45,4 @@ BlockComment = "/*" any-until-first-"*/" ;
 ```
 
 Nested block comments are forbidden as syntax, but `/*` inside a block comment
-is treated as text. Unterminated block comments emit `E0101`.
-
+is treated as text. Unterminated block comments emit `E0104`.
