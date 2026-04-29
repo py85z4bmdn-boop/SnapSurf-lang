@@ -69,26 +69,31 @@ emit_main_asm:
     ret
 
 emit_block:
+    push rbx
     call ast_child
-    mov r12, rax
+    mov rbx, rax
 .loop:
-    test r12, r12
+    test rbx, rbx
     jz .done
-    mov rdi, r12
+    mov rdi, rbx
     call emit_stmt
     test rax, rax
     jnz .fail
-    mov rdi, r12
+    mov rdi, rbx
     call ast_next
-    mov r12, rax
+    mov rbx, rax
     jmp .loop
 .done:
     xor rax, rax
+    pop rbx
     ret
 .fail:
+    pop rbx
     ret
 
 emit_stmt:
+    push r12
+    push r13
     mov r12, rdi
     call ast_kind
     mov r13, rax
@@ -110,10 +115,16 @@ emit_stmt:
     je .loop_stmt
     cmp r13, AST_BREAK_STMT
     je .break_stmt
+    cmp r13, AST_CONTINUE_STMT
+    je .continue_stmt
     xor rax, rax
+    pop r13
+    pop r12
     ret
 .call:
     call emit_io_write
+    pop r13
+    pop r12
     ret
 .ret:
     mov rdi, r12
@@ -127,28 +138,47 @@ emit_stmt:
     mov rdx, asm_ret_epilogue_len
     call write_all
     xor rax, rax
+    pop r13
+    pop r12
     ret
 .store:
     mov rdi, r12
     call emit_store_stmt
+    pop r13
+    pop r12
     ret
 .if_stmt:
     mov rdi, r12
     call emit_if_stmt
+    pop r13
+    pop r12
     ret
 .while_stmt:
     mov rdi, r12
     call emit_while_stmt
+    pop r13
+    pop r12
     ret
 .loop_stmt:
     mov rdi, r12
     call emit_loop_stmt
+    pop r13
+    pop r12
     ret
 .break_stmt:
-    xor rax, rax
+    call emit_break_stmt
+    pop r13
+    pop r12
+    ret
+.continue_stmt:
+    call emit_continue_stmt
+    pop r13
+    pop r12
     ret
 .fail:
     mov rax, 1
+    pop r13
+    pop r12
     ret
 
 emit_store_stmt:

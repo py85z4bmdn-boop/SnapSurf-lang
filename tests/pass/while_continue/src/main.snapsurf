@@ -1,0 +1,15 @@
+fn main -> i32
+    mut i i32 = 0
+    mut sum i32 = 0
+    while i < 10 ->
+        i = i + 1
+        if i == 3 ->
+            continue
+        end
+        if i == 7 ->
+            continue
+        end
+        sum = sum + i
+    end
+    ret sum
+end

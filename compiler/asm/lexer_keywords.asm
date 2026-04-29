@@ -10,6 +10,8 @@ keyword_kind:
     je .len4
     cmp rsi, 5
     je .len5
+    cmp rsi, 8
+    je .len8
     jmp .ident
 .len2:
     cmp byte [rdi], 'f'
@@ -174,6 +176,25 @@ keyword_kind:
     cmp byte [rdi + 4], 'k'
     jne .ident
     mov rax, TOK_BREAK
+    ret
+.len8:
+    cmp byte [rdi], 'c'
+    jne .ident
+    cmp byte [rdi + 1], 'o'
+    jne .ident
+    cmp byte [rdi + 2], 'n'
+    jne .ident
+    cmp byte [rdi + 3], 't'
+    jne .ident
+    cmp byte [rdi + 4], 'i'
+    jne .ident
+    cmp byte [rdi + 5], 'n'
+    jne .ident
+    cmp byte [rdi + 6], 'u'
+    jne .ident
+    cmp byte [rdi + 7], 'e'
+    jne .ident
+    mov rax, TOK_CONTINUE
     ret
 .ident:
     mov rax, TOK_IDENT

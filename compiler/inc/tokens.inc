@@ -17,6 +17,7 @@
 %define TOK_WHILE 20
 %define TOK_LOOP 21
 %define TOK_BREAK 22
+%define TOK_CONTINUE 26
 %define TOK_AND 23
 %define TOK_OR 24
 %define TOK_NOT 25

@@ -1,7 +1,9 @@
-; Status: PARTIAL.
+; Status: COMPLETE for foundation v0 subset.
 ; Semantic lowering/validation for supported foundation calls.
 
 semantic_load_call:
+    push rbx
+    push r12
     mov r12, rdi
     xor rsi, rsi
     call ast_child_at
@@ -56,16 +58,22 @@ semantic_load_call:
     cmp rbx, [parsed_str_len]
     jne .len_mismatch
     xor rax, rax
+    pop r12
+    pop rbx
     ret
 .bad:
     mov rdi, src_path
     mov rsi, err_unsup_ast
     call print_diag
     mov rax, 1
+    pop r12
+    pop rbx
     ret
 .len_mismatch:
     mov rdi, src_path
     mov rsi, err_len_mismatch
     call print_diag
     mov rax, 1
+    pop r12
+    pop rbx
     ret

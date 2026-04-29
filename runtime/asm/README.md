@@ -8,7 +8,7 @@ Implemented reference modules:
 - `syscall_linux_x86_64.asm`: minimal write syscall wrapper
 - `panic_abort.asm`: minimal abort path
 
-Current compiler behavior:
+Current compiler behavior:    
 
 `build/surf` emits equivalent runtime tiny startup code directly into
 `build/main.asm` for the hello-world foundation slice. Splitting generated code

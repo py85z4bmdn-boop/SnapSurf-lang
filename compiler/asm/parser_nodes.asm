@@ -78,4 +78,3 @@ parse_bool_node:
     xor r8, r8
     call ast_new
     ret
-    ret

@@ -1,0 +1,9 @@
+package while_continue
+version 0.1.0
+type executable
+target linux-x86_64
+runtime tiny
+entry main
+
+requires none
+end

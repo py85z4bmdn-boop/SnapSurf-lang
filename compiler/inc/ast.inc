@@ -34,6 +34,13 @@
 %define AST_WHILE_STMT 33
 %define AST_LOOP_STMT 34
 %define AST_BREAK_STMT 35
+%define AST_CONTINUE_STMT 42
+
+; Foundation v0 extensions (manual memory + raw pointer ops)
+%define AST_MEM_MALLOC_EXPR 36
+%define AST_MEM_LOAD_I32_EXPR 37
+%define AST_MEM_FREE_STMT 38
+%define AST_MEM_STORE_I32_STMT 39
 
 %define AST_CAP 1024
 %define AST_KIND 0

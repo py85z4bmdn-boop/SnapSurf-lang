@@ -13,6 +13,9 @@ compile_package:
     test rax, rax
     jnz .fail
 
+    ; Rebuild symbol table flat for emitter (no scoping)
+    call semantic_rebuild_for_emit
+
     call capability_check_subset
     test rax, rax
     jnz .fail

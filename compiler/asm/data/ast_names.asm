@@ -34,4 +34,5 @@ ast_name_if: db "AstIfStmt", 10, 0
 ast_name_while: db "AstWhileStmt", 10, 0
 ast_name_loop: db "AstLoopStmt", 10, 0
 ast_name_break: db "AstBreakStmt", 10, 0
+ast_name_continue: db "AstContinueStmt", 10, 0
 ast_name_unknown: db "AstUnknown", 10, 0

@@ -38,4 +38,5 @@ tok_name_le: db "TokLe", 10, 0
 tok_name_ee: db "TokEe", 10, 0
 tok_name_ne: db "TokNe", 10, 0
 tok_name_newline: db "TokNewline", 10, 0
+tok_name_continue: db "TokContinue", 10, 0
 tok_name_unknown: db "TokUnknown", 10, 0

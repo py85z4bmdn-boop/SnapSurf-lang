@@ -96,6 +96,8 @@ token_name_ptr:
     je .ne
     cmp rdi, TOK_NEWLINE
     je .newline
+    cmp rdi, TOK_CONTINUE
+    je .continue
     mov rax, tok_name_unknown
     ret
 .eof:
@@ -214,4 +216,7 @@ token_name_ptr:
     ret
 .newline:
     mov rax, tok_name_newline
+    ret
+.continue:
+    mov rax, tok_name_continue
     ret

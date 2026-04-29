@@ -1,5 +1,5 @@
-; Status: PARTIAL.
-; Real AST arena for the hello-world foundation subset.
+; Status: COMPLETE for foundation v0 subset.
+; Real AST arena with complete dump-ast node name dispatch.
 
 ast_reset:
     mov byte [has_io_write], 0
@@ -13,6 +13,7 @@ ast_reset:
     mov qword [ast_call_stmt], 0
     mov qword [ast_ret_stmt], 0
     mov qword [ast_error_flag], 0
+    mov qword [loop_depth], 0
     ret
 
 ast_new:
@@ -138,6 +139,34 @@ ast_name_ptr:
     je .mod
     cmp rdi, AST_UNARY_NEG
     je .neg
+    cmp rdi, AST_BIN_GT
+    je .gt
+    cmp rdi, AST_BIN_LT
+    je .lt
+    cmp rdi, AST_BIN_GE
+    je .ge
+    cmp rdi, AST_BIN_LE
+    je .le
+    cmp rdi, AST_BIN_EE
+    je .ee
+    cmp rdi, AST_BIN_NE
+    je .ne
+    cmp rdi, AST_BIN_AND
+    je .and
+    cmp rdi, AST_BIN_OR
+    je .or
+    cmp rdi, AST_UNARY_NOT
+    je .not
+    cmp rdi, AST_IF_STMT
+    je .if
+    cmp rdi, AST_WHILE_STMT
+    je .while
+    cmp rdi, AST_LOOP_STMT
+    je .loop
+    cmp rdi, AST_BREAK_STMT
+    je .break
+    cmp rdi, AST_CONTINUE_STMT
+    je .continue
     mov rax, ast_name_unknown
     ret
 .source:
@@ -205,4 +234,46 @@ ast_name_ptr:
     ret
 .neg:
     mov rax, ast_name_neg
+    ret
+.gt:
+    mov rax, ast_name_gt
+    ret
+.lt:
+    mov rax, ast_name_lt
+    ret
+.ge:
+    mov rax, ast_name_ge
+    ret
+.le:
+    mov rax, ast_name_le
+    ret
+.ee:
+    mov rax, ast_name_ee
+    ret
+.ne:
+    mov rax, ast_name_ne
+    ret
+.and:
+    mov rax, ast_name_and
+    ret
+.or:
+    mov rax, ast_name_or
+    ret
+.not:
+    mov rax, ast_name_not
+    ret
+.if:
+    mov rax, ast_name_if
+    ret
+.while:
+    mov rax, ast_name_while
+    ret
+.loop:
+    mov rax, ast_name_loop
+    ret
+.break:
+    mov rax, ast_name_break
+    ret
+.continue:
+    mov rax, ast_name_continue
     ret

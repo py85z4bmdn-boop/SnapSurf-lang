@@ -1,0 +1,10 @@
+fn main -> i32
+    mut i i32 = 0
+    while i < 100 ->
+        if i == 5 ->
+            break
+        end
+        i = i + 1
+    end
+    ret i
+end
