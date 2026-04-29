@@ -12,6 +12,14 @@
 %define TOK_FALSE 15
 %define TOK_LET 16
 %define TOK_MUT 17
+%define TOK_IF 18
+%define TOK_ELSE 19
+%define TOK_WHILE 20
+%define TOK_LOOP 21
+%define TOK_BREAK 22
+%define TOK_AND 23
+%define TOK_OR 24
+%define TOK_NOT 25
 
 %define TOK_ARROW 30
 %define TOK_DOT 31
@@ -24,6 +32,12 @@
 %define TOK_PERCENT 38
 %define TOK_LPAREN 39
 %define TOK_RPAREN 40
+%define TOK_GT 41
+%define TOK_LT 42
+%define TOK_GE 43
+%define TOK_LE 44
+%define TOK_EE 45
+%define TOK_NE 46
 %define TOK_NEWLINE 50
 
 %define TOKEN_CAP 4096

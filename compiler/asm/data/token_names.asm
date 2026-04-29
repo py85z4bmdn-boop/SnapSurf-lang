@@ -12,6 +12,14 @@ tok_name_true: db "TokTrue", 10, 0
 tok_name_false: db "TokFalse", 10, 0
 tok_name_let: db "TokLet", 10, 0
 tok_name_mut: db "TokMut", 10, 0
+tok_name_if: db "TokIf", 10, 0
+tok_name_else: db "TokElse", 10, 0
+tok_name_while: db "TokWhile", 10, 0
+tok_name_loop: db "TokLoop", 10, 0
+tok_name_break: db "TokBreak", 10, 0
+tok_name_and: db "TokAnd", 10, 0
+tok_name_or: db "TokOr", 10, 0
+tok_name_not: db "TokNot", 10, 0
 tok_name_arrow: db "TokArrow", 10, 0
 tok_name_dot: db "TokDot", 10, 0
 tok_name_slash: db "TokSlash", 10, 0
@@ -23,5 +31,11 @@ tok_name_star: db "TokStar", 10, 0
 tok_name_percent: db "TokPercent", 10, 0
 tok_name_lparen: db "TokLParen", 10, 0
 tok_name_rparen: db "TokRParen", 10, 0
+tok_name_gt: db "TokGt", 10, 0
+tok_name_lt: db "TokLt", 10, 0
+tok_name_ge: db "TokGe", 10, 0
+tok_name_le: db "TokLe", 10, 0
+tok_name_ee: db "TokEe", 10, 0
+tok_name_ne: db "TokNe", 10, 0
 tok_name_newline: db "TokNewline", 10, 0
 tok_name_unknown: db "TokUnknown", 10, 0

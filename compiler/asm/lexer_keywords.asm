@@ -13,23 +13,65 @@ keyword_kind:
     jmp .ident
 .len2:
     cmp byte [rdi], 'f'
-    jne .ident
+    je .check_fn
+    cmp byte [rdi], 'i'
+    je .check_if
+    cmp byte [rdi], 'o'
+    je .check_or
+    jmp .ident
+.check_fn:
     cmp byte [rdi + 1], 'n'
     jne .ident
     mov rax, TOK_FN
     ret
+.check_if:
+    cmp byte [rdi + 1], 'f'
+    jne .ident
+    mov rax, TOK_IF
+    ret
+.check_or:
+    cmp byte [rdi + 1], 'r'
+    jne .ident
+    mov rax, TOK_OR
+    ret
 .len3:
     cmp byte [rdi], 'u'
-    jne .check_ret
+    je .check_use
+    cmp byte [rdi], 'a'
+    je .check_and
+    cmp byte [rdi], 'n'
+    je .check_not
+    cmp byte [rdi], 'r'
+    je .check_ret
+    cmp byte [rdi], 'e'
+    je .check_end
+    cmp byte [rdi], 'l'
+    je .check_let
+    cmp byte [rdi], 'm'
+    je .check_mut
+    jmp .ident
+.check_use:
     cmp byte [rdi + 1], 's'
     jne .ident
     cmp byte [rdi + 2], 'e'
     jne .ident
     mov rax, TOK_USE
     ret
+.check_and:
+    cmp byte [rdi + 1], 'n'
+    jne .ident
+    cmp byte [rdi + 2], 'd'
+    jne .ident
+    mov rax, TOK_AND
+    ret
+.check_not:
+    cmp byte [rdi + 1], 'o'
+    jne .ident
+    cmp byte [rdi + 2], 't'
+    jne .ident
+    mov rax, TOK_NOT
+    ret
 .check_ret:
-    cmp byte [rdi], 'r'
-    jne .check_end
     cmp byte [rdi + 1], 'e'
     jne .ident
     cmp byte [rdi + 2], 't'
@@ -37,8 +79,6 @@ keyword_kind:
     mov rax, TOK_RET
     ret
 .check_end:
-    cmp byte [rdi], 'e'
-    jne .check_let
     cmp byte [rdi + 1], 'n'
     jne .ident
     cmp byte [rdi + 2], 'd'
@@ -46,8 +86,6 @@ keyword_kind:
     mov rax, TOK_END
     ret
 .check_let:
-    cmp byte [rdi], 'l'
-    jne .check_mut
     cmp byte [rdi + 1], 'e'
     jne .ident
     cmp byte [rdi + 2], 't'
@@ -55,8 +93,6 @@ keyword_kind:
     mov rax, TOK_LET
     ret
 .check_mut:
-    cmp byte [rdi], 'm'
-    jne .ident
     cmp byte [rdi + 1], 'u'
     jne .ident
     cmp byte [rdi + 2], 't'
@@ -65,7 +101,13 @@ keyword_kind:
     ret
 .len4:
     cmp byte [rdi], 't'
-    jne .ident
+    je .check_true
+    cmp byte [rdi], 'e'
+    je .check_else
+    cmp byte [rdi], 'l'
+    je .check_loop
+    jmp .ident
+.check_true:
     cmp byte [rdi + 1], 'r'
     jne .ident
     cmp byte [rdi + 2], 'u'
@@ -74,9 +116,33 @@ keyword_kind:
     jne .ident
     mov rax, TOK_TRUE
     ret
+.check_else:
+    cmp byte [rdi + 1], 'l'
+    jne .ident
+    cmp byte [rdi + 2], 's'
+    jne .ident
+    cmp byte [rdi + 3], 'e'
+    jne .ident
+    mov rax, TOK_ELSE
+    ret
+.check_loop:
+    cmp byte [rdi + 1], 'o'
+    jne .ident
+    cmp byte [rdi + 2], 'o'
+    jne .ident
+    cmp byte [rdi + 3], 'p'
+    jne .ident
+    mov rax, TOK_LOOP
+    ret
 .len5:
     cmp byte [rdi], 'f'
-    jne .ident
+    je .check_false
+    cmp byte [rdi], 'w'
+    je .check_while
+    cmp byte [rdi], 'b'
+    je .check_break
+    jmp .ident
+.check_false:
     cmp byte [rdi + 1], 'a'
     jne .ident
     cmp byte [rdi + 2], 'l'
@@ -86,6 +152,28 @@ keyword_kind:
     cmp byte [rdi + 4], 'e'
     jne .ident
     mov rax, TOK_FALSE
+    ret
+.check_while:
+    cmp byte [rdi + 1], 'h'
+    jne .ident
+    cmp byte [rdi + 2], 'i'
+    jne .ident
+    cmp byte [rdi + 3], 'l'
+    jne .ident
+    cmp byte [rdi + 4], 'e'
+    jne .ident
+    mov rax, TOK_WHILE
+    ret
+.check_break:
+    cmp byte [rdi + 1], 'r'
+    jne .ident
+    cmp byte [rdi + 2], 'e'
+    jne .ident
+    cmp byte [rdi + 3], 'a'
+    jne .ident
+    cmp byte [rdi + 4], 'k'
+    jne .ident
+    mov rax, TOK_BREAK
     ret
 .ident:
     mov rax, TOK_IDENT

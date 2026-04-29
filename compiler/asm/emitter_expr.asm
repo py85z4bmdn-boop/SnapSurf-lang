@@ -18,6 +18,8 @@ emit_expr:
     je .var
     cmp r13, AST_UNARY_NEG
     je .neg
+    cmp r13, AST_UNARY_NOT
+    je .not
     cmp r13, AST_BIN_ADD
     je .binary
     cmp r13, AST_BIN_SUB
@@ -28,6 +30,22 @@ emit_expr:
     je .binary
     cmp r13, AST_BIN_MOD
     je .binary
+    cmp r13, AST_BIN_GT
+    je .comparison
+    cmp r13, AST_BIN_LT
+    je .comparison
+    cmp r13, AST_BIN_GE
+    je .comparison
+    cmp r13, AST_BIN_LE
+    je .comparison
+    cmp r13, AST_BIN_EE
+    je .comparison
+    cmp r13, AST_BIN_NE
+    je .comparison
+    cmp r13, AST_BIN_AND
+    je .logical
+    cmp r13, AST_BIN_OR
+    je .logical
     jmp .fail
 .int:
     mov rdi, r12
@@ -75,6 +93,32 @@ emit_expr:
     mov rsi, asm_neg_rax
     mov rdx, asm_neg_rax_len
     call write_all
+    jmp .ok
+.not:
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    mov rdi, [out_fd]
+    mov rsi, asm_not_rax
+    mov rdx, asm_not_rax_len
+    call write_all
+    jmp .ok
+.comparison:
+    mov rdi, r12
+    mov rsi, r13
+    call emit_comparison_expr
+    test rax, rax
+    jnz .fail
+    jmp .ok
+.logical:
+    mov rdi, r12
+    mov rsi, r13
+    call emit_logical_expr
+    test rax, rax
+    jnz .fail
     jmp .ok
 .binary:
     mov rdi, r12

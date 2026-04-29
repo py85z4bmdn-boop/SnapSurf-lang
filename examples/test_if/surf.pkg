@@ -1,0 +1,11 @@
+package test_if
+version 0.1.0
+type executable
+target linux-x86_64
+runtime tiny
+entry main
+
+requires syscall
+
+dep core/io 0.1.0
+end

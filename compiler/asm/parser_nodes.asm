@@ -67,15 +67,15 @@ parse_str_node_at:
     ret
 
 parse_bool_node:
-    mov r12, rdi
     call current_token_addr
     mov r13, [rax + TOKEN_START]
     mov r14, r13
     add r14, [rax + TOKEN_LEN]
+    mov rcx, [token_index]
     mov rdi, AST_BOOL_LIT
     mov rsi, r13
     mov rdx, r14
-    mov rcx, r12
     xor r8, r8
     call ast_new
+    ret
     ret

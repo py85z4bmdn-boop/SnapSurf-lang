@@ -31,6 +31,34 @@ asm_mod_rax: db "    mov rcx, rax",10,"    pop rax",10,"    cqo",10,"    idiv rc
 asm_mod_rax_len: equ $ - asm_mod_rax
 asm_neg_rax: db "    neg rax",10
 asm_neg_rax_len: equ $ - asm_neg_rax
+asm_not_rax: db "    test rax, rax",10,"    setz al",10,"    movzx rax, al",10
+asm_not_rax_len: equ $ - asm_not_rax
+asm_cmp_gt: db "    pop rcx",10,"    cmp rcx, rax",10,"    setg al",10,"    movzx rax, al",10
+asm_cmp_gt_len: equ $ - asm_cmp_gt
+asm_cmp_lt: db "    pop rcx",10,"    cmp rcx, rax",10,"    setl al",10,"    movzx rax, al",10
+asm_cmp_lt_len: equ $ - asm_cmp_lt
+asm_cmp_ge: db "    pop rcx",10,"    cmp rcx, rax",10,"    setge al",10,"    movzx rax, al",10
+asm_cmp_ge_len: equ $ - asm_cmp_ge
+asm_cmp_le: db "    pop rcx",10,"    cmp rcx, rax",10,"    setle al",10,"    movzx rax, al",10
+asm_cmp_le_len: equ $ - asm_cmp_le
+asm_cmp_ee: db "    pop rcx",10,"    cmp rcx, rax",10,"    sete al",10,"    movzx rax, al",10
+asm_cmp_ee_len: equ $ - asm_cmp_ee
+asm_cmp_ne: db "    pop rcx",10,"    cmp rcx, rax",10,"    setne al",10,"    movzx rax, al",10
+asm_cmp_ne_len: equ $ - asm_cmp_ne
+asm_and_rax: db "    pop rcx",10,"    and rax, rcx",10
+asm_and_rax_len: equ $ - asm_and_rax
+asm_or_rax: db "    pop rcx",10,"    or rax, rcx",10
+asm_or_rax_len: equ $ - asm_or_rax
+asm_jz_pre: db "    test rax, rax",10,"    jz .L"
+asm_jz_pre_len: equ $ - asm_jz_pre
+asm_jz_post: db 10
+asm_jz_post_len: equ $ - asm_jz_post
+asm_jmp_pre: db "    jmp .L"
+asm_jmp_pre_len: equ $ - asm_jmp_pre
+asm_label_pre: db ".L"
+asm_label_pre_len: equ $ - asm_label_pre
+asm_label_post: db ":",10
+asm_label_post_len: equ $ - asm_label_post
 asm_ret_epilogue: db "    mov rsp, rbp",10,"    pop rbp",10,"    ret",10
 asm_ret_epilogue_len: equ $ - asm_ret_epilogue
 asm_rodata_pre: db 10,"section .rodata",10,".Lstr0:",10,"    db "

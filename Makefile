@@ -30,6 +30,7 @@ ASM_COMPILER_SOURCES = \
 	compiler/asm/capability.asm \
 	compiler/asm/emitter_nasm.asm \
 	compiler/asm/emitter_expr.asm \
+	compiler/asm/emitter_control.asm \
 	compiler/asm/emitter_instructions.asm \
 	compiler/asm/emitter_writer.asm \
 	compiler/asm/data/cli.asm \

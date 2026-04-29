@@ -21,4 +21,17 @@ ast_name_mul: db "AstBinMul", 10, 0
 ast_name_div: db "AstBinDiv", 10, 0
 ast_name_mod: db "AstBinMod", 10, 0
 ast_name_neg: db "AstUnaryNeg", 10, 0
+ast_name_gt: db "AstBinGt", 10, 0
+ast_name_lt: db "AstBinLt", 10, 0
+ast_name_ge: db "AstBinGe", 10, 0
+ast_name_le: db "AstBinLe", 10, 0
+ast_name_ee: db "AstBinEe", 10, 0
+ast_name_ne: db "AstBinNe", 10, 0
+ast_name_and: db "AstBinAnd", 10, 0
+ast_name_or: db "AstBinOr", 10, 0
+ast_name_not: db "AstUnaryNot", 10, 0
+ast_name_if: db "AstIfStmt", 10, 0
+ast_name_while: db "AstWhileStmt", 10, 0
+ast_name_loop: db "AstLoopStmt", 10, 0
+ast_name_break: db "AstBreakStmt", 10, 0
 ast_name_unknown: db "AstUnknown", 10, 0

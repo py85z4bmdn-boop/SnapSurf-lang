@@ -85,6 +85,14 @@ semantic_stmt:
     je .mut
     cmp r13, AST_ASSIGN_STMT
     je .assign
+    cmp r13, AST_IF_STMT
+    je .if_stmt
+    cmp r13, AST_WHILE_STMT
+    je .while_stmt
+    cmp r13, AST_LOOP_STMT
+    je .loop_stmt
+    cmp r13, AST_BREAK_STMT
+    je .break_stmt
     mov rdi, src_path
     mov rsi, err_unsup_ast
     call print_diag
@@ -111,6 +119,21 @@ semantic_stmt:
 .assign:
     mov rdi, r12
     call semantic_assign_stmt
+    ret
+.if_stmt:
+    mov rdi, r12
+    call semantic_if_stmt
+    ret
+.while_stmt:
+    mov rdi, r12
+    call semantic_while_stmt
+    ret
+.loop_stmt:
+    mov rdi, r12
+    call semantic_loop_stmt
+    ret
+.break_stmt:
+    xor rax, rax
     ret
 
 semantic_decl_stmt:
@@ -265,4 +288,142 @@ semantic_ret_stmt:
     ret
 .fail:
     mov rax, 1
+    ret
+
+semantic_if_stmt:
+    push rbx
+    push r12
+    push r13
+    mov r12, rdi
+    mov rdi, r12
+    call ast_child
+    mov rbx, rax
+    test rbx, rbx
+    jz .bad
+    mov rdi, rbx
+    call semantic_expr_type
+    cmp rax, TYPE_BOOL
+    jne .bad_cond
+    mov rdi, rbx
+    call ast_next
+    mov r13, rax
+    test r13, r13
+    jz .bad
+    mov rdi, r13
+    call semantic_block
+    test rax, rax
+    jnz .fail
+    mov rdi, r13
+    call ast_next
+    test rax, rax
+    jz .done
+    mov rdi, rax
+    call semantic_block
+    test rax, rax
+    jnz .fail
+.done:
+    xor rax, rax
+    pop r13
+    pop r12
+    pop rbx
+    ret
+.bad_cond:
+    mov rdi, rbx
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_bad_cond
+    call print_diag
+    mov rax, 1
+    pop r13
+    pop r12
+    pop rbx
+    ret
+.bad:
+    mov rdi, src_path
+    mov rsi, err_unsup_ast
+    call print_diag
+    mov rax, 1
+    pop r13
+    pop r12
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+semantic_while_stmt:
+    push rbx
+    push r12
+    mov r12, rdi
+    call ast_child
+    mov rbx, rax
+    test rbx, rbx
+    jz .bad
+    mov rdi, rbx
+    call semantic_expr_type
+    cmp rax, TYPE_BOOL
+    jne .bad_cond
+    mov rdi, rbx
+    call ast_next
+    mov rdi, rax
+    test rdi, rdi
+    jz .bad
+    call semantic_block
+    test rax, rax
+    jnz .fail
+    xor rax, rax
+    pop r12
+    pop rbx
+    ret
+.bad_cond:
+    mov rdi, rbx
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_bad_cond
+    call print_diag
+    mov rax, 1
+    pop r12
+    pop rbx
+    ret
+.bad:
+    mov rdi, src_path
+    mov rsi, err_unsup_ast
+    call print_diag
+    mov rax, 1
+    pop r12
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
+    pop r12
+    pop rbx
+    ret
+    ret
+
+semantic_loop_stmt:
+    push r12
+    mov r12, rdi
+    call ast_child
+    mov rdi, rax
+    test rdi, rdi
+    jz .bad
+    call semantic_block
+    test rax, rax
+    jnz .fail
+    xor rax, rax
+    pop r12
+    ret
+.bad:
+    mov rdi, src_path
+    mov rsi, err_unsup_ast
+    call print_diag
+    mov rax, 1
+    pop r12
+    ret
+.fail:
+    mov rax, 1
+    pop r12
     ret

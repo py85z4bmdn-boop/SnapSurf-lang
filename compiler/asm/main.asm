@@ -182,6 +182,7 @@ exit_process:
 %include "compiler/asm/capability.asm"
 %include "compiler/asm/emitter_nasm.asm"
 %include "compiler/asm/emitter_expr.asm"
+%include "compiler/asm/emitter_control.asm"
 %include "compiler/asm/emitter_instructions.asm"
 %include "compiler/asm/emitter_writer.asm"
 

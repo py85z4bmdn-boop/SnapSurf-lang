@@ -77,6 +77,8 @@ parse_prefix_expr:
     je .var
     cmp rax, TOK_MINUS
     je .neg
+    cmp rax, TOK_NOT
+    je .not
     cmp rax, TOK_LPAREN
     je .group
     jmp .bad
@@ -121,6 +123,20 @@ parse_prefix_expr:
     xor r8, r8
     call ast_new
     ret
+.not:
+    call advance_token
+    mov rdi, 30
+    call parse_expr_min
+    test rax, rax
+    jz .fail
+    mov r12, rax
+    mov rdi, AST_UNARY_NOT
+    xor rsi, rsi
+    xor rdx, rdx
+    mov rcx, r12
+    xor r8, r8
+    call ast_new
+    ret
 .group:
     call advance_token
     xor rdi, rdi
@@ -141,6 +157,22 @@ parse_prefix_expr:
     ret
 
 infix_binding_power:
+    cmp rdi, TOK_OR
+    je .or_op
+    cmp rdi, TOK_AND
+    je .and_op
+    cmp rdi, TOK_GT
+    je .gt
+    cmp rdi, TOK_LT
+    je .lt
+    cmp rdi, TOK_GE
+    je .ge
+    cmp rdi, TOK_LE
+    je .le
+    cmp rdi, TOK_EE
+    je .ee
+    cmp rdi, TOK_NE
+    je .ne
     cmp rdi, TOK_PLUS
     je .add
     cmp rdi, TOK_MINUS
@@ -153,6 +185,38 @@ infix_binding_power:
     je .mod
     xor rax, rax
     xor rdx, rdx
+    ret
+.or_op:
+    mov rax, 5
+    mov rdx, AST_BIN_OR
+    ret
+.and_op:
+    mov rax, 6
+    mov rdx, AST_BIN_AND
+    ret
+.gt:
+    mov rax, 8
+    mov rdx, AST_BIN_GT
+    ret
+.lt:
+    mov rax, 8
+    mov rdx, AST_BIN_LT
+    ret
+.ge:
+    mov rax, 8
+    mov rdx, AST_BIN_GE
+    ret
+.le:
+    mov rax, 8
+    mov rdx, AST_BIN_LE
+    ret
+.ee:
+    mov rax, 8
+    mov rdx, AST_BIN_EE
+    ret
+.ne:
+    mov rax, 8
+    mov rdx, AST_BIN_NE
     ret
 .add:
     mov rax, 10

@@ -191,6 +191,14 @@ parse_block:
     je .decl
     cmp rax, TOK_MUT
     je .decl
+    cmp rax, TOK_IF
+    je .if_stmt
+    cmp rax, TOK_WHILE
+    je .while_stmt
+    cmp rax, TOK_LOOP
+    je .loop_stmt
+    cmp rax, TOK_BREAK
+    je .break_stmt
     cmp rax, TOK_IDENT
     je .ident_stmt
     jmp .unsupported
@@ -201,6 +209,26 @@ parse_block:
     jmp .loop
 .decl:
     call parse_decl_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.if_stmt:
+    call parse_if_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.while_stmt:
+    call parse_while_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.loop_stmt:
+    call parse_loop_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.break_stmt:
+    call parse_break_stmt
     test rax, rax
     jnz .fail
     jmp .loop
@@ -439,4 +467,357 @@ parse_call_stmt:
 .unsupported:
     call print_unsupported_current
     mov rax, 1
+    ret
+
+parse_if_stmt:
+    call current_token_addr
+    mov r12, [rax + TOKEN_START]
+    call advance_token
+
+    xor rdi, rdi
+    call parse_expr_min
+    test rax, rax
+    jz .bad
+    mov r14, rax
+
+    call current_token_kind
+    cmp rax, TOK_ARROW
+    jne .bad
+    call advance_token
+
+    mov rdi, AST_BLOCK
+    mov rsi, r12
+    mov rdx, r12
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    mov r15, rax
+
+    mov rax, [ast_block_node]
+    mov [ast_block_node_saved], rax
+    mov [ast_block_node], r15
+
+    call parse_block_inner
+    test rax, rax
+    jnz .restore_and_fail
+
+    call current_token_kind
+    cmp rax, TOK_ELSE
+    je .has_else
+    cmp rax, TOK_END
+    jne .restore_and_fail
+
+    mov rdi, AST_IF_STMT
+    mov rsi, r12
+    mov rdx, r12
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    mov r13, rax
+
+    mov rdi, r13
+    mov rsi, r14
+    call ast_append_child
+    mov rdi, r13
+    mov rsi, r15
+    call ast_append_child
+
+    mov rax, [ast_block_node_saved]
+    mov rdi, rax
+    mov rsi, r13
+    call ast_append_child
+
+    call advance_token
+    mov rax, [ast_block_node_saved]
+    mov [ast_block_node], rax
+    xor rax, rax
+    ret
+
+.has_else:
+    mov [tmp_ast_a], r15
+    call advance_token
+
+    call current_token_kind
+    cmp rax, TOK_ARROW
+    jne .restore_and_fail
+    call advance_token
+
+    mov rdi, AST_BLOCK
+    mov rsi, r12
+    mov rdx, r12
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    mov r15, rax
+
+    mov [ast_block_node], r15
+
+    call parse_block_inner
+    test rax, rax
+    jnz .restore_and_fail
+
+    mov rdi, AST_IF_STMT
+    mov rsi, r12
+    mov rdx, r12
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    mov r13, rax
+
+    mov rdi, r13
+    mov rsi, r14
+    call ast_append_child
+    mov rdi, r13
+    mov rsi, [tmp_ast_a]
+    call ast_append_child
+    mov rdi, r13
+    mov rsi, r15
+    call ast_append_child
+
+    mov rax, [ast_block_node_saved]
+    mov rdi, rax
+    mov rsi, r13
+    call ast_append_child
+
+    call advance_token
+    mov rax, [ast_block_node_saved]
+    mov [ast_block_node], rax
+    xor rax, rax
+    ret
+
+.restore_and_fail:
+    mov rax, [ast_block_node_saved]
+    mov [ast_block_node], rax
+.bad:
+    call print_unsupported_current
+    mov rax, 1
+    ret
+
+parse_block_inner:
+.loop:
+    call skip_newline_tokens
+    call current_token_kind
+    cmp rax, TOK_END
+    je .end
+    cmp rax, TOK_ELSE
+    je .end
+    cmp rax, TOK_EOF
+    je .missing_end
+    cmp rax, TOK_RET
+    je .ret
+    cmp rax, TOK_LET
+    je .decl
+    cmp rax, TOK_MUT
+    je .decl
+    cmp rax, TOK_IF
+    je .if_stmt
+    cmp rax, TOK_WHILE
+    je .while_stmt
+    cmp rax, TOK_LOOP
+    je .loop_stmt
+    cmp rax, TOK_BREAK
+    je .break_stmt
+    cmp rax, TOK_IDENT
+    je .ident_stmt
+    jmp .unsupported
+.ret:
+    call parse_ret_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.decl:
+    call parse_decl_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.if_stmt:
+    call parse_if_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.while_stmt:
+    call parse_while_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.loop_stmt:
+    call parse_loop_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.break_stmt:
+    call parse_break_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.ident_stmt:
+    call current_is_io_write
+    test rax, rax
+    jnz .call
+    call parse_assign_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.call:
+    call parse_call_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.end:
+    xor rax, rax
+    ret
+.missing_end:
+    call set_diag_from_current
+    mov rdi, src_path
+    mov rsi, err_missing_end
+    call print_diag
+    mov rax, 1
+    ret
+.unsupported:
+    call print_unsupported_current
+    mov rax, 1
+    ret
+.fail:
+    ret
+
+parse_while_stmt:
+    call current_token_addr
+    mov r12, [rax + TOKEN_START]
+    call advance_token
+
+    xor rdi, rdi
+    call parse_expr_min
+    test rax, rax
+    jz .bad
+    mov r14, rax
+
+    call current_token_kind
+    cmp rax, TOK_ARROW
+    jne .bad
+    call advance_token
+
+    mov rdi, AST_BLOCK
+    mov rsi, r12
+    mov rdx, r12
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    mov r15, rax
+
+    mov rax, [ast_block_node]
+    mov [ast_block_node_saved], rax
+    mov [ast_block_node], r15
+
+    call parse_block_inner
+    test rax, rax
+    jnz .restore_and_fail
+
+    mov rdi, AST_WHILE_STMT
+    mov rsi, r12
+    mov rdx, r12
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    mov r13, rax
+
+    mov rdi, r13
+    mov rsi, r14
+    call ast_append_child
+    mov rdi, r13
+    mov rsi, r15
+    call ast_append_child
+
+    mov rax, [ast_block_node_saved]
+    mov rdi, rax
+    mov rsi, r13
+    call ast_append_child
+
+    mov rax, [ast_block_node_saved]
+    mov [ast_block_node], rax
+    call advance_token
+    xor rax, rax
+    ret
+
+.restore_and_fail:
+    mov rax, [ast_block_node_saved]
+    mov [ast_block_node], rax
+.bad:
+    call print_unsupported_current
+    mov rax, 1
+    ret
+
+parse_loop_stmt:
+    call current_token_addr
+    mov r12, [rax + TOKEN_START]
+    call advance_token
+
+    call current_token_kind
+    cmp rax, TOK_ARROW
+    jne .bad
+    call advance_token
+
+    mov rdi, AST_BLOCK
+    mov rsi, r12
+    mov rdx, r12
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    mov r15, rax
+
+    mov rax, [ast_block_node]
+    mov [ast_block_node_saved], rax
+    mov [ast_block_node], r15
+
+    call parse_block_inner
+    test rax, rax
+    jnz .restore_and_fail
+
+    mov rdi, AST_LOOP_STMT
+    mov rsi, r12
+    mov rdx, r12
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    mov r13, rax
+
+    mov rdi, r13
+    mov rsi, r15
+    call ast_append_child
+
+    mov rax, [ast_block_node_saved]
+    mov rdi, rax
+    mov rsi, r13
+    call ast_append_child
+
+    mov rax, [ast_block_node_saved]
+    mov [ast_block_node], rax
+    call advance_token
+    xor rax, rax
+    ret
+
+.restore_and_fail:
+    mov rax, [ast_block_node_saved]
+    mov [ast_block_node], rax
+.bad:
+    call print_unsupported_current
+    mov rax, 1
+    ret
+
+parse_break_stmt:
+    call current_token_addr
+    mov r12, [rax + TOKEN_START]
+    call advance_token
+
+    mov rdi, AST_BREAK_STMT
+    mov rsi, r12
+    mov rdx, r12
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    mov r14, rax
+
+    mov rdi, [ast_block_node]
+    mov rsi, r14
+    call ast_append_child
+    xor rax, rax
     ret

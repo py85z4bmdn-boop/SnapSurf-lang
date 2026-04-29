@@ -44,6 +44,22 @@ token_name_ptr:
     je .let
     cmp rdi, TOK_MUT
     je .mut
+    cmp rdi, TOK_IF
+    je .if
+    cmp rdi, TOK_ELSE
+    je .else
+    cmp rdi, TOK_WHILE
+    je .while
+    cmp rdi, TOK_LOOP
+    je .loop
+    cmp rdi, TOK_BREAK
+    je .break
+    cmp rdi, TOK_AND
+    je .and
+    cmp rdi, TOK_OR
+    je .or
+    cmp rdi, TOK_NOT
+    je .not
     cmp rdi, TOK_ARROW
     je .arrow
     cmp rdi, TOK_DOT
@@ -66,6 +82,18 @@ token_name_ptr:
     je .lparen
     cmp rdi, TOK_RPAREN
     je .rparen
+    cmp rdi, TOK_GT
+    je .gt
+    cmp rdi, TOK_LT
+    je .lt
+    cmp rdi, TOK_GE
+    je .ge
+    cmp rdi, TOK_LE
+    je .le
+    cmp rdi, TOK_EE
+    je .ee
+    cmp rdi, TOK_NE
+    je .ne
     cmp rdi, TOK_NEWLINE
     je .newline
     mov rax, tok_name_unknown
@@ -109,6 +137,30 @@ token_name_ptr:
 .mut:
     mov rax, tok_name_mut
     ret
+.if:
+    mov rax, tok_name_if
+    ret
+.else:
+    mov rax, tok_name_else
+    ret
+.while:
+    mov rax, tok_name_while
+    ret
+.loop:
+    mov rax, tok_name_loop
+    ret
+.break:
+    mov rax, tok_name_break
+    ret
+.and:
+    mov rax, tok_name_and
+    ret
+.or:
+    mov rax, tok_name_or
+    ret
+.not:
+    mov rax, tok_name_not
+    ret
 .arrow:
     mov rax, tok_name_arrow
     ret
@@ -141,6 +193,24 @@ token_name_ptr:
     ret
 .rparen:
     mov rax, tok_name_rparen
+    ret
+.gt:
+    mov rax, tok_name_gt
+    ret
+.lt:
+    mov rax, tok_name_lt
+    ret
+.ge:
+    mov rax, tok_name_ge
+    ret
+.le:
+    mov rax, tok_name_le
+    ret
+.ee:
+    mov rax, tok_name_ee
+    ret
+.ne:
+    mov rax, tok_name_ne
     ret
 .newline:
     mov rax, tok_name_newline

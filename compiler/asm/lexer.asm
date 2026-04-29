@@ -44,7 +44,13 @@ lex_source_subset:
     cmp al, ','
     je .comma
     cmp al, '='
-    je .eq
+    je .eq_or_ee
+    cmp al, '>'
+    je .gt_or_ge
+    cmp al, '<'
+    je .lt_or_le
+    cmp al, '!'
+    je .bang_or_ne
     call is_ident_start_al
     test rax, rax
     jnz .ident
@@ -154,8 +160,91 @@ lex_source_subset:
 .comma:
     mov rdi, TOK_COMMA
     jmp .single
-.eq:
+.eq_or_ee:
+    mov rax, r12
+    inc rax
+    cmp rax, r13
+    jae .eq_single
+    cmp byte [src_buf + rax], '='
+    jne .eq_single
+    mov rdi, TOK_EE
+    mov rsi, r12
+    mov rdx, 2
+    mov rcx, r14
+    mov r8, r15
+    xor r9, r9
+    call token_add
+    test rax, rax
+    jnz .fail
+    add r12, 2
+    add r15, 2
+    jmp .loop
+.eq_single:
     mov rdi, TOK_EQ
+    jmp .single
+.gt_or_ge:
+    mov rax, r12
+    inc rax
+    cmp rax, r13
+    jae .gt_single
+    cmp byte [src_buf + rax], '='
+    jne .gt_single
+    mov rdi, TOK_GE
+    mov rsi, r12
+    mov rdx, 2
+    mov rcx, r14
+    mov r8, r15
+    xor r9, r9
+    call token_add
+    test rax, rax
+    jnz .fail
+    add r12, 2
+    add r15, 2
+    jmp .loop
+.gt_single:
+    mov rdi, TOK_GT
+    jmp .single
+.lt_or_le:
+    mov rax, r12
+    inc rax
+    cmp rax, r13
+    jae .lt_single
+    cmp byte [src_buf + rax], '='
+    jne .lt_single
+    mov rdi, TOK_LE
+    mov rsi, r12
+    mov rdx, 2
+    mov rcx, r14
+    mov r8, r15
+    xor r9, r9
+    call token_add
+    test rax, rax
+    jnz .fail
+    add r12, 2
+    add r15, 2
+    jmp .loop
+.lt_single:
+    mov rdi, TOK_LT
+    jmp .single
+.bang_or_ne:
+    mov rax, r12
+    inc rax
+    cmp rax, r13
+    jae .invalid
+    cmp byte [src_buf + rax], '='
+    jne .invalid
+    mov rdi, TOK_NE
+    mov rsi, r12
+    mov rdx, 2
+    mov rcx, r14
+    mov r8, r15
+    xor r9, r9
+    call token_add
+    test rax, rax
+    jnz .fail
+    add r12, 2
+    add r15, 2
+    jmp .loop
 .single:
     mov rsi, r12
     mov rdx, 1
@@ -254,6 +343,10 @@ lex_source_subset:
     mov rcx, r10
     mov r8, r11
     xor r9, r9
+    cmp rdi, TOK_TRUE
+    jne .not_true
+    mov r9, 1
+.not_true:
     call token_add
     test rax, rax
     jnz .fail

@@ -21,6 +21,19 @@
 %define AST_BIN_DIV 20
 %define AST_BIN_MOD 21
 %define AST_UNARY_NEG 22
+%define AST_BIN_GT 23
+%define AST_BIN_LT 24
+%define AST_BIN_GE 25
+%define AST_BIN_LE 26
+%define AST_BIN_EE 27
+%define AST_BIN_NE 28
+%define AST_BIN_AND 29
+%define AST_BIN_OR 30
+%define AST_UNARY_NOT 31
+%define AST_IF_STMT 32
+%define AST_WHILE_STMT 33
+%define AST_LOOP_STMT 34
+%define AST_BREAK_STMT 35
 
 %define AST_CAP 1024
 %define AST_KIND 0

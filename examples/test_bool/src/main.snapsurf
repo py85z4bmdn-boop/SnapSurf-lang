@@ -1,0 +1,4 @@
+fn main -> i32
+    let x bool = true
+    ret 0
+end

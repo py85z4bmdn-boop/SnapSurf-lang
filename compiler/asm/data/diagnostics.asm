@@ -15,6 +15,7 @@ err_bad_use: db "E0205 invalid use declaration", 0
 err_no_main: db "E0401 main function not found", 0
 err_bad_main: db "E0402 invalid main signature", 0
 err_ret: db "E0403 return type mismatch", 0
+err_bad_cond: db "E0403 condition must be boolean", 0
 err_unsup_expr: db "E0404 unsupported token in foundation: ", 0
 err_unsup_ast: db "E0404 unsupported AST in foundation", 0
 err_len_mismatch: db "E0404 string literal length does not match explicit io.write length", 0

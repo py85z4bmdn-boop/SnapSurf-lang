@@ -102,6 +102,14 @@ emit_stmt:
     je .store
     cmp r13, AST_ASSIGN_STMT
     je .store
+    cmp r13, AST_IF_STMT
+    je .if_stmt
+    cmp r13, AST_WHILE_STMT
+    je .while_stmt
+    cmp r13, AST_LOOP_STMT
+    je .loop_stmt
+    cmp r13, AST_BREAK_STMT
+    je .break_stmt
     xor rax, rax
     ret
 .call:
@@ -123,6 +131,21 @@ emit_stmt:
 .store:
     mov rdi, r12
     call emit_store_stmt
+    ret
+.if_stmt:
+    mov rdi, r12
+    call emit_if_stmt
+    ret
+.while_stmt:
+    mov rdi, r12
+    call emit_while_stmt
+    ret
+.loop_stmt:
+    mov rdi, r12
+    call emit_loop_stmt
+    ret
+.break_stmt:
+    xor rax, rax
     ret
 .fail:
     mov rax, 1
