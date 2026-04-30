@@ -186,6 +186,16 @@ exit_process:
 %include "compiler/asm/emitter_instructions.asm"
 %include "compiler/asm/emitter_writer.asm"
 
+; Performance optimization modules
+%include "compiler/asm/opt/memops.asm"
+%include "compiler/asm/opt/strtab.asm"
+%include "compiler/asm/opt/hash.asm"
+%include "compiler/asm/opt/arena.asm"
+%include "compiler/asm/opt/chartab.asm"
+%include "compiler/asm/opt/writebuf.asm"
+%include "compiler/asm/opt/faststr.asm"
+%include "compiler/asm/opt/intconv.asm"
+
 %include "compiler/asm/data/cli.asm"
 %include "compiler/asm/data/paths.asm"
 %include "compiler/asm/data/pkg_grammar.asm"
@@ -203,3 +213,4 @@ exit_process:
 %include "compiler/asm/state/emitter.asm"
 %include "compiler/asm/state/process.asm"
 %include "compiler/asm/state/scratch.asm"
+

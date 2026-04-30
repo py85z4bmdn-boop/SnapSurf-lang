@@ -9,12 +9,19 @@ ASM_COMPILER_SOURCES = \
 	compiler/asm/source_reader.asm \
 	compiler/asm/utf8.asm \
 	compiler/asm/lexer.asm \
+	compiler/asm/lexer/scanner.asm \
+	compiler/asm/lexer/operators.asm \
+	compiler/asm/lexer/comments.asm \
+	compiler/asm/lexer/literals.asm \
 	compiler/asm/lexer_string_pool.asm \
 	compiler/asm/token_buffer.asm \
 	compiler/asm/lexer_keywords.asm \
 	compiler/asm/lexer_debug.asm \
 	compiler/asm/parser_pkg.asm \
 	compiler/asm/parser_source.asm \
+	compiler/asm/parser/declarations.asm \
+	compiler/asm/parser/control_flow.asm \
+	compiler/asm/parser/statements.asm \
 	compiler/asm/parser_expr.asm \
 	compiler/asm/parser_nodes.asm \
 	compiler/asm/parser_match.asm \
@@ -31,8 +38,19 @@ ASM_COMPILER_SOURCES = \
 	compiler/asm/emitter_nasm.asm \
 	compiler/asm/emitter_expr.asm \
 	compiler/asm/emitter_control.asm \
+	compiler/asm/emitter/loop_context.asm \
+	compiler/asm/emitter/break_continue.asm \
+	compiler/asm/emitter/comparison.asm \
 	compiler/asm/emitter_instructions.asm \
 	compiler/asm/emitter_writer.asm \
+	compiler/asm/opt/memops.asm \
+	compiler/asm/opt/strtab.asm \
+	compiler/asm/opt/hash.asm \
+	compiler/asm/opt/arena.asm \
+	compiler/asm/opt/chartab.asm \
+	compiler/asm/opt/writebuf.asm \
+	compiler/asm/opt/faststr.asm \
+	compiler/asm/opt/intconv.asm \
 	compiler/asm/data/cli.asm \
 	compiler/asm/data/paths.asm \
 	compiler/asm/data/pkg_grammar.asm \
