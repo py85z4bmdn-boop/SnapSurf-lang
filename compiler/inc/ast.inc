@@ -49,6 +49,11 @@
 ; Array operations
 %define AST_ARRAY_INDEX 49
 
+; New language features
+%define AST_ELIF_CLAUSE 50
+%define AST_CONST_DECL 51
+%define AST_PRINT_STMT 52
+
 ; Foundation v0 extensions (manual memory + raw pointer ops)
 %define AST_MEM_MALLOC_EXPR 36
 %define AST_MEM_LOAD_I32_EXPR 37

@@ -102,6 +102,12 @@ token_name_ptr:
     je .unsafe
     cmp rdi, TOK_CALL
     je .call
+    cmp rdi, TOK_ELIF
+    je .elif
+    cmp rdi, TOK_CONST
+    je .const
+    cmp rdi, TOK_PRINT
+    je .print
     mov rax, tok_name_unknown
     ret
 .eof:
@@ -229,4 +235,13 @@ token_name_ptr:
     ret
 .call:
     mov rax, tok_name_call
+    ret
+.elif:
+    mov rax, tok_name_elif
+    ret
+.const:
+    mov rax, tok_name_const
+    ret
+.print:
+    mov rax, tok_name_print
     ret

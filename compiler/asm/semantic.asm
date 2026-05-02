@@ -712,6 +712,8 @@ semantic_stmt:
     je .break_stmt
     cmp r13, AST_CONTINUE_STMT
     je .continue_stmt
+    cmp r13, AST_PRINT_STMT
+    je .print_stmt
     mov rdi, src_path
     mov rsi, err_unsup_ast
     call print_diag
@@ -776,6 +778,12 @@ semantic_stmt:
     ret
 .continue_stmt:
     xor rax, rax
+    pop r13
+    pop r12
+    ret
+.print_stmt:
+    mov rdi, r12
+    call semantic_print_stmt
     pop r13
     pop r12
     ret
@@ -1131,5 +1139,35 @@ semantic_loop_stmt:
 .fail:
     mov rax, 1
     pop r13
+    pop r12
+    ret
+
+; semantic_print_stmt: Validate that 'print expr' has an i32 expression.
+; rdi = print_stmt node index.
+semantic_print_stmt:
+    push r12
+    mov r12, rdi
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    test rdi, rdi
+    jz .bad
+    call semantic_expr_type
+    test rax, rax
+    jz .fail
+    cmp rax, TYPE_I32
+    jne .bad
+    xor rax, rax
+    pop r12
+    ret
+.bad:
+    mov rdi, src_path
+    mov rsi, err_type
+    call print_diag
+    mov rax, 1
+    pop r12
+    ret
+.fail:
+    mov rax, 1
     pop r12
     ret

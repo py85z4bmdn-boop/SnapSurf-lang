@@ -41,4 +41,7 @@ tok_name_newline: db "TokNewline", 10, 0
 tok_name_continue: db "TokContinue", 10, 0
 tok_name_unsafe: db "TokUnsafe", 10, 0
 tok_name_call: db "TokCall", 10, 0
+tok_name_elif: db "TokElif", 10, 0
+tok_name_const: db "TokConst", 10, 0
+tok_name_print: db "TokPrint", 10, 0
 tok_name_unknown: db "TokUnknown", 10, 0

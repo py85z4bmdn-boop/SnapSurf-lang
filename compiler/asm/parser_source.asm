@@ -395,6 +395,8 @@ parse_block:
     je .continue_stmt
     cmp rax, TOK_IDENT
     je .ident_stmt
+    cmp rax, TOK_PRINT
+    je .print_stmt
     jmp .unsupported
 .ret:
     call parse_ret_stmt
@@ -441,6 +443,11 @@ parse_block:
     jmp .loop
 .call:
     call parse_call_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.print_stmt:
+    call parse_print_stmt
     test rax, rax
     jnz .fail
     jmp .loop
@@ -470,6 +477,8 @@ parse_block_inner:
     je .end
     cmp rax, TOK_ELSE
     je .end
+    cmp rax, TOK_ELIF
+    je .end
     cmp rax, TOK_EOF
     je .missing_end
     cmp rax, TOK_RET
@@ -490,6 +499,8 @@ parse_block_inner:
     je .continue_stmt
     cmp rax, TOK_IDENT
     je .ident_stmt
+    cmp rax, TOK_PRINT
+    je .print_stmt
     jmp .unsupported
 .ret:
     call parse_ret_stmt
@@ -536,6 +547,11 @@ parse_block_inner:
     jmp .loop
 .call:
     call parse_call_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.print_stmt:
+    call parse_print_stmt
     test rax, rax
     jnz .fail
     jmp .loop

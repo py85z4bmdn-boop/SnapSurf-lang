@@ -1,0 +1,12 @@
+fn main -> i32
+    let x i32 = 15
+    if x > 20 ->
+        ret 1
+    elif x > 10 ->
+        ret 2
+    elif x > 5 ->
+        ret 3
+    else ->
+        ret 4
+    end
+end

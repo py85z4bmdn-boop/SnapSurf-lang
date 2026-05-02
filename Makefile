@@ -44,6 +44,7 @@ ASM_COMPILER_SOURCES = \
 	compiler/asm/emitter/comparison.asm \
 	compiler/asm/emitter_instructions.asm \
 	compiler/asm/emitter_writer.asm \
+	compiler/asm/colorize.asm \
 	compiler/asm/opt/memops.asm \
 	compiler/asm/opt/strtab.asm \
 	compiler/asm/opt/hash.asm \
@@ -60,6 +61,7 @@ ASM_COMPILER_SOURCES = \
 	compiler/asm/data/source_text.asm \
 	compiler/asm/data/token_names.asm \
 	compiler/asm/data/ast_names.asm \
+	compiler/asm/data/ansi_colors.asm \
 	compiler/asm/state/files.asm \
 	compiler/asm/state/diagnostics.asm \
 	compiler/asm/state/tokens.asm \

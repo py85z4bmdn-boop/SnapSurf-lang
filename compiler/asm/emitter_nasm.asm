@@ -40,6 +40,14 @@ emit_main_asm:
     test rbx, rbx
     jnz .fn_loop
 
+    ; Emit __snapsurf_print_int helper if print was used
+    cmp byte [needs_print_int_helper], 0
+    je .rodata_emit
+    mov rdi, [out_fd]
+    mov rsi, asm_print_int_helper
+    mov rdx, asm_print_int_helper_len
+    call write_all
+
 .rodata_emit:
     cmp byte [has_io_write], 0
     je .close
@@ -281,6 +289,8 @@ emit_stmt:
     je .break_stmt
     cmp r13, AST_CONTINUE_STMT
     je .continue_stmt
+    cmp r13, AST_PRINT_STMT
+    je .print_stmt
     xor rax, rax
     pop r13
     pop r12
@@ -336,6 +346,12 @@ emit_stmt:
     ret
 .continue_stmt:
     call emit_continue_stmt
+    pop r13
+    pop r12
+    ret
+.print_stmt:
+    mov rdi, r12
+    call emit_print_stmt
     pop r13
     pop r12
     ret

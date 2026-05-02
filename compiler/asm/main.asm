@@ -65,6 +65,12 @@ _start:
     test rax, rax
     jnz .dump_ast
 
+    mov rdi, [r13 + 8]
+    mov rsi, cmd_colorize
+    call streq
+    test rax, rax
+    jnz .colorize
+
 .usage:
     mov rdi, usage_msg
     call print_stderr_z
@@ -143,6 +149,15 @@ _start:
     xor rdi, rdi
     jmp exit_process
 
+.colorize:
+    mov rdi, [r13 + 16]
+    call load_package_and_lex
+    test rax, rax
+    jnz .err
+    call colorize_source
+    xor rdi, rdi
+    jmp exit_process
+
 .err:
     mov rdi, EXIT_ERR
     jmp exit_process
@@ -186,6 +201,9 @@ exit_process:
 %include "compiler/asm/emitter_instructions.asm"
 %include "compiler/asm/emitter_writer.asm"
 
+; Syntax coloring
+%include "compiler/asm/colorize.asm"
+
 ; Optimization passes
 %include "compiler/asm/opt/dead_code_elimination.asm"
 %include "compiler/asm/opt/optimizer.asm"
@@ -208,6 +226,7 @@ exit_process:
 %include "compiler/asm/data/source_text.asm"
 %include "compiler/asm/data/token_names.asm"
 %include "compiler/asm/data/ast_names.asm"
+%include "compiler/asm/data/ansi_colors.asm"
 
 %include "compiler/asm/state/files.asm"
 %include "compiler/asm/state/diagnostics.asm"

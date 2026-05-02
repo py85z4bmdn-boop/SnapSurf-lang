@@ -115,3 +115,47 @@ asm_mov_rcx_rax: db "    mov rcx, rax",10
 asm_mov_rcx_rax_len: equ $ - asm_mov_rcx_rax
 asm_mov_rax_at_rcx_rax_8: db "    mov rax, [rcx + rax*8]",10
 asm_mov_rax_at_rcx_rax_8_len: equ $ - asm_mov_rax_at_rcx_rax_8
+
+; print support templates
+asm_call_print_int: db "    mov rdi, rax",10,"    call __snapsurf_print_int",10
+asm_call_print_int_len: equ $ - asm_call_print_int
+
+; __snapsurf_print_int: Convert integer in rdi to decimal string and print
+; to stdout, followed by a newline. Clobbers rax,rcx,rdx,rsi,rdi.
+asm_print_int_helper: db \
+    "__snapsurf_print_int:",10, \
+    "    push rbp",10, \
+    "    mov rbp, rsp",10, \
+    "    sub rsp, 32",10, \
+    "    mov rax, rdi",10, \
+    "    lea rsi, [rbp - 1]",10, \
+    "    mov byte [rsi], 10",10, \
+    "    mov rcx, 1",10, \
+    "    test rax, rax",10, \
+    "    jns .pi_pos",10, \
+    "    neg rax",10, \
+    ".pi_pos:",10, \
+    "    mov r8, 10",10, \
+    ".pi_loop:",10, \
+    "    xor rdx, rdx",10, \
+    "    div r8",10, \
+    "    add dl, 48",10, \
+    "    dec rsi",10, \
+    "    mov [rsi], dl",10, \
+    "    inc rcx",10, \
+    "    test rax, rax",10, \
+    "    jnz .pi_loop",10, \
+    "    test rdi, rdi",10, \
+    "    jns .pi_write",10, \
+    "    dec rsi",10, \
+    "    mov byte [rsi], 45",10, \
+    "    inc rcx",10, \
+    ".pi_write:",10, \
+    "    mov rax, 1",10, \
+    "    mov rdi, 1",10, \
+    "    mov rdx, rcx",10, \
+    "    syscall",10, \
+    "    mov rsp, rbp",10, \
+    "    pop rbp",10, \
+    "    ret",10
+asm_print_int_helper_len: equ $ - asm_print_int_helper

@@ -8,7 +8,7 @@
     cmp r12, r13
     jae .ident_done
     mov al, [src_buf + r12]
-    call is_ident_rest_al
+    call opt_is_ident_rest
     test rax, rax
     jz .ident_done
     inc r12

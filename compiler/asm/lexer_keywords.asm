@@ -109,7 +109,7 @@ keyword_kind:
     cmp byte [rdi], 't'
     je .check_true
     cmp byte [rdi], 'e'
-    je .check_else
+    je .check_else_or_elif
     cmp byte [rdi], 'l'
     je .check_loop
     jmp .ident
@@ -131,14 +131,21 @@ keyword_kind:
     jne .ident
     mov rax, TOK_TRUE
     ret
-.check_else:
+.check_else_or_elif:
     cmp byte [rdi + 1], 'l'
     jne .ident
     cmp byte [rdi + 2], 's'
-    jne .ident
+    jne .check_elif
     cmp byte [rdi + 3], 'e'
     jne .ident
     mov rax, TOK_ELSE
+    ret
+.check_elif:
+    cmp byte [rdi + 2], 'i'
+    jne .ident
+    cmp byte [rdi + 3], 'f'
+    jne .ident
+    mov rax, TOK_ELIF
     ret
 .check_loop:
     cmp byte [rdi + 1], 'o'
@@ -156,6 +163,10 @@ keyword_kind:
     je .check_while
     cmp byte [rdi], 'b'
     je .check_break
+    cmp byte [rdi], 'c'
+    je .check_const
+    cmp byte [rdi], 'p'
+    je .check_print
     jmp .ident
 .check_false:
     cmp byte [rdi + 1], 'a'
@@ -189,6 +200,28 @@ keyword_kind:
     cmp byte [rdi + 4], 'k'
     jne .ident
     mov rax, TOK_BREAK
+    ret
+.check_const:
+    cmp byte [rdi + 1], 'o'
+    jne .ident
+    cmp byte [rdi + 2], 'n'
+    jne .ident
+    cmp byte [rdi + 3], 's'
+    jne .ident
+    cmp byte [rdi + 4], 't'
+    jne .ident
+    mov rax, TOK_CONST
+    ret
+.check_print:
+    cmp byte [rdi + 1], 'r'
+    jne .ident
+    cmp byte [rdi + 2], 'i'
+    jne .ident
+    cmp byte [rdi + 3], 'n'
+    jne .ident
+    cmp byte [rdi + 4], 't'
+    jne .ident
+    mov rax, TOK_PRINT
     ret
 .len6:
     cmp byte [rdi], 'u'

@@ -23,6 +23,9 @@
 %define TOK_NOT 25
 %define TOK_UNSAFE 27
 %define TOK_CALL 28
+%define TOK_ELIF 29
+%define TOK_CONST 52
+%define TOK_PRINT 53
 
 %define TOK_ARROW 30
 %define TOK_DOT 31

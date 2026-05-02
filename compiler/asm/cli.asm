@@ -50,6 +50,13 @@ cli_known_command:
     jnz .yes_pop
 
     pop rdi
+    push rdi
+    mov rsi, cmd_colorize
+    call streq
+    test rax, rax
+    jnz .yes_pop
+
+    pop rdi
     xor rax, rax
     ret
 

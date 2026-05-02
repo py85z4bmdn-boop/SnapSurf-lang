@@ -97,6 +97,8 @@ run_exit div_mod 8
 run_exit unary_minus 2
 run_exit function_call 42
 run_exit main_after_helper 0
+run_exit elif_chain 2
+run_exit print_builtin 0
 
 run_fail() {
     name="$1"
