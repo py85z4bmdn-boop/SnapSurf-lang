@@ -105,3 +105,13 @@ asm_pop_r9: db "    pop r9",10
 asm_pop_r9_len: equ $ - asm_pop_r9
 asm_fn_prefix: db "fn"
 asm_fn_prefix_len: equ $ - asm_fn_prefix
+asm_lea_rax_rbp: db "    lea rax, [rbp - "
+asm_lea_rax_rbp_len: equ $ - asm_lea_rax_rbp
+asm_lea_rax_rbp_end: db "]",10
+asm_lea_rax_rbp_end_len: equ $ - asm_lea_rax_rbp_end
+asm_mov_rax_at_rax: db "    mov rax, [rax]",10
+asm_mov_rax_at_rax_len: equ $ - asm_mov_rax_at_rax
+asm_mov_rcx_rax: db "    mov rcx, rax",10
+asm_mov_rcx_rax_len: equ $ - asm_mov_rcx_rax
+asm_mov_rax_at_rcx_rax_8: db "    mov rax, [rcx + rax*8]",10
+asm_mov_rax_at_rcx_rax_8_len: equ $ - asm_mov_rax_at_rcx_rax_8

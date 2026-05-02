@@ -42,6 +42,13 @@
 %define AST_UNSAFE_FN 45
 %define AST_UNSAFE_BLOCK 46
 
+; Pointer operations
+%define AST_ADDR_OF 47
+%define AST_DEREF 48
+
+; Array operations
+%define AST_ARRAY_INDEX 49
+
 ; Foundation v0 extensions (manual memory + raw pointer ops)
 %define AST_MEM_MALLOC_EXPR 36
 %define AST_MEM_LOAD_I32_EXPR 37

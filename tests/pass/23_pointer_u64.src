@@ -1,0 +1,5 @@
+fn main -> i32
+    let x u64 = 999
+    let px *u64 = &x
+    ret 0
+end

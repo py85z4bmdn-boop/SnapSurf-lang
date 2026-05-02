@@ -41,6 +41,10 @@
 %define TOK_LE 44
 %define TOK_EE 45
 %define TOK_NE 46
+%define TOK_AMP 47
+%define TOK_LBRACKET 48
+%define TOK_RBRACKET 49
+%define TOK_SEMICOLON 51
 %define TOK_NEWLINE 50
 
 %define TOKEN_CAP 4096

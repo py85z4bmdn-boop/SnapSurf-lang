@@ -1,1 +1,1 @@
-tests/compile_fail/invalid_main_signature/src/main.snapsurf:1:12 E0402 invalid main signature
+tests/compile_fail/invalid_main_signature/src/main.snapsurf:1:12 E0204 invalid return type

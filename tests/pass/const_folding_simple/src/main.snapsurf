@@ -1,0 +1,5 @@
+use core/io
+
+fn main -> i32
+    ret 2 + 3 * 4
+end

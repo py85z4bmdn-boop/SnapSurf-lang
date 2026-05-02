@@ -1,0 +1,6 @@
+fn main -> i32
+    let arr [i32; 5]
+    let idx i32 = 2
+    let val i32 = arr[idx]
+    ret 0
+end

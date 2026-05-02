@@ -1,0 +1,6 @@
+; Basic pointer test: address-of and dereference
+fn main -> i32
+    let x i32 = 42
+    let px *i32 = &x
+    ret 0
+end

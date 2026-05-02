@@ -1,0 +1,5 @@
+fn main -> i32
+    let arr [i32; 3]
+    let x i32 = arr[0]
+    ret 0
+end

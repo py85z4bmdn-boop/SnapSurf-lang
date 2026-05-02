@@ -79,6 +79,10 @@ parse_prefix_expr:
     je .neg
     cmp rax, TOK_NOT
     je .not
+    cmp rax, TOK_AMP
+    je .addr
+    cmp rax, TOK_STAR
+    je .deref
     cmp rax, TOK_LPAREN
     je .group
     jmp .bad
@@ -108,6 +112,8 @@ parse_prefix_expr:
     mov r12, rax
     call advance_token
     call current_token_kind
+    cmp rax, TOK_LBRACKET
+    je .var_index
     cmp rax, TOK_LPAREN
     je .var_call
     mov rdi, rax
@@ -115,6 +121,10 @@ parse_prefix_expr:
     test rax, rax
     jnz .var_call
     mov rax, r12
+    ret
+.var_index:
+    mov rdi, r12
+    call parse_array_index_expr
     ret
 .var_call:
     mov rdi, r12
@@ -142,6 +152,34 @@ parse_prefix_expr:
     jz .fail
     mov r12, rax
     mov rdi, AST_UNARY_NOT
+    xor rsi, rsi
+    xor rdx, rdx
+    mov rcx, r12
+    xor r8, r8
+    call ast_new
+    ret
+.addr:
+    call advance_token
+    mov rdi, 30
+    call parse_expr_min
+    test rax, rax
+    jz .fail
+    mov r12, rax
+    mov rdi, AST_ADDR_OF
+    xor rsi, rsi
+    xor rdx, rdx
+    mov rcx, r12
+    xor r8, r8
+    call ast_new
+    ret
+.deref:
+    call advance_token
+    mov rdi, 30
+    call parse_expr_min
+    test rax, rax
+    jz .fail
+    mov r12, rax
+    mov rdi, AST_DEREF
     xor rsi, rsi
     xor rdx, rdx
     mov rcx, r12
@@ -248,6 +286,60 @@ infix_binding_power:
 .mod:
     mov rax, 20
     mov rdx, AST_BIN_MOD
+    ret
+
+; parse_array_index_expr: Parse array[index] expression
+; Input: rdi = array expression node
+; Output: rax = AST_ARRAY_INDEX node, or 0 on error
+parse_array_index_expr:
+    push rdi            ; Save array expression
+    push r12
+    
+    call current_token_kind
+    cmp rax, TOK_LBRACKET
+    jne .bad
+    
+    call advance_token
+    
+    ; Parse index expression
+    xor rdi, rdi
+    call parse_expr_min
+    test rax, rax
+    jz .bad
+    
+    mov r12, rax        ; Save index expression
+    
+    ; Expect ]
+    call current_token_kind
+    cmp rax, TOK_RBRACKET
+    jne .bad
+    
+    call advance_token
+    
+    ; Create AST_ARRAY_INDEX node
+    mov rdi, AST_ARRAY_INDEX
+    xor rsi, rsi
+    xor rdx, rdx
+    mov rcx, [rsp + 8]  ; array expression
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .bad
+    
+    mov rbx, rax
+    mov rdi, rbx
+    mov rsi, r12        ; index expression
+    call ast_append_child
+    
+    mov rax, rbx
+    pop r12
+    pop rdi
+    ret
+
+.bad:
+    pop r12
+    pop rdi
+    xor rax, rax
     ret
 
 %include "compiler/asm/parser/function_calls.asm"

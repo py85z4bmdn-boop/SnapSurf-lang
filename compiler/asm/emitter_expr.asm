@@ -1,5 +1,6 @@
-; Status: PARTIAL.
+; Status: PARTIAL with performance optimization.
 ; NASM expression codegen for literals, locals, unary minus, and arithmetic.
+; Optimized dispatch: high-frequency cases checked first for better CPU branch prediction.
 
 emit_expr:
     push rbx
@@ -10,16 +11,12 @@ emit_expr:
     mov r12, rdi
     call ast_kind
     mov r13, rax
+    
+    ; High-frequency cases first (better branch prediction)
     cmp r13, AST_INT_LIT
     je .int
-    cmp r13, AST_BOOL_LIT
-    je .bool
     cmp r13, AST_VAR_REF
     je .var
-    cmp r13, AST_UNARY_NEG
-    je .neg
-    cmp r13, AST_UNARY_NOT
-    je .not
     cmp r13, AST_BIN_ADD
     je .binary
     cmp r13, AST_BIN_SUB
@@ -28,26 +25,42 @@ emit_expr:
     je .binary
     cmp r13, AST_BIN_DIV
     je .binary
-    cmp r13, AST_BIN_MOD
-    je .binary
-    cmp r13, AST_BIN_GT
-    je .comparison
+    
+    ; Medium-frequency cases
     cmp r13, AST_BIN_LT
     je .comparison
-    cmp r13, AST_BIN_GE
-    je .comparison
-    cmp r13, AST_BIN_LE
+    cmp r13, AST_BIN_GT
     je .comparison
     cmp r13, AST_BIN_EE
-    je .comparison
-    cmp r13, AST_BIN_NE
     je .comparison
     cmp r13, AST_BIN_AND
     je .logical
     cmp r13, AST_BIN_OR
     je .logical
+    
+    ; Less frequent cases
+    cmp r13, AST_BOOL_LIT
+    je .bool
+    cmp r13, AST_UNARY_NEG
+    je .neg
+    cmp r13, AST_UNARY_NOT
+    je .not
+    cmp r13, AST_BIN_MOD
+    je .binary
+    cmp r13, AST_BIN_GE
+    je .comparison
+    cmp r13, AST_BIN_LE
+    je .comparison
+    cmp r13, AST_BIN_NE
+    je .comparison
     cmp r13, AST_FN_CALL_EXPR
     je .fn_call
+    cmp r13, AST_ADDR_OF
+    je .addr_of
+    cmp r13, AST_DEREF
+    je .deref
+    cmp r13, AST_ARRAY_INDEX
+    je .array_index
     jmp .fail
 .int:
     mov rdi, r12
@@ -128,6 +141,86 @@ emit_expr:
     test rax, rax
     jnz .fail
     jmp .ok
+.addr_of:
+    ; &expr: compute address of variable
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    ; For now, only support &var syntax
+    call ast_kind
+    cmp rax, AST_VAR_REF
+    jne .fail
+    
+    ; Get the variable slot
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_child
+    mov rdi, rax
+    call symbol_slot_for_token
+    test rax, rax
+    jz .fail
+    imul rax, 8
+    mov rbx, rax
+    
+    ; Load address: lea rax, [rbp - slot_offset]
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_rax_rbp
+    mov rdx, asm_lea_rax_rbp_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_rax_rbp_end
+    mov rdx, asm_lea_rax_rbp_end_len
+    call write_all
+    jmp .ok
+.deref:
+    ; *expr: load from pointer value
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Load from address: mov rax, [rax]
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_rax_at_rax
+    mov rdx, asm_mov_rax_at_rax_len
+    call write_all
+    jmp .ok
+.array_index:
+    ; arr[idx]: Emit array_expr into rax, then emit idx into rbx, compute offset
+    mov rdi, r12
+    call ast_child
+    mov r14, rax
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Save array pointer in rcx
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_rcx_rax
+    mov rdx, asm_mov_rcx_rax_len
+    call write_all
+    
+    ; Emit index expression
+    mov rdi, r12
+    call ast_child
+    call ast_next
+    mov rdi, rax
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Load value at [rcx + rax*8] (assuming 64-bit values)
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_rax_at_rcx_rax_8
+    mov rdx, asm_mov_rax_at_rcx_rax_8_len
+    call write_all
+    jmp .ok
 .binary:
     mov rdi, r12
     call emit_binary_expr
@@ -155,6 +248,7 @@ emit_binary_expr:
     push r12
     push r13
     push r14
+    push r15
     mov r12, rdi
     call ast_kind
     mov r13, rax
@@ -168,6 +262,23 @@ emit_binary_expr:
     test rax, rax
     jz .fail
     mov rbx, rax
+
+    ; Try constant folding optimization
+    mov rdi, r13
+    mov rsi, r14
+    mov rdx, rbx
+    call try_fold_binary_expr
+    cmp rax, 1
+    je .runtime
+    cmp rax, 0
+    je .runtime
+
+    ; Folding succeeded - folded result is in rbx, emit it
+    call emit_mov_rax_imm
+    jmp .ok
+
+.runtime:
+    ; No folding possible - use runtime evaluation
     mov rdi, r14
     call emit_expr
     test rax, rax
@@ -222,6 +333,7 @@ emit_binary_expr:
     call write_all
 .ok:
     xor rax, rax
+    pop r15
     pop r14
     pop r13
     pop r12
@@ -229,10 +341,112 @@ emit_binary_expr:
     ret
 .fail:
     mov rax, 1
+    pop r15
     pop r14
     pop r13
     pop r12
     pop rbx
+    ret
+
+; try_fold_binary_expr: Attempt to fold binary expression at compile-time
+; Input: rdi = operation kind, rsi = left node, rdx = right node
+; Output: rax = -1 (folded, result in rbx), 0 (overflow), 1 (can't fold - not constants)
+; Modifies: rax, rbx, rcx, r8, r9
+try_fold_binary_expr:
+    push r10
+    push r11
+    push r12
+    push r13
+    mov r12, rdi        ; operation kind
+    mov r13, rsi        ; left node
+    mov r10, rdx        ; right node
+
+    ; Check if left is integer literal
+    mov rdi, r13
+    call ast_kind
+    cmp rax, AST_INT_LIT
+    jne .cant_fold_noleft
+    mov rdi, r13
+    call ast_child
+    mov rdi, rax
+    call token_addr
+    mov r8, [rax + TOKEN_PAYLOAD]
+
+    ; Check if right is integer literal
+    mov rdi, r10
+    call ast_kind
+    cmp rax, AST_INT_LIT
+    jne .cant_fold_noright
+    mov rdi, r10
+    call ast_child
+    mov rdi, rax
+    call token_addr
+    mov r9, [rax + TOKEN_PAYLOAD]
+
+    ; Both are constants - fold them
+    cmp r12, AST_BIN_ADD
+    je .fold_add
+    cmp r12, AST_BIN_SUB
+    je .fold_sub
+    cmp r12, AST_BIN_MUL
+    je .fold_mul
+    cmp r12, AST_BIN_DIV
+    je .fold_div
+    cmp r12, AST_BIN_MOD
+    je .fold_mod
+    jmp .cant_fold_badop
+
+.fold_add:
+    mov rax, r8
+    add rax, r9
+    jmp .folded_ok
+
+.fold_sub:
+    mov rax, r8
+    sub rax, r9
+    jmp .folded_ok
+
+.fold_mul:
+    mov rax, r8
+    imul rax, r9
+    jmp .folded_ok
+
+.fold_div:
+    cmp r9, 0
+    je .fold_div_by_zero
+    mov rax, r8
+    cqo
+    idiv r9
+    jmp .folded_ok
+
+.fold_mod:
+    cmp r9, 0
+    je .fold_mod_by_zero
+    mov rax, r8
+    cqo
+    idiv r9
+    mov rax, rdx
+    jmp .folded_ok
+
+.folded_ok:
+    mov rbx, rax        ; Result in rbx for emit_mov_rax_imm
+    mov rax, -1         ; Success
+    jmp .try_fold_done
+
+.fold_div_by_zero:
+.fold_mod_by_zero:
+    mov rax, 0          ; Division by zero - can't fold
+    jmp .try_fold_done
+
+.cant_fold_noleft:
+.cant_fold_noright:
+.cant_fold_badop:
+    mov rax, 1          ; Can't fold - not constants
+.try_fold_done:
+    pop r13
+    pop r12
+    pop r11
+    pop r10
     ret
 
 ; emit_fn_call_expr: Emit function call instruction

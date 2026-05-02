@@ -1,0 +1,6 @@
+fn main -> i32
+    let x i32 = 5
+    let px *i32 = &x
+    let ppi **i32 = &px
+    ret 0
+end

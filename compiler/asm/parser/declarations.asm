@@ -19,9 +19,10 @@ parse_decl_stmt:
     jz .bad
     mov [tmp_ast_a], rax
 
-    call expect_ident_text_i32
+    call parse_any_type
     test rax, rax
     jz .bad
+    mov [tmp_type_id], rax
     call advance_token
     call current_token_kind
     cmp rax, TOK_EQ

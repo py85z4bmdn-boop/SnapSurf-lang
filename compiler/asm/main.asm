@@ -186,6 +186,10 @@ exit_process:
 %include "compiler/asm/emitter_instructions.asm"
 %include "compiler/asm/emitter_writer.asm"
 
+; Optimization passes
+%include "compiler/asm/opt/dead_code_elimination.asm"
+%include "compiler/asm/opt/optimizer.asm"
+
 ; Performance optimization modules
 %include "compiler/asm/opt/memops.asm"
 %include "compiler/asm/opt/strtab.asm"

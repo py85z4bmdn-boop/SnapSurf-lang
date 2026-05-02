@@ -39,6 +39,12 @@
 .rparen:
     mov rdi, TOK_RPAREN
     jmp .single
+.lbracket:
+    mov rdi, TOK_LBRACKET
+    jmp .single
+.rbracket:
+    mov rdi, TOK_RBRACKET
+    jmp .single
 .dot:
     mov rdi, TOK_DOT
     jmp .single
@@ -56,6 +62,9 @@
     jmp .single
 .comma:
     mov rdi, TOK_COMMA
+    jmp .single
+.semicolon:
+    mov rdi, TOK_SEMICOLON
     jmp .single
 .eq_or_ee:
     mov rax, r12
@@ -154,3 +163,8 @@
     inc r12
     inc r15
     jmp .loop
+
+; Address-of operator
+.amp:
+    mov rdi, TOK_AMP
+    jmp .single

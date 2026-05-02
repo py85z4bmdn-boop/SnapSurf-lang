@@ -19,34 +19,60 @@ parse_source_subset:
     jz .fail
     mov [ast_root], rax
 
+    xor r15, r15                        ; Track function count
     call skip_newline_tokens
 .use_loop:
     call current_token_kind
     cmp rax, TOK_USE
-    jne .fn
+    jne .fn_parse_loop
     call parse_use_decl
     test rax, rax
     jnz .fail
     call skip_newline_tokens
     jmp .use_loop
 
-.fn:
-    mov qword [parser_found_main], 0     ; Reset for this iteration
-    call parse_main_fn
-    test rax, rax
-    jnz .fail
+.fn_parse_loop:
     call skip_newline_tokens
     call current_token_kind
     cmp rax, TOK_FN
-    je .next_fn
+    jne .fn_parse_done
+    
+    ; Parse a function (can be any name, not just main)
+    mov qword [parser_found_main], 0    ; Reset main flag for this iteration
+    call parse_fn_or_main
+    test rax, rax
+    jnz .fail
+    inc r15                             ; Increment function count
+    jmp .fn_parse_loop
+
+.fn_parse_done:
+    ; Check we found at least one function
+    test r15, r15
+    jz .no_functions
+    
+    ; Check for EOF or unexpected token
+    call current_token_kind
     cmp rax, TOK_EOF
-    jne .trailing
+    je .success
+    cmp rax, TOK_END
+    je .success
+    
+    ; Unexpected token after functions
+    call print_unsupported_current
+    mov rax, 1
+    ret
+
+.success:
     xor rax, rax
     ret
-.next_fn:
-    jmp .fn
-.trailing:
-    call print_unsupported_current
+
+.no_functions:
+    call set_diag_from_current
+    mov rdi, src_path
+    mov rsi, err_no_functions
+    call print_diag
+    mov rax, 1
+    ret
 .fail:
     mov rax, 1
     ret
@@ -102,15 +128,14 @@ parse_use_decl:
     mov rax, 1
     ret
 
-parse_main_fn:
+parse_fn_or_main:
+    ; Parse a single function (FN token already verified by caller)
+    ; Input: current token should be at 'fn' keyword
+    ; Returns: 0 on success, non-zero on failure
     call skip_newline_tokens
     call current_token_kind
-    cmp rax, TOK_EOF
-    je .no_main
-    cmp rax, TOK_END
-    je .unexpected_end
     cmp rax, TOK_FN
-    jne .no_main
+    jne .bad_expected_fn
     call current_token_addr
     mov r12, [rax + TOKEN_START]
     call advance_token
@@ -150,6 +175,7 @@ parse_main_fn:
     mov rsi, rax
     call ast_append_child
 
+    ; Check if this is the 'main' function
     mov rax, r14
     sub rax, r15
     cmp rax, 4
@@ -177,6 +203,7 @@ parse_main_fn:
     cmp rax, TOK_LPAREN
     je .params_paren
     jmp .parse_params
+
 
 .params_paren:
     call advance_token
@@ -218,9 +245,9 @@ parse_main_fn:
     jne .bad_fn_sig
     call advance_token
 
-    call expect_ident_text_i32
+    call parse_any_type
     test rax, rax
-    jz .bad_main
+    jz .bad_return_type
     call advance_token
 
     mov rdi, AST_BLOCK
@@ -239,10 +266,10 @@ parse_main_fn:
     call parse_block
     ret
 
-.no_main:
+.bad_expected_fn:
     call set_diag_from_current
     mov rdi, src_path
-    mov rsi, err_no_main
+    mov rsi, err_bad_fn
     call print_diag
     mov rax, 1
     ret
@@ -281,13 +308,6 @@ parse_main_fn:
     call print_diag
     mov rax, 1
     ret
-.bad_main:
-    call set_diag_from_current
-    mov rdi, src_path
-    mov rsi, err_bad_main
-    call print_diag
-    mov rax, 1
-    ret
 .fail:
     mov rax, 1
     ret
@@ -301,9 +321,10 @@ parse_fn_param_node:
     test rax, rax
     jz .bad_name
     mov r12, rax
-    call expect_ident_text_i32
+    call parse_any_type
     test rax, rax
     jz .bad_type
+    mov [tmp_type_id], rax
     call advance_token
     mov rdi, r12
     call ast_span_start

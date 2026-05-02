@@ -37,12 +37,18 @@ lex_source_subset:
     je .lparen
     cmp al, ')'
     je .rparen
+    cmp al, '['
+    je .lbracket
+    cmp al, ']'
+    je .rbracket
     cmp al, '.'
     je .dot
     cmp al, '/'
     je .slash
     cmp al, ','
     je .comma
+    cmp al, ';'
+    je .semicolon
     cmp al, '='
     je .eq_or_ee
     cmp al, '>'
@@ -51,6 +57,8 @@ lex_source_subset:
     je .lt_or_le
     cmp al, '!'
     je .bang_or_ne
+    cmp al, '&'
+    je .amp
     call is_ident_start_al
     test rax, rax
     jnz .ident
