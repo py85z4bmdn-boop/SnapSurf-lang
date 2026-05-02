@@ -18,3 +18,13 @@ parsed_io_len: resq 1
 parsed_ret_value: resq 1
 has_syscall: resb 1
 has_io_write: resb 1
+
+; Multi-function support: function registry
+fn_registry_count: resq 1
+fn_name_start: resq 256
+fn_name_len: resq 256
+fn_param_count: resq 256
+fn_ast_node: resq 256
+fn_emit_counter: resq 1
+current_fn_param_count: resq 1
+tmp_saved_block: resq 1

@@ -3,6 +3,7 @@
 
 emit_main_asm:
     call mkdir_build
+    mov qword [label_counter], 0
     mov rax, SYS_OPEN
     mov rdi, asm_path
     mov rsi, O_WRONLY | O_CREAT | O_TRUNC
@@ -17,27 +18,29 @@ emit_main_asm:
     mov rdx, asm_pre_len
     call write_all
 
-    cmp qword [local_count], 0
-    je .body
-    mov rdi, [out_fd]
-    mov rsi, asm_stack_pre
-    mov rdx, asm_stack_pre_len
-    call write_all
-    mov rax, [local_count]
-    imul rax, 8
-    mov rdi, [out_fd]
-    call write_u64_fd
-    mov rdi, [out_fd]
-    mov rsi, asm_final_newline
-    mov rdx, 1
-    call write_all
-
-.body:
-    mov rdi, [ast_block_node]
-    call emit_block
+    mov rdi, [ast_root]
+    call ast_child
+    test rax, rax
+    jz .fail_close
+    mov rbx, rax
+.fn_loop:
+    mov rdi, rbx
+    call ast_kind
+    cmp rax, AST_FN_DECL
+    jne .next_fn
+    mov rdi, rbx
+    call emit_function
     test rax, rax
     jnz .fail_close
 
+.next_fn:
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    test rbx, rbx
+    jnz .fn_loop
+
+.rodata_emit:
     cmp byte [has_io_write], 0
     je .close
     mov rdi, [out_fd]
@@ -66,6 +69,167 @@ emit_main_asm:
     mov rsi, err_emit_failed
     call print_diag
     mov rax, 1
+    ret
+
+emit_function:
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+
+    mov r12, rdi
+    mov rdi, r12
+    call semantic_rebuild_function_for_emit
+    test rax, rax
+    jnz .ufn_error
+
+    mov rdi, r12
+    call ast_child
+    test rax, rax
+    jz .ufn_error
+    mov r13, rax
+
+    mov rdi, r13
+    call ast_span_start
+    mov r14, rax
+    mov rdi, r13
+    call ast_span_end
+    mov r15, rax
+    sub r15, r14
+    mov rdi, [out_fd]
+    mov rsi, r14
+    mov rdx, r15
+    call write_src_span
+    mov rdi, [out_fd]
+    mov rsi, asm_label_post
+    mov rdx, asm_label_post_len
+    call write_all
+
+    mov rdi, [out_fd]
+    mov rsi, asm_fn_prologue
+    mov rdx, asm_fn_prologue_len
+    call write_all
+
+    cmp qword [local_count], 0
+    je .spill_params
+    mov rdi, [out_fd]
+    mov rsi, asm_stack_pre
+    mov rdx, asm_stack_pre_len
+    call write_all
+    mov rax, [local_count]
+    imul rax, 8
+    add rax, 15
+    and rax, -16
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_final_newline
+    mov rdx, 1
+    call write_all
+
+.spill_params:
+    call emit_function_param_spills
+    test rax, rax
+    jz .ufn_error
+    mov rdi, r12
+    call semantic_fn_block
+    test rax, rax
+    jz .ufn_error
+    mov [ast_block_node], rax
+    mov rdi, rax
+    call emit_block
+    test rax, rax
+    jnz .ufn_error
+
+    xor rax, rax
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+.ufn_error:
+    mov rax, 1
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+emit_user_function:
+    call emit_function
+    ret
+
+emit_function_param_spills:
+    push rbx
+    push r12
+    xor r12, r12
+    mov rbx, [current_fn_param_count]
+.loop:
+    cmp r12, rbx
+    jae .done
+    mov rdi, [out_fd]
+    mov rsi, asm_store_local_pre
+    mov rdx, asm_store_local_pre_len
+    call write_all
+    mov rax, r12
+    inc rax
+    imul rax, 8
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    cmp r12, 0
+    je .rdi
+    cmp r12, 1
+    je .rsi
+    cmp r12, 2
+    je .rdx
+    cmp r12, 3
+    je .rcx
+    cmp r12, 4
+    je .r8
+    cmp r12, 5
+    je .r9
+    jmp .fail
+.rdi:
+    mov rsi, asm_store_param_rdi_post
+    mov rdx, asm_store_param_rdi_post_len
+    jmp .write
+.rsi:
+    mov rsi, asm_store_param_rsi_post
+    mov rdx, asm_store_param_rsi_post_len
+    jmp .write
+.rdx:
+    mov rsi, asm_store_param_rdx_post
+    mov rdx, asm_store_param_rdx_post_len
+    jmp .write
+.rcx:
+    mov rsi, asm_store_param_rcx_post
+    mov rdx, asm_store_param_rcx_post_len
+    jmp .write
+.r8:
+    mov rsi, asm_store_param_r8_post
+    mov rdx, asm_store_param_r8_post_len
+    jmp .write
+.r9:
+    mov rsi, asm_store_param_r9_post
+    mov rdx, asm_store_param_r9_post_len
+.write:
+    call write_all
+    inc r12
+    jmp .loop
+.done:
+    mov rax, 1
+    pop r12
+    pop rbx
+    ret
+.fail:
+    xor rax, rax
+    pop r12
+    pop rbx
     ret
 
 emit_block:

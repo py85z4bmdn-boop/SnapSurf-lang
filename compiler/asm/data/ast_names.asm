@@ -35,4 +35,8 @@ ast_name_while: db "AstWhileStmt", 10, 0
 ast_name_loop: db "AstLoopStmt", 10, 0
 ast_name_break: db "AstBreakStmt", 10, 0
 ast_name_continue: db "AstContinueStmt", 10, 0
+ast_name_fn_param: db "AstFnParam", 10, 0
+ast_name_fn_call: db "AstFnCallExpr", 10, 0
+ast_name_unsafe_fn: db "AstUnsafeFn", 10, 0
+ast_name_unsafe_block: db "AstUnsafeBlock", 10, 0
 ast_name_unknown: db "AstUnknown", 10, 0

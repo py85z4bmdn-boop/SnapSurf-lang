@@ -16,6 +16,8 @@ semantic_expr_type:
     je .bool
     cmp r13, AST_VAR_REF
     je .var
+    cmp r13, AST_FN_CALL_EXPR
+    je .fn_call
     cmp r13, AST_UNARY_NEG
     je .unary_i32
     cmp r13, AST_UNARY_NOT
@@ -64,6 +66,10 @@ semantic_expr_type:
     dec rax
     imul rax, 8
     mov rax, [sym_type + rax]
+    jmp .done
+.fn_call:
+    mov rdi, r12
+    call semantic_fn_call_type
     jmp .done
 .unary_i32:
     mov rdi, r12

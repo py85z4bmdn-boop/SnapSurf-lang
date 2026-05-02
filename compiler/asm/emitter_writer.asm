@@ -72,3 +72,49 @@ write_db_string:
     pop r12
     pop rbx
     ret
+
+; write_function_name: Write function name from source pointer
+; Input: rdi = file descriptor, rsi = name pointer
+; Writes until whitespace or null terminator
+write_function_name:
+    push r11
+    push r12
+    push rcx
+    mov r11, rdi        ; r11 = file descriptor
+    mov r12, rsi        ; r12 = name pointer
+    mov rcx, 0          ; rcx = count
+.count:
+    mov al, [r12 + rcx]
+    cmp al, ' '
+    je .write_it
+    cmp al, 9           ; tab
+    je .write_it
+    cmp al, 10          ; newline
+    je .write_it
+    cmp al, 0
+    je .write_it
+    inc rcx
+    cmp rcx, 255
+    jl .count
+.write_it:
+    mov rdi, r11        ; rdi = file descriptor
+    mov rsi, r12        ; rsi = name pointer
+    mov rdx, rcx        ; rdx = length
+    mov rax, SYS_WRITE
+    syscall
+    pop rcx
+    pop r12
+    pop r11
+    ret
+
+write_src_span:
+    push rdi
+    push rsi
+    push rdx
+    add rsi, src_buf
+    mov rax, SYS_WRITE
+    syscall
+    pop rdx
+    pop rsi
+    pop rdi
+    ret

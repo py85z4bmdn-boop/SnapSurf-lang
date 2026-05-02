@@ -10,6 +10,8 @@ keyword_kind:
     je .len4
     cmp rsi, 5
     je .len5
+    cmp rsi, 6
+    je .len6
     cmp rsi, 8
     je .len8
     jmp .ident
@@ -102,6 +104,8 @@ keyword_kind:
     mov rax, TOK_MUT
     ret
 .len4:
+    cmp byte [rdi], 'c'
+    je .check_call
     cmp byte [rdi], 't'
     je .check_true
     cmp byte [rdi], 'e'
@@ -109,6 +113,15 @@ keyword_kind:
     cmp byte [rdi], 'l'
     je .check_loop
     jmp .ident
+.check_call:
+    cmp byte [rdi + 1], 'a'
+    jne .ident
+    cmp byte [rdi + 2], 'l'
+    jne .ident
+    cmp byte [rdi + 3], 'l'
+    jne .ident
+    mov rax, TOK_CALL
+    ret
 .check_true:
     cmp byte [rdi + 1], 'r'
     jne .ident
@@ -176,6 +189,23 @@ keyword_kind:
     cmp byte [rdi + 4], 'k'
     jne .ident
     mov rax, TOK_BREAK
+    ret
+.len6:
+    cmp byte [rdi], 'u'
+    je .check_unsafe
+    jmp .ident
+.check_unsafe:
+    cmp byte [rdi + 1], 'n'
+    jne .ident
+    cmp byte [rdi + 2], 's'
+    jne .ident
+    cmp byte [rdi + 3], 'a'
+    jne .ident
+    cmp byte [rdi + 4], 'f'
+    jne .ident
+    cmp byte [rdi + 5], 'e'
+    jne .ident
+    mov rax, TOK_UNSAFE
     ret
 .len8:
     cmp byte [rdi], 'c'

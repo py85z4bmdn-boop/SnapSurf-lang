@@ -1,0 +1,21 @@
+# SnapSurf Intel Register Discipline
+
+Compiler-internal NASM routines:
+- Follow `compiler/inc/calling_conv.inc`.
+- Save `rbx`, `r12`, `r13`, `r14`, and `r15` when a routine keeps state in them
+  across nested calls.
+- Treat `rax`, `rcx`, `rdx`, `rsi`, `rdi`, and `r8-r11` as scratch unless the
+  local routine explicitly saves them.
+
+Generated SnapSurf code:
+- Function return value: `rax`.
+- Integer argument registers in order: `rdi`, `rsi`, `rdx`, `rcx`, `r8`, `r9`.
+- Parameters are spilled into stack slots on entry. The current emitter then
+  reuses the existing local-load/store path instead of inventing a second
+  parameter access path.
+- User functions are rejected above six parameters until stack-passed arguments
+  are implemented deliberately.
+
+Review rule:
+- Any assembly change that moves data through `mov`, `push`, `pop`, `call`, or
+  `ret` must be reasoned at register/stack-slot level before it is called done.

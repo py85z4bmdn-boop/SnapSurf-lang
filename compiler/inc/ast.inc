@@ -36,6 +36,12 @@
 %define AST_BREAK_STMT 35
 %define AST_CONTINUE_STMT 42
 
+; Multi-function support additions
+%define AST_FN_PARAM 43
+%define AST_FN_CALL_EXPR 44
+%define AST_UNSAFE_FN 45
+%define AST_UNSAFE_BLOCK 46
+
 ; Foundation v0 extensions (manual memory + raw pointer ops)
 %define AST_MEM_MALLOC_EXPR 36
 %define AST_MEM_LOAD_I32_EXPR 37
@@ -49,3 +55,5 @@
 %define AST_CHILD_OR_DATA 24
 %define AST_NEXT_OR_EXTRA 32
 %define AST_SIZE 40
+
+%define FN_REG_CAP 256

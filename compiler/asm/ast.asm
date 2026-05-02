@@ -9,6 +9,7 @@ ast_reset:
     mov qword [ast_count], 0
     mov qword [ast_root], 0
     mov qword [ast_main_fn], 0
+    mov qword [ast_main_node_idx], 0
     mov qword [ast_block_node], 0
     mov qword [ast_call_stmt], 0
     mov qword [ast_ret_stmt], 0
@@ -167,6 +168,14 @@ ast_name_ptr:
     je .break
     cmp rdi, AST_CONTINUE_STMT
     je .continue
+    cmp rdi, AST_FN_PARAM
+    je .fn_param
+    cmp rdi, AST_FN_CALL_EXPR
+    je .fn_call
+    cmp rdi, AST_UNSAFE_FN
+    je .unsafe_fn
+    cmp rdi, AST_UNSAFE_BLOCK
+    je .unsafe_block
     mov rax, ast_name_unknown
     ret
 .source:
@@ -276,4 +285,16 @@ ast_name_ptr:
     ret
 .continue:
     mov rax, ast_name_continue
+    ret
+.fn_param:
+    mov rax, ast_name_fn_param
+    ret
+.fn_call:
+    mov rax, ast_name_fn_call
+    ret
+.unsafe_fn:
+    mov rax, ast_name_unsafe_fn
+    ret
+.unsafe_block:
+    mov rax, ast_name_unsafe_block
     ret

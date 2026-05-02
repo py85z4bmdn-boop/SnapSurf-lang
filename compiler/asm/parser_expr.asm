@@ -107,7 +107,18 @@ parse_prefix_expr:
     call parse_var_ref_node
     mov r12, rax
     call advance_token
+    call current_token_kind
+    cmp rax, TOK_LPAREN
+    je .var_call
+    mov rdi, rax
+    call token_starts_expr
+    test rax, rax
+    jnz .var_call
     mov rax, r12
+    ret
+.var_call:
+    mov rdi, r12
+    call parse_fn_call_expr
     ret
 .neg:
     call advance_token
@@ -238,3 +249,5 @@ infix_binding_power:
     mov rax, 20
     mov rdx, AST_BIN_MOD
     ret
+
+%include "compiler/asm/parser/function_calls.asm"

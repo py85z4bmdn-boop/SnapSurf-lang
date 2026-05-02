@@ -1,0 +1,28 @@
+# SnapSurf Threading And Intel Performance Direction
+
+Current status:
+- No SnapSurf threading surface is implemented in the ASM foundation.
+- No mutex, futex, TLS, atomics, or scheduler contract is present yet.
+- The correct current behavior is to reject or leave unimplemented, not fake a
+  concurrency API.
+
+Future threading direction:
+- Start with Linux futex-backed primitives.
+- Keep atomics explicit and architecture-named at the lowering layer.
+- Define memory ordering in compiler docs before emitting `lock`-prefixed
+  instructions.
+- Keep thread entry ABI separate from normal SnapSurf function calls.
+
+Intel performance direction:
+- Keep hot compiler buffers fixed-capacity until overflow paths are explicit.
+- Prefer linear arena/token walks before hash tables in tiny foundation passes.
+- Align generated stack frames to 16 bytes before nested calls.
+- Keep syscall count visible; do not bury writes behind opaque helpers unless
+  the helper has a measurable buffering contract.
+
+Not implemented yet:
+- SIMD lowering.
+- Register allocation.
+- Stack-passed function arguments.
+- Atomic operations.
+- Thread spawning and synchronization.

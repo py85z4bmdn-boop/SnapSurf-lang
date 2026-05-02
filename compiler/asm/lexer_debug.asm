@@ -98,6 +98,10 @@ token_name_ptr:
     je .newline
     cmp rdi, TOK_CONTINUE
     je .continue
+    cmp rdi, TOK_UNSAFE
+    je .unsafe
+    cmp rdi, TOK_CALL
+    je .call
     mov rax, tok_name_unknown
     ret
 .eof:
@@ -219,4 +223,10 @@ token_name_ptr:
     ret
 .continue:
     mov rax, tok_name_continue
+    ret
+.unsafe:
+    mov rax, tok_name_unsafe
+    ret
+.call:
+    mov rax, tok_name_call
     ret

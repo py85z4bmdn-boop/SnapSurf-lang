@@ -95,6 +95,8 @@ run_exit precedence 7
 run_exit paren_expr 9
 run_exit div_mod 8
 run_exit unary_minus 2
+run_exit function_call 42
+run_exit main_after_helper 0
 
 run_fail() {
     name="$1"
@@ -123,5 +125,6 @@ run_fail duplicate_symbol
 run_fail symbol_overflow
 run_fail let_mut_rejected
 run_fail bool_arithmetic
+run_fail function_arity
 
 echo "foundation asm tests passed"

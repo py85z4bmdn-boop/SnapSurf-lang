@@ -22,6 +22,7 @@ ASM_COMPILER_SOURCES = \
 	compiler/asm/parser/declarations.asm \
 	compiler/asm/parser/control_flow.asm \
 	compiler/asm/parser/statements.asm \
+	compiler/asm/parser/function_calls.asm \
 	compiler/asm/parser_expr.asm \
 	compiler/asm/parser_nodes.asm \
 	compiler/asm/parser_match.asm \

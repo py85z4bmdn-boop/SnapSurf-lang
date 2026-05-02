@@ -2,6 +2,7 @@ AstSourceFile
 AstUseDecl
 AstPath
 AstFnDecl
+AstPath
 AstBlock
 AstPath
 AstIntLit

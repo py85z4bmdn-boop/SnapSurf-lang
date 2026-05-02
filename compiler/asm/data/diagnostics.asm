@@ -11,7 +11,16 @@ err_expected: db "E0201 expected token", 0
 err_missing_end: db "E0202 missing end", 0
 err_unexpected_end: db "E0203 unexpected end", 0
 err_bad_fn: db "E0204 invalid function declaration", 0
+err_bad_fn_name: db "E0204 function name expected", 0
+err_bad_fn_sig: db "E0204 invalid function signature", 0
+err_bad_return_type: db "E0204 invalid return type", 0
+err_bad_param_name: db "E0204 parameter name expected", 0
+err_bad_param_type: db "E0204 parameter type expected", 0
+err_missing_arrow: db "E0204 '->' expected in function signature", 0
 err_bad_use: db "E0205 invalid use declaration", 0
+err_fn_registry_overflow: db "E0301 function registry overflow (max 128 functions)", 0
+err_fn_not_found: db "E0404 function not found", 0
+err_fn_param_mismatch: db "E0404 function call argument count mismatch", 0
 err_no_main: db "E0401 main function not found", 0
 err_bad_main: db "E0402 invalid main signature", 0
 err_ret: db "E0403 return type mismatch", 0

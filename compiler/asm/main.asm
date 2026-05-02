@@ -213,4 +213,3 @@ exit_process:
 %include "compiler/asm/state/emitter.asm"
 %include "compiler/asm/state/process.asm"
 %include "compiler/asm/state/scratch.asm"
-

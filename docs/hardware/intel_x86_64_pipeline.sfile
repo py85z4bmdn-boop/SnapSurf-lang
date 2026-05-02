@@ -1,0 +1,27 @@
+# SnapSurf Intel x86_64 Pipeline Notes
+
+Scope: root ASM/NASM foundation only. These notes constrain compiler/runtime
+work; they are not executed by `make`.
+
+Target baseline:
+- Linux x86_64 ELF64.
+- System V AMD64 ABI for user function calls.
+- Integer foundation path uses GPRs first: `rax` return value, `rdi/rsi/rdx/rcx/r8/r9`
+  for the first six integer arguments.
+
+Current generated-call contract:
+- `_start` calls `main`.
+- Every SnapSurf function emits:
+  - `push rbp`
+  - `mov rbp, rsp`
+  - optional `sub rsp, rounded_stack_bytes`
+  - parameter register spills to `[rbp - slot]`
+  - body
+  - return epilogue from `ret expr`
+- Stack reservation is rounded to 16 bytes so nested `call` instructions do not
+  inherit odd local-slot alignment.
+
+Do not weaken:
+- Do not call C/Rust runtime helpers from the root foundation path.
+- Do not hide function-call lowering behind a runtime dispatcher.
+- Do not emit a label name that cannot be resolved from semantic registry data.

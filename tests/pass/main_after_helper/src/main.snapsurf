@@ -1,0 +1,7 @@
+fn helper -> i32
+    ret 7
+end
+
+fn main -> i32
+    ret 0
+end

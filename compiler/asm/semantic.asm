@@ -1,36 +1,100 @@
-; Status: COMPLETE for foundation v0 subset.
-; Semantic checker with proper scoping for nested blocks.
-; All functions properly save/restore callee-saved registers (rbx, r12-r15).
+; Status: PARTIAL.
+; Semantic checker for the current AST subset, including function registry,
+; per-function symbols, and checked user-function calls.
 
 semantic_check_subset:
     cmp qword [ast_error_flag], 0
     jne .ast_error
+    cmp qword [ast_root], 0
+    je .no_ast
+
+    call semantic_init_fn_registry
+
+    mov rdi, [ast_root]
+    call ast_child
+    mov rbx, rax
+.register_loop:
+    test rbx, rbx
+    jz .register_done
+    mov rdi, rbx
+    call ast_kind
+    cmp rax, AST_FN_DECL
+    je .register_fn
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .register_loop
+
+.register_fn:
+    mov rdi, rbx
+    call semantic_register_function
+    test rax, rax
+    jnz .fail
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .register_loop
+
+.register_done:
     cmp qword [ast_main_fn], 0
     je .no_main
-    cmp qword [ast_block_node], 0
-    je .bad_ret
-    call semantic_reset_symbols
-    call type_init
-    call scope_push
+    mov rdi, [ast_main_fn]
+    call semantic_function_param_count
+    test rax, rax
+    jnz .bad_main
+
+    mov rdi, [ast_root]
+    call ast_child
+    mov rbx, rax
+.check_loop:
+    test rbx, rbx
+    jz .check_done
+    mov rdi, rbx
+    call ast_kind
+    cmp rax, AST_FN_DECL
+    je .check_fn
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .check_loop
+
+.check_fn:
+    mov rdi, rbx
+    call semantic_check_function
     test rax, rax
     jnz .fail
-    mov rdi, [ast_block_node]
-    call semantic_block
-    test rax, rax
-    jnz .fail
-    cmp byte [return_seen], 0
-    je .bad_ret
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .check_loop
+
+.check_done:
     xor rax, rax
     ret
+
 .ast_error:
     mov rdi, src_path
     mov rsi, err_ast_overflow
     call print_diag
     mov rax, 1
     ret
+.no_ast:
+    mov rdi, src_path
+    mov rsi, err_no_main
+    call print_diag
+    mov rax, 1
+    ret
 .no_main:
     mov rdi, src_path
     mov rsi, err_no_main
+    call print_diag
+    mov rax, 1
+    ret
+.bad_main:
+    mov rdi, [ast_main_fn]
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_bad_main
     call print_diag
     mov rax, 1
     ret
@@ -43,6 +107,411 @@ semantic_check_subset:
 .fail:
     ret
 
+; semantic_init_fn_registry: Initialize the function registry
+; Returns: rax = 0 always
+semantic_init_fn_registry:
+    mov qword [fn_registry_count], 0
+    mov qword [fn_emit_counter], 0
+    mov qword [current_fn_param_count], 0
+    xor rax, rax
+    ret
+
+; semantic_find_function: lookup by source span.
+; Input: rdi = name start offset, rsi = name length.
+; Returns: rax = registry index + 1, or 0 if not found.
+semantic_find_function:
+    push rbx
+    push r12
+    push r13
+    push r14
+    mov r12, rdi
+    mov r13, rsi
+    xor rbx, rbx
+.search_loop:
+    cmp rbx, [fn_registry_count]
+    jge .not_found
+    mov rax, rbx
+    imul rax, 8
+    cmp [fn_name_len + rax], r13
+    jne .next_entry
+    mov r14, [fn_name_start + rax]
+    xor rcx, rcx
+.compare_loop:
+    cmp rcx, r13
+    jge .found
+    mov al, [src_buf + r12 + rcx]
+    mov dl, [src_buf + r14 + rcx]
+    cmp al, dl
+    jne .next_entry
+    inc rcx
+    jmp .compare_loop
+
+.next_entry:
+    inc rbx
+    jmp .search_loop
+
+.found:
+    mov rax, rbx
+    inc rax
+    jmp .out
+.not_found:
+    xor rax, rax
+.out:
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+semantic_register_function:
+    push rbx
+    push r12
+    push r13
+    push r14
+    mov r12, rdi
+    mov rdi, r12
+    call ast_child
+    test rax, rax
+    jz .no_name
+    mov rbx, rax
+    mov rdi, rbx
+    call ast_span_start
+    mov r13, rax
+    mov rdi, rbx
+    call ast_span_end
+    mov r14, rax
+    sub r14, r13
+    mov rdi, r13
+    mov rsi, r14
+    call semantic_find_function
+    test rax, rax
+    jnz .duplicate
+    mov rbx, [fn_registry_count]
+    cmp rbx, FN_REG_CAP
+    jge .registry_overflow
+    mov rax, rbx
+    imul rax, 8
+    mov [fn_name_start + rax], r13
+    mov [fn_name_len + rax], r14
+    mov [fn_ast_node + rax], r12
+    mov rdi, r12
+    call semantic_function_param_count
+    cmp rax, 6
+    ja .bad_signature
+    mov rdx, rbx
+    imul rdx, 8
+    mov [fn_param_count + rdx], rax
+    mov rdi, r13
+    mov rsi, r14
+    call source_span_is_main
+    test rax, rax
+    jz .not_main
+    mov [ast_main_fn], r12
+.not_main:
+    inc qword [fn_registry_count]
+    xor rax, rax
+    jmp .out
+
+.no_name:
+    mov rax, 1
+    jmp .out
+.duplicate:
+    mov rdi, r12
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_duplicate
+    call print_diag
+    mov rax, 1
+    jmp .out
+.bad_signature:
+    mov rdi, r12
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_bad_fn_sig
+    call print_diag
+    mov rax, 1
+    jmp .out
+.registry_overflow:
+    mov rdi, src_path
+    mov rsi, err_fn_registry_overflow
+    call print_diag
+    mov rax, 1
+.out:
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+source_span_is_main:
+    cmp rsi, 4
+    jne .no
+    cmp byte [src_buf + rdi], 'm'
+    jne .no
+    cmp byte [src_buf + rdi + 1], 'a'
+    jne .no
+    cmp byte [src_buf + rdi + 2], 'i'
+    jne .no
+    cmp byte [src_buf + rdi + 3], 'n'
+    jne .no
+    mov rax, 1
+    ret
+.no:
+    xor rax, rax
+    ret
+
+semantic_fn_block:
+    push rbx
+    call ast_child
+    mov rbx, rax
+.loop:
+    test rbx, rbx
+    jz .missing
+    mov rdi, rbx
+    call ast_kind
+    cmp rax, AST_BLOCK
+    je .found
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .loop
+.found:
+    mov rax, rbx
+    pop rbx
+    ret
+.missing:
+    xor rax, rax
+    pop rbx
+    ret
+
+semantic_function_param_count:
+    push rbx
+    push r12
+    xor r12, r12
+    call ast_child
+    mov rbx, rax
+.loop:
+    test rbx, rbx
+    jz .done
+    mov rdi, rbx
+    call ast_kind
+    cmp rax, AST_BLOCK
+    je .done
+    cmp rax, AST_FN_PARAM
+    jne .next
+    inc r12
+.next:
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .loop
+.done:
+    mov rax, r12
+    pop r12
+    pop rbx
+    ret
+
+semantic_bind_params:
+    push rbx
+    push r12
+    call ast_child
+    mov rbx, rax
+.loop:
+    test rbx, rbx
+    jz .done
+    mov rdi, rbx
+    call ast_kind
+    cmp rax, AST_BLOCK
+    je .done
+    cmp rax, AST_FN_PARAM
+    jne .next
+    mov rdi, rbx
+    call ast_child
+    mov rdi, rax
+    call semantic_ident_token
+    mov rdi, rax
+    xor rsi, rsi
+    mov rdx, TYPE_I32
+    call symbol_add
+    test rax, rax
+    jnz .fail
+.next:
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .loop
+.done:
+    xor rax, rax
+    pop r12
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
+    pop r12
+    pop rbx
+    ret
+
+semantic_check_function:
+    push rbx
+    push r12
+    mov r12, rdi
+    call semantic_fn_block
+    test rax, rax
+    jz .bad
+    mov rbx, rax
+    call semantic_reset_symbols
+    call type_init
+    call scope_push
+    test rax, rax
+    jnz .fail
+    mov rdi, r12
+    call semantic_bind_params
+    test rax, rax
+    jnz .fail_pop
+    mov rdi, rbx
+    mov [ast_block_node], rbx
+    call semantic_block
+    test rax, rax
+    jnz .fail_pop
+    call scope_pop
+    cmp byte [return_seen], 0
+    je .bad_ret
+    xor rax, rax
+    pop r12
+    pop rbx
+    ret
+.bad:
+    mov rdi, src_path
+    mov rsi, err_unsup_ast
+    call print_diag
+    mov rax, 1
+    pop r12
+    pop rbx
+    ret
+.bad_ret:
+    mov rdi, src_path
+    mov rsi, err_ret
+    call print_diag
+    mov rax, 1
+    pop r12
+    pop rbx
+    ret
+.fail_pop:
+    call scope_pop
+.fail:
+    mov rax, 1
+    pop r12
+    pop rbx
+    ret
+
+semantic_fn_call_type:
+    push rbx
+    push r12
+    push r13
+    push r14
+    mov r12, rdi
+    mov rdi, r12
+    call ast_child
+    test rax, rax
+    jz .bad
+    mov rbx, rax
+    mov rdi, rbx
+    call ast_span_start
+    mov r13, rax
+    mov rdi, rbx
+    call ast_span_end
+    mov r14, rax
+    sub r14, r13
+    mov rdi, r13
+    mov rsi, r14
+    call semantic_find_function
+    test rax, rax
+    jz .not_found
+    dec rax
+    imul rax, 8
+    mov r14, [fn_param_count + rax]
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, r14
+    jne .arity_bad
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+.arg_loop:
+    test rbx, rbx
+    jz .ok
+    mov rdi, rbx
+    call semantic_expr_type
+    cmp rax, TYPE_I32
+    jne .type_bad
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .arg_loop
+.ok:
+    mov rax, TYPE_I32
+    jmp .out
+.not_found:
+    mov rdi, r12
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_fn_not_found
+    call print_diag
+    xor rax, rax
+    jmp .out
+.arity_bad:
+    mov rdi, r12
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_fn_param_mismatch
+    call print_diag
+    xor rax, rax
+    jmp .out
+.type_bad:
+    mov rdi, rbx
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_type
+    call print_diag
+    xor rax, rax
+    jmp .out
+.bad:
+    mov rdi, src_path
+    mov rsi, err_unsup_ast
+    call print_diag
+    xor rax, rax
+.out:
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+semantic_call_arg_count:
+    push rbx
+    push r12
+    xor r12, r12
+    call ast_child
+    mov rbx, rax
+    test rbx, rbx
+    jz .done
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+.loop:
+    test rbx, rbx
+    jz .done
+    inc r12
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .loop
+.done:
+    mov rax, r12
+    pop r12
+    pop rbx
+    ret
+
 semantic_reset_symbols:
     mov qword [sym_count], 0
     mov qword [local_count], 0
@@ -52,11 +521,40 @@ semantic_reset_symbols:
     ret
 
 ; Rebuild the symbol table flat (no scoping) for the emitter.
-; Walks the main block AST and re-adds all let/mut declarations.
+; Walks a function block AST and re-adds parameters plus let/mut declarations.
 semantic_rebuild_for_emit:
+    mov rdi, [ast_main_fn]
+    call semantic_rebuild_function_for_emit
+    ret
+
+semantic_rebuild_function_for_emit:
+    push rbx
+    push r12
+    mov r12, rdi
     call semantic_reset_symbols
-    mov rdi, [ast_block_node]
+    mov rdi, r12
+    call semantic_bind_params
+    test rax, rax
+    jnz .fail
+    mov rdi, r12
+    call semantic_function_param_count
+    mov [current_fn_param_count], rax
+    mov rdi, r12
+    call semantic_fn_block
+    test rax, rax
+    jz .fail
+    mov rbx, rax
+    mov [ast_block_node], rbx
+    mov rdi, rbx
     call rebuild_block_flat
+    xor rax, rax
+    pop r12
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
+    pop r12
+    pop rbx
     ret
 
 rebuild_block_flat:

@@ -21,6 +21,8 @@
 %define TOK_AND 23
 %define TOK_OR 24
 %define TOK_NOT 25
+%define TOK_UNSAFE 27
+%define TOK_CALL 28
 
 %define TOK_ARROW 30
 %define TOK_DOT 31
