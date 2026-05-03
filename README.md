@@ -50,7 +50,9 @@ Hello SnapSurf
 - AST arena for the parsed source subset
 - parser subset for `use core/io`, `fn main -> i32`, `io.write`, `let`, `mut`, assignment, `ret expr`, and `end`
 - Pratt expression parser for integer literals, variable references, parentheses, unary `-`, and `+ - * / %`
+- strict top-level token rejection after function declarations
 - fixed-capacity single-function symbol table for local bindings, duplicate detection, undefined-symbol detection, immutable-assignment rejection, and fail-closed overflow diagnostics
+- semantic validation for `break`/`continue` placement and conservative function return-path coverage
 - explicit foundation type ID and descriptor table in [compiler/inc/types.inc](compiler/inc/types.inc); only `i32` locals are accepted today
 - fixed-capacity scope stack primitives exist for future nested blocks, but source syntax still has only the function-root scope
 - documented internal register convention in [compiler/inc/calling_conv.inc](compiler/inc/calling_conv.inc)

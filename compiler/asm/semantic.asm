@@ -373,9 +373,11 @@ semantic_check_function:
     call semantic_block
     test rax, rax
     jnz .fail_pop
+    mov rdi, rbx
+    call semantic_block_returns
+    test rax, rax
+    jz .fail_pop_bad_ret
     call scope_pop
-    cmp byte [return_seen], 0
-    je .bad_ret
     xor rax, rax
     pop r12
     pop rbx
@@ -403,6 +405,13 @@ semantic_check_function:
     pop r12
     pop rbx
     ret
+.fail_pop_bad_ret:
+    call scope_pop
+    mov rdi, r12
+    call ast_span_start
+    mov rdi, rax
+    call set_diag_from_start
+    jmp .bad_ret
 
 semantic_fn_call_type:
     push rbx
@@ -517,6 +526,7 @@ semantic_reset_symbols:
     mov qword [local_count], 0
     mov qword [slot_cursor], 0
     mov qword [scope_depth], 0
+    mov qword [semantic_loop_depth], 0
     mov byte [return_seen], 0
     ret
 
@@ -772,12 +782,14 @@ semantic_stmt:
     pop r12
     ret
 .break_stmt:
-    xor rax, rax
+    mov rdi, r12
+    call semantic_loop_control_stmt
     pop r13
     pop r12
     ret
 .continue_stmt:
-    xor rax, rax
+    mov rdi, r12
+    call semantic_loop_control_stmt
     pop r13
     pop r12
     ret
@@ -950,6 +962,112 @@ semantic_ret_stmt:
     pop r12
     ret
 
+semantic_loop_control_stmt:
+    cmp qword [semantic_loop_depth], 0
+    jne .ok
+    push rdi
+    call ast_span_start
+    mov rdi, rax
+    call set_diag_from_start
+    pop rdi
+    mov rdi, src_path
+    mov rsi, err_loop_control
+    call print_diag
+    mov rax, 1
+    ret
+.ok:
+    xor rax, rax
+    ret
+
+semantic_loop_enter:
+    mov rax, [semantic_loop_depth]
+    cmp rax, SCOPE_CAP
+    jae .overflow
+    inc qword [semantic_loop_depth]
+    xor rax, rax
+    ret
+.overflow:
+    mov rdi, src_path
+    mov rsi, err_scope_overflow
+    call print_diag
+    mov rax, 1
+    ret
+
+semantic_loop_leave:
+    cmp qword [semantic_loop_depth], 0
+    je .done
+    dec qword [semantic_loop_depth]
+.done:
+    xor rax, rax
+    ret
+
+semantic_block_returns:
+    push rbx
+    call ast_child
+    mov rbx, rax
+.loop:
+    test rbx, rbx
+    jz .no
+    mov rdi, rbx
+    call semantic_stmt_returns
+    test rax, rax
+    jnz .yes
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .loop
+.yes:
+    mov rax, 1
+    pop rbx
+    ret
+.no:
+    xor rax, rax
+    pop rbx
+    ret
+
+semantic_stmt_returns:
+    push rbx
+    push r12
+    mov r12, rdi
+    call ast_kind
+    cmp rax, AST_RET_STMT
+    je .yes
+    cmp rax, AST_IF_STMT
+    je .if_stmt
+    jmp .no
+.if_stmt:
+    mov rdi, r12
+    call ast_child
+    test rax, rax
+    jz .no
+    mov rdi, rax
+    call ast_next
+    test rax, rax
+    jz .no
+    mov rbx, rax
+    mov rdi, rbx
+    call semantic_block_returns
+    test rax, rax
+    jz .no
+    mov rdi, rbx
+    call ast_next
+    test rax, rax
+    jz .no
+    mov rdi, rax
+    call semantic_block_returns
+    test rax, rax
+    jz .no
+.yes:
+    mov rax, 1
+    pop r12
+    pop rbx
+    ret
+.no:
+    xor rax, rax
+    pop r12
+    pop rbx
+    ret
+
 ; semantic_if_stmt: AST structure is
 ;   if_stmt -> child chain: [condition, then_block, (optional else_block)]
 semantic_if_stmt:
@@ -1055,10 +1173,14 @@ semantic_while_stmt:
     call scope_push
     test rax, rax
     jnz .fail
+    call semantic_loop_enter
+    test rax, rax
+    jnz .fail_scope
     mov rdi, r13
     call semantic_block
     test rax, rax
-    jnz .fail_scope
+    jnz .fail_loop
+    call semantic_loop_leave
     call scope_pop
     xor rax, rax
     pop r13
@@ -1092,6 +1214,9 @@ semantic_while_stmt:
     pop r12
     pop rbx
     ret
+.fail_loop:
+    call semantic_loop_leave
+    jmp .fail_scope
 .fail:
     mov rax, 1
     pop r13
@@ -1113,10 +1238,14 @@ semantic_loop_stmt:
     call scope_push
     test rax, rax
     jnz .fail
+    call semantic_loop_enter
+    test rax, rax
+    jnz .fail_scope
     mov rdi, r13
     call semantic_block
     test rax, rax
-    jnz .fail_scope
+    jnz .fail_loop
+    call semantic_loop_leave
     call scope_pop
     xor rax, rax
     pop r13
@@ -1136,6 +1265,9 @@ semantic_loop_stmt:
     pop r13
     pop r12
     ret
+.fail_loop:
+    call semantic_loop_leave
+    jmp .fail_scope
 .fail:
     mov rax, 1
     pop r13

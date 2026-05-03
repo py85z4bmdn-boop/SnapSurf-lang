@@ -2,6 +2,8 @@
 ; FNV-1a 64-bit hash: fast, well-distributed, simple to implement.
 ; Used to replace linear scans with O(1) hash lookups.
 
+section .text
+
 ; fnv1a_hash: Compute FNV-1a 64-bit hash of rdx bytes at rdi.
 ; Returns hash in rax.
 fnv1a_hash:

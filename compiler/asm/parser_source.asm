@@ -54,8 +54,6 @@ parse_source_subset:
     call current_token_kind
     cmp rax, TOK_EOF
     je .success
-    cmp rax, TOK_END
-    je .success
     
     ; Unexpected token after functions
     call print_unsupported_current

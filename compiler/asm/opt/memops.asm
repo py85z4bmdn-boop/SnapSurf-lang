@@ -2,6 +2,8 @@
 ; These replace naive byte-by-byte loops with register-width operations.
 ; All functions follow System V AMD64 ABI: rdi, rsi, rdx as args.
 
+section .text
+
 ; fast_memcpy: Copy rdx bytes from rsi to rdi.
 ; Uses 8-byte moves for bulk, then byte-by-byte for remainder.
 ; Preserves: rbx, r12-r15.

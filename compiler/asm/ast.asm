@@ -15,6 +15,7 @@ ast_reset:
     mov qword [ast_ret_stmt], 0
     mov qword [ast_error_flag], 0
     mov qword [loop_depth], 0
+    mov byte [needs_print_int_helper], 0
     ret
 
 ast_new:

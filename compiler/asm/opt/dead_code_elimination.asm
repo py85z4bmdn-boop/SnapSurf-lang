@@ -2,6 +2,8 @@
 ; Status: NEW
 ; Dead Code Elimination - removes statements unreachable after return
 
+section .text
+
 ; dce_analyze_block: Analyze a block and mark unreachable statements
 ; Input: rdi = block AST node
 ; Output: rax = number of unreachable statements found

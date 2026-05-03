@@ -2,6 +2,8 @@
 ; Bump allocator with alignment guarantees for optimal cache line usage.
 ; Zero-overhead: no free, no fragmentation, single pointer increment.
 
+section .text
+
 ; arena_alloc: Allocate rdi bytes from the AST arena.
 ; Returns pointer in rax, or 0 on overflow.
 ; Aligns to 8 bytes for optimal qword access.
@@ -32,7 +34,7 @@ arena_used:
     ret
 
 section .bss
-align 64                             ; Align to cache line
+alignb 64                            ; Align to cache line
 arena_buf: resb 262144              ; 256KB arena
 arena_end equ arena_buf + 262144
 arena_cursor: resq 1

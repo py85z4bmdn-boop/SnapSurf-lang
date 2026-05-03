@@ -1,6 +1,8 @@
 ; opt/faststr.asm — Optimized string primitives replacing naive byte loops.
 ; Uses register-width operations for common hot-path string functions.
 
+section .text
+
 ; fast_strlen: Count bytes in zero-terminated string at rsi.
 ; Returns length in rax. Uses qword scanning for speed.
 fast_strlen:

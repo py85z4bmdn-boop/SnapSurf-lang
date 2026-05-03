@@ -1,0 +1,1 @@
+tests/compile_fail/break_outside_loop/src/main.snapsurf:2:5 E0507 break/continue outside loop

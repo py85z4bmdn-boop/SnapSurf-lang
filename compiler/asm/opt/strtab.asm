@@ -1,6 +1,8 @@
 ; opt/strtab.asm — Branchless and cache-friendly string table operations.
 ; Optimized string comparison for hot paths: keyword lookup, symbol find.
 
+section .text
+
 ; fast_streq_fixed: Compare exactly rdx bytes at rdi and rsi.
 ; Returns 1 if equal, 0 if not. Branchless on match for short strings.
 ; rdi = ptr_a, rsi = ptr_b, rdx = length.

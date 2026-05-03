@@ -2,6 +2,8 @@
 ; Status: NEW
 ; Main optimizer pass coordinator
 
+section .text
+
 ; run_optimization_passes: Execute all optimization passes
 ; Input: none (uses [ast_root])
 ; Output: rax = 0 on success

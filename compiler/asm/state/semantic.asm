@@ -3,6 +3,7 @@ sym_count: resq 1
 local_count: resq 1
 slot_cursor: resq 1
 scope_depth: resq 1
+semantic_loop_depth: resq 1
 return_seen: resb 1
 sym_start: resq SYM_CAP
 sym_len: resq SYM_CAP

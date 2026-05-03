@@ -1,0 +1,1 @@
+tests/compile_fail/extra_top_level_end/src/main.snapsurf:4:1 E0404 unsupported token in foundation: TokEnd

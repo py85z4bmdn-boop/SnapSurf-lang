@@ -1,0 +1,4 @@
+fn main -> i32
+    continue
+    ret 0
+end

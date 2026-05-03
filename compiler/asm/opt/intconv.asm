@@ -2,6 +2,8 @@
 ; Replaces division-based decimal conversion with multiplication trick.
 ; Used in write_u64_fd for label number emission.
 
+section .text
+
 ; fast_u64_to_dec: Convert unsigned 64-bit integer in rax to decimal string.
 ; Writes into buffer at rdi (must have >= 20 bytes).
 ; Returns: rax = pointer to start of string, rdx = length.

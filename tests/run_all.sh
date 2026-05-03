@@ -99,6 +99,12 @@ run_exit function_call 42
 run_exit main_after_helper 0
 run_exit elif_chain 2
 run_exit print_builtin 0
+run_exit while_simple 10
+run_exit while_break 5
+run_exit while_continue 45
+run_exit loop_break 7
+run_exit scoping 10
+run_exit const_folding_simple 14
 
 run_fail() {
     name="$1"
@@ -128,5 +134,9 @@ run_fail symbol_overflow
 run_fail let_mut_rejected
 run_fail bool_arithmetic
 run_fail function_arity
+run_fail break_outside_loop
+run_fail continue_outside_loop
+run_fail extra_top_level_end
+run_fail conditional_return_missing
 
 echo "foundation asm tests passed"
