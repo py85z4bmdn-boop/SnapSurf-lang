@@ -3,7 +3,7 @@ struct X
 end
 
 fn get_field p X -> i32
-    let v i32 = 0
+    let v i32 = p.a
     ret v
 end
 

@@ -1,0 +1,12 @@
+struct Data
+    val i32;
+end
+
+fn process d Data -> i32
+    let copy Data = d
+    ret 0
+end
+
+fn main -> i32
+    ret 0
+end

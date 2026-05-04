@@ -1,0 +1,13 @@
+struct Point
+    x i32;
+    y i32;
+end
+
+fn use_point p Point -> i32
+    let a i32 = p.y
+    ret a
+end
+
+fn main -> i32
+    ret 0
+end

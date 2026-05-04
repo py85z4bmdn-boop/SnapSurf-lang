@@ -436,7 +436,7 @@ type_lookup_struct_field:
     xor rbx, rbx                ; registry index
 .registry_loop:
     cmp rbx, [struct_registry_count]
-    jae .not_found
+    jae .registry_not_found
     
     mov rax, [struct_type_id + rbx * 8]
     cmp rax, r12
@@ -444,6 +444,11 @@ type_lookup_struct_field:
     
     inc rbx
     jmp .registry_loop
+    
+.registry_not_found:
+    ; Struct type ID not in registry - this means struct wasn't registered
+    xor rax, rax
+    jmp .done
     
 .found_struct:
     ; Get the AST node for this struct

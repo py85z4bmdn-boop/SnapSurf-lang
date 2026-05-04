@@ -1,0 +1,19 @@
+struct First
+    a i32;
+end
+
+struct Second
+    b i32;
+end
+
+fn test_first p First -> i32
+    ret 0
+end
+
+fn test_second q Second -> i32
+    ret 0
+end
+
+fn main -> i32
+    ret 0
+end

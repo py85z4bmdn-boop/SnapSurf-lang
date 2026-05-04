@@ -1,0 +1,11 @@
+struct MyType
+    x i32;
+end
+
+fn get_struct -> MyType
+    ret 0
+end
+
+fn main -> i32
+    ret 0
+end
