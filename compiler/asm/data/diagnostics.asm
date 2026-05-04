@@ -18,6 +18,8 @@ err_bad_param_name: db "E0204 parameter name expected", 0
 err_bad_param_type: db "E0204 parameter type expected", 0
 err_missing_arrow: db "E0204 '->' expected in function signature", 0
 err_bad_use: db "E0205 invalid use declaration", 0
+err_bad_struct: db "E0206 invalid struct declaration", 0
+err_struct_registry_overflow: db "E0207 too many struct definitions", 0
 err_fn_registry_overflow: db "E0301 function registry overflow (max 128 functions)", 0
 err_fn_not_found: db "E0404 function not found", 0
 err_fn_param_mismatch: db "E0404 function call argument count mismatch", 0
@@ -36,6 +38,7 @@ err_immutable: db "E0504 cannot assign immutable binding", 0
 err_symbol_overflow: db "E0505 symbol table overflow", 0
 err_scope_overflow: db "E0506 scope depth exceeded", 0
 err_loop_control: db "E0507 break/continue outside loop", 0
+err_unsafe_op: db "E0508 unsafe operation outside unsafe block", 0
 err_ast_overflow: db "E0301 AST arena overflow", 0
 err_cap: db "E0801 missing required capability", 0
 err_syscall_cap: db "E0802 syscall used without requires syscall", 0

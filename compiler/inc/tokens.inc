@@ -27,6 +27,10 @@
 %define TOK_CONST 52
 %define TOK_PRINT 53
 
+%define TOK_STRUCT 54
+%define TOK_LBRACE 55
+%define TOK_RBRACE 56
+
 %define TOK_ARROW 30
 %define TOK_DOT 31
 %define TOK_SLASH 32

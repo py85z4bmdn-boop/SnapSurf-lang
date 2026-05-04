@@ -50,6 +50,9 @@ Hello SnapSurf
 - AST arena for the parsed source subset
 - parser subset for `use core/io`, `fn main -> i32`, `io.write`, `let`, `mut`, assignment, `ret expr`, and `end`
 - Pratt expression parser for integer literals, variable references, parentheses, unary `-`, and `+ - * / %`
+- semantic support for same-width primitive integer locals beyond `i32`, with no implicit integer-width coercion
+- pointer type interning plus `&x`/`*p` expression checking and stack-address codegen
+- fixed-size array type interning, stack slot reservation, and `arr[i]` address-based load codegen
 - strict top-level token rejection after function declarations
 - fixed-capacity single-function symbol table for local bindings, duplicate detection, undefined-symbol detection, immutable-assignment rejection, and fail-closed overflow diagnostics
 - semantic validation for `break`/`continue` placement and conservative function return-path coverage
@@ -67,8 +70,8 @@ Hello SnapSurf
 ## Not Complete
 
 The project is not self-hosting and the foundation is not complete. Remaining
-major gaps include full token stream, full AST arena, control flow, functions
-with parameters, nested block syntax, structs/enums, module resolution, richer
+major gaps include full token stream, full AST arena, complete control-flow and
+function semantics, nested block syntax, structs/enums, module resolution, richer
 type checking, MIR, register allocation or non-stack expression lowering,
 ownership checker, lockfile resolver, package registry, formatter, optimizer,
 LSP, and self-hosting.

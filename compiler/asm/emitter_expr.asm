@@ -61,6 +61,8 @@ emit_expr:
     je .deref
     cmp r13, AST_ARRAY_INDEX
     je .array_index
+    cmp r13, AST_FIELD_ACCESS
+    je .field_access
     jmp .fail
 .int:
     mov rdi, r12
@@ -192,13 +194,40 @@ emit_expr:
     call write_all
     jmp .ok
 .array_index:
-    ; arr[idx]: Emit array_expr into rax, then emit idx into rbx, compute offset
+    ; arr[idx]: compute base address, then load element.
     mov rdi, r12
     call ast_child
     mov r14, rax
+    mov rdi, r14
+    call ast_kind
+    cmp rax, AST_VAR_REF
+    je .array_index_var
+    mov rdi, r14
     call emit_expr
     test rax, rax
     jnz .fail
+    jmp .array_index_base_done
+.array_index_var:
+    mov rdi, r14
+    call ast_child
+    mov rdi, rax
+    call symbol_slot_for_token
+    test rax, rax
+    jz .fail
+    imul rax, 8
+    mov rbx, rax
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_rax_rbp
+    mov rdx, asm_lea_rax_rbp_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_rax_rbp_end
+    mov rdx, asm_lea_rax_rbp_end_len
+    call write_all
+.array_index_base_done:
     
     ; Save array pointer in rcx
     mov rdi, [out_fd]
@@ -209,6 +238,7 @@ emit_expr:
     ; Emit index expression
     mov rdi, r12
     call ast_child
+    mov rdi, rax
     call ast_next
     mov rdi, rax
     call emit_expr
@@ -220,6 +250,16 @@ emit_expr:
     mov rsi, asm_mov_rax_at_rcx_rax_8
     mov rdx, asm_mov_rax_at_rcx_rax_8_len
     call write_all
+    jmp .ok
+.field_access:
+    ; p.field: For now, emit base variable address
+    ; TODO: Add field offset calculation once field layout is available
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call emit_expr
+    test rax, rax
+    jnz .fail
     jmp .ok
 .binary:
     mov rdi, r12

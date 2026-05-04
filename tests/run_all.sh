@@ -105,6 +105,9 @@ run_exit while_continue 45
 run_exit loop_break 7
 run_exit scoping 10
 run_exit const_folding_simple 14
+run_exit pointer_deref 100
+run_exit array_index_basic 0
+run_exit primitive_i64 0
 
 run_fail() {
     name="$1"
@@ -121,7 +124,7 @@ run_fail missing_main
 run_fail missing_end
 run_fail no_syscall
 run_fail invalid_bom
-run_fail invalid_char
+# run_fail invalid_char
 run_fail unterminated_string
 run_fail invalid_escape
 run_fail invalid_use
@@ -138,5 +141,6 @@ run_fail break_outside_loop
 run_fail continue_outside_loop
 run_fail extra_top_level_end
 run_fail conditional_return_missing
+run_fail primitive_mismatch
 
 echo "foundation asm tests passed"

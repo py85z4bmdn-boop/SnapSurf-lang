@@ -1,0 +1,13 @@
+struct SimpleBox
+    value i32;
+end
+
+fn take_box b SimpleBox -> i32
+    ret 0
+end
+
+fn main -> i32
+    let y SimpleBox = 0
+    let result i32 = take_box y
+    ret 0
+end

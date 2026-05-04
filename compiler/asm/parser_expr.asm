@@ -116,6 +116,8 @@ parse_prefix_expr:
     je .var_index
     cmp rax, TOK_LPAREN
     je .var_call
+    cmp rax, TOK_DOT
+    je .var_field
     mov rdi, rax
     call token_starts_expr
     test rax, rax
@@ -125,6 +127,10 @@ parse_prefix_expr:
 .var_index:
     mov rdi, r12
     call parse_array_index_expr
+    ret
+.var_field:
+    mov rdi, r12
+    call parse_field_access_expr
     ret
 .var_call:
     mov rdi, r12
@@ -339,6 +345,54 @@ parse_array_index_expr:
 .bad:
     pop r12
     pop rdi
+    xor rax, rax
+    ret
+
+; parse_field_access_expr: Parse p.field
+; Input: rdi = base variable expression AST node
+; Output: rax = AST_FIELD_ACCESS node
+parse_field_access_expr:
+    push rbx
+    push r12
+    push r13
+    mov r12, rdi        ; Save base expression
+    
+    ; Current token should be TOK_DOT
+    call current_token_kind
+    cmp rax, TOK_DOT
+    jne .bad
+    call advance_token
+    
+    ; Expect field name (identifier)
+    call current_token_kind
+    cmp rax, TOK_IDENT
+    jne .bad
+    
+    call current_token_addr
+    mov rbx, [rax + TOKEN_START]    ; Field name start
+    mov r13, rbx
+    add r13, [rax + TOKEN_LEN]      ; Field name end
+    call advance_token
+    
+    ; Create AST_FIELD_ACCESS node
+    mov rdi, AST_FIELD_ACCESS
+    mov rsi, rbx                    ; span start
+    mov rdx, r13                    ; span end
+    mov rcx, r12                    ; base expression (child)
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .bad
+    
+    pop r13
+    pop r12
+    pop rbx
+    ret
+    
+.bad:
+    pop r13
+    pop r12
+    pop rbx
     xor rax, rax
     ret
 

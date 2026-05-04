@@ -29,7 +29,7 @@ Still deliberately narrow:
 
 - no full token stream beyond the foundation subset yet
 - no full AST arena beyond the foundation subset yet
-- no control-flow or multi-function parser/codegen yet
+- no complete control-flow or multi-function semantics yet
 - no full semantic checker yet
 - no dynamic symbol table yet; the current fixed-capacity table fails closed at
   `SYM_CAP`

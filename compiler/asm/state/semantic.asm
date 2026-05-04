@@ -4,6 +4,7 @@ local_count: resq 1
 slot_cursor: resq 1
 scope_depth: resq 1
 semantic_loop_depth: resq 1
+semantic_unsafe_depth: resq 1
 return_seen: resb 1
 sym_start: resq SYM_CAP
 sym_len: resq SYM_CAP
@@ -29,3 +30,11 @@ fn_ast_node: resq 256
 fn_emit_counter: resq 1
 current_fn_param_count: resq 1
 tmp_saved_block: resq 1
+
+; Struct registry: track defined struct types
+struct_registry_count: resq 1
+struct_name_start: resq 256
+struct_name_len: resq 256
+struct_type_id: resq 256
+struct_field_count: resq 256
+struct_ast_node: resq 256

@@ -59,6 +59,10 @@ lex_source_subset:
     je .bang_or_ne
     cmp al, '&'
     je .amp
+    cmp al, '{'
+    je .lbrace
+    cmp al, '}'
+    je .rbrace
     ; Use branchless LUT for ident/digit classification (opt/chartab.asm)
     call opt_is_ident_start
     test rax, rax

@@ -29,8 +29,16 @@ symbol_add:
     mov [sym_len + rdx], rcx
     mov [sym_mut + rdx], r13
     mov [sym_type + rdx], r14
+    mov rdi, r14
+    call type_slot_count
+    test rax, rax
+    jnz .slot_count_ok
+    mov rax, 1
+.slot_count_ok:
     mov rcx, [slot_cursor]
-    inc rcx
+    add rcx, rax
+    mov rdx, rbx
+    imul rdx, 8
     mov [sym_slot + rdx], rcx
     mov [slot_cursor], rcx
     cmp rcx, [local_count]

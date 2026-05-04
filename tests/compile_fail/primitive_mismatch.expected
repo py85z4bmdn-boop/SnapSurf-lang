@@ -1,0 +1,1 @@
+tests/compile_fail/primitive_mismatch/src/main.snapsurf:3:9 E0501 type mismatch

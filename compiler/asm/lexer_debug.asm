@@ -94,6 +94,14 @@ token_name_ptr:
     je .ee
     cmp rdi, TOK_NE
     je .ne
+    cmp rdi, TOK_AMP
+    je .amp
+    cmp rdi, TOK_LBRACKET
+    je .lbracket
+    cmp rdi, TOK_RBRACKET
+    je .rbracket
+    cmp rdi, TOK_SEMICOLON
+    je .semicolon
     cmp rdi, TOK_NEWLINE
     je .newline
     cmp rdi, TOK_CONTINUE
@@ -108,6 +116,12 @@ token_name_ptr:
     je .const
     cmp rdi, TOK_PRINT
     je .print
+    cmp rdi, TOK_STRUCT
+    je .struct
+    cmp rdi, TOK_LBRACE
+    je .lbrace
+    cmp rdi, TOK_RBRACE
+    je .rbrace
     mov rax, tok_name_unknown
     ret
 .eof:
@@ -224,6 +238,18 @@ token_name_ptr:
 .ne:
     mov rax, tok_name_ne
     ret
+.amp:
+    mov rax, tok_name_amp
+    ret
+.lbracket:
+    mov rax, tok_name_lbracket
+    ret
+.rbracket:
+    mov rax, tok_name_rbracket
+    ret
+.semicolon:
+    mov rax, tok_name_semicolon
+    ret
 .newline:
     mov rax, tok_name_newline
     ret
@@ -244,4 +270,13 @@ token_name_ptr:
     ret
 .print:
     mov rax, tok_name_print
+    ret
+.struct:
+    mov rax, tok_name_struct
+    ret
+.lbrace:
+    mov rax, tok_name_lbrace
+    ret
+.rbrace:
+    mov rax, tok_name_rbrace
     ret

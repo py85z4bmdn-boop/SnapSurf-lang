@@ -326,12 +326,19 @@ semantic_bind_params:
     cmp rax, AST_FN_PARAM
     jne .next
     mov rdi, rbx
+    call ast_get_type_tag
+    test rax, rax
+    jnz .param_type_ok
+    mov rax, TYPE_I32
+.param_type_ok:
+    mov [tmp_type_id], rax
+    mov rdi, rbx
     call ast_child
     mov rdi, rax
     call semantic_ident_token
     mov rdi, rax
     xor rsi, rsi
-    mov rdx, TYPE_I32
+    mov rdx, [tmp_type_id]
     call symbol_add
     test rax, rax
     jnz .fail
@@ -360,7 +367,6 @@ semantic_check_function:
     jz .bad
     mov rbx, rax
     call semantic_reset_symbols
-    call type_init
     call scope_push
     test rax, rax
     jnz .fail
@@ -527,6 +533,7 @@ semantic_reset_symbols:
     mov qword [slot_cursor], 0
     mov qword [scope_depth], 0
     mov qword [semantic_loop_depth], 0
+    mov qword [semantic_unsafe_depth], 0
     mov byte [return_seen], 0
     ret
 
@@ -605,24 +612,38 @@ rebuild_stmt_flat:
     ret
 .decl:
     mov rdi, r12
+    call ast_get_type_tag
+    test rax, rax
+    jnz .decl_type_flat_ok
+    mov rax, TYPE_I32
+.decl_type_flat_ok:
+    mov [tmp_type_id], rax
+    mov rdi, r12
     call ast_child
     mov rdi, rax
     call ast_child
     mov rdi, rax
     xor rsi, rsi
-    mov rdx, TYPE_I32
+    mov rdx, [tmp_type_id]
     call symbol_add
     pop r13
     pop r12
     ret
 .decl_mut:
     mov rdi, r12
+    call ast_get_type_tag
+    test rax, rax
+    jnz .decl_mut_type_flat_ok
+    mov rax, TYPE_I32
+.decl_mut_type_flat_ok:
+    mov [tmp_type_id], rax
+    mov rdi, r12
     call ast_child
     mov rdi, rax
     call ast_child
     mov rdi, rax
     mov rsi, 1
-    mov rdx, TYPE_I32
+    mov rdx, [tmp_type_id]
     call symbol_add
     pop r13
     pop r12
@@ -799,6 +820,12 @@ semantic_stmt:
     pop r13
     pop r12
     ret
+.unsafe_block:
+    mov rdi, r12
+    call semantic_unsafe_block
+    pop r13
+    pop r12
+    ret
 
 semantic_decl_stmt:
     push rbx
@@ -807,6 +834,13 @@ semantic_decl_stmt:
     mov r12, rdi
     mov r13, rsi
     mov rdi, r12
+    call ast_get_type_tag
+    test rax, rax
+    jnz .decl_type_ok
+    mov rax, TYPE_I32
+.decl_type_ok:
+    mov [tmp_type_id], rax
+    mov rdi, r12
     call ast_child
     mov rbx, rax
     test rbx, rbx
@@ -814,18 +848,22 @@ semantic_decl_stmt:
     mov rdi, rbx
     call ast_next
     test rax, rax
-    jz .bad
+    jz .no_initializer
+    mov rdi, [tmp_type_id]
+    mov [expected_expr_type], rdi
     mov rdi, rax
     call semantic_expr_type
+    mov qword [expected_expr_type], 0
     test rax, rax
     jz .fail
-    cmp rax, TYPE_I32
+    cmp rax, [tmp_type_id]
     jne .type_bad
+.add_symbol:
     mov rdi, rbx
     call semantic_ident_token
     mov rdi, rax
     mov rsi, r13
-    mov rdx, TYPE_I32
+    mov rdx, [tmp_type_id]
     call symbol_add
     test rax, rax
     jnz .fail
@@ -834,6 +872,12 @@ semantic_decl_stmt:
     pop r12
     pop rbx
     ret
+.no_initializer:
+    mov rdi, [tmp_type_id]
+    call type_get_element_of_array
+    test rax, rax
+    jz .bad
+    jmp .add_symbol
 .type_bad:
     mov rdi, rbx
     call semantic_ident_token
@@ -879,15 +923,20 @@ semantic_assign_stmt:
     imul rdx, 8
     cmp qword [sym_mut + rdx], 0
     je .immutable
+    mov rax, [sym_type + rdx]
+    mov [tmp_type_id], rax
     mov rdi, rbx
     call ast_next
     test rax, rax
     jz .bad
+    mov rdi, [tmp_type_id]
+    mov [expected_expr_type], rdi
     mov rdi, rax
     call semantic_expr_type
+    mov qword [expected_expr_type], 0
     test rax, rax
     jz .fail
-    cmp rax, TYPE_I32
+    cmp rax, [tmp_type_id]
     jne .type_bad
     xor rax, rax
     pop r12
@@ -941,7 +990,9 @@ semantic_ret_stmt:
     mov rdi, rax
     test rdi, rdi
     jz .bad
+    mov qword [expected_expr_type], TYPE_I32
     call semantic_expr_type
+    mov qword [expected_expr_type], 0
     test rax, rax
     jz .fail
     cmp rax, TYPE_I32
@@ -1034,7 +1085,19 @@ semantic_stmt_returns:
     je .yes
     cmp rax, AST_IF_STMT
     je .if_stmt
+    cmp rax, AST_UNSAFE_BLOCK
+    je .unsafe_block
     jmp .no
+.unsafe_block:
+    mov rdi, r12
+    call ast_child
+    test rax, rax
+    jz .no
+    mov rdi, rax
+    call semantic_block_returns
+    pop r12
+    pop rbx
+    ret
 .if_stmt:
     mov rdi, r12
     call ast_child
@@ -1302,4 +1365,85 @@ semantic_print_stmt:
 .fail:
     mov rax, 1
     pop r12
+    ret
+
+semantic_unsafe_enter:
+    mov rax, [semantic_unsafe_depth]
+    cmp rax, SCOPE_CAP
+    jae .overflow
+    inc qword [semantic_unsafe_depth]
+    xor rax, rax
+    ret
+.overflow:
+    mov rdi, src_path
+    mov rsi, err_scope_overflow
+    call print_diag
+    mov rax, 1
+    ret
+
+semantic_unsafe_leave:
+    cmp qword [semantic_unsafe_depth], 0
+    je .done
+    dec qword [semantic_unsafe_depth]
+.done:
+    xor rax, rax
+    ret
+
+semantic_check_unsafe_deref:
+    cmp qword [semantic_unsafe_depth], 0
+    jne .ok
+    push rdi
+    call ast_span_start
+    mov rdi, rax
+    call set_diag_from_start
+    pop rdi
+    mov rdi, src_path
+    mov rsi, err_unsafe_op
+    call print_diag
+    mov rax, 1
+    ret
+.ok:
+    xor rax, rax
+    ret
+
+semantic_unsafe_block:
+    push rbx
+    push r12
+    mov r12, rdi
+    
+    call semantic_unsafe_enter
+    test rax, rax
+    jnz .fail_enter
+    
+    mov rdi, r12
+    call ast_child
+    mov rbx, rax
+    
+.block_loop:
+    test rbx, rbx
+    jz .block_done
+    
+    mov rdi, rbx
+    call semantic_stmt
+    test rax, rax
+    jnz .fail_loop
+    
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .block_loop
+    
+.block_done:
+    call semantic_unsafe_leave
+    xor rax, rax
+    pop r12
+    pop rbx
+    ret
+    
+.fail_loop:
+    call semantic_unsafe_leave
+    jmp .fail_enter
+.fail_enter:
+    pop r12
+    pop rbx
     ret

@@ -226,6 +226,8 @@ keyword_kind:
 .len6:
     cmp byte [rdi], 'u'
     je .check_unsafe
+    cmp byte [rdi], 's'
+    je .check_struct
     jmp .ident
 .check_unsafe:
     cmp byte [rdi + 1], 'n'
@@ -239,6 +241,19 @@ keyword_kind:
     cmp byte [rdi + 5], 'e'
     jne .ident
     mov rax, TOK_UNSAFE
+    ret
+.check_struct:
+    cmp byte [rdi + 1], 't'
+    jne .ident
+    cmp byte [rdi + 2], 'r'
+    jne .ident
+    cmp byte [rdi + 3], 'u'
+    jne .ident
+    cmp byte [rdi + 4], 'c'
+    jne .ident
+    cmp byte [rdi + 5], 't'
+    jne .ident
+    mov rax, TOK_STRUCT
     ret
 .len8:
     cmp byte [rdi], 'c'

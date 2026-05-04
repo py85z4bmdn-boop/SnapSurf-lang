@@ -1,0 +1,6 @@
+fn main -> i32
+    let x i32 = 100
+    let px *i32 = &x
+    let y i32 = *px
+    ret y
+end

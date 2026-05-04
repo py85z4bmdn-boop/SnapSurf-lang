@@ -200,8 +200,8 @@ parse_pointer_type:
     ; Consume *
     call advance_token
     
-    ; Parse the inner type
-    call parse_type_keyword
+    ; Parse the inner type; recursive so **T is valid.
+    call parse_any_type
     test rax, rax
     jz .not_ptr          ; Inner type must be valid
     
@@ -239,8 +239,17 @@ parse_any_type:
     ; Parse primitive type
     call parse_type_keyword
     test rax, rax
-    jz .not_type          ; Not a recognized primitive
+    jnz .primitive_found          ; Found primitive type
     
+    ; Not a primitive; check if it's a struct type
+    call current_token_addr
+    mov rdi, [rax + TOKEN_START]
+    mov rsi, [rax + TOKEN_LEN]
+    call type_lookup_struct_by_name
+    test rax, rax
+    jz .not_type                 ; Not a recognized type
+    
+.primitive_found:
     mov [tmp_type_id], rax
     
     ; Check if followed by [N] for array
@@ -275,8 +284,10 @@ parse_any_type:
 
 .not_type:
     xor rax, rax
+    ret
 
 .done_type:
+    mov rax, [tmp_type_id]
     ret
 
 
@@ -296,6 +307,7 @@ parse_array_type:
     jz .bad
     
     mov [tmp_type_id], rax    ; Save element type
+    call advance_token
     call current_token_kind
     cmp rax, TOK_SEMICOLON
     jne .bad
@@ -323,9 +335,7 @@ parse_array_type:
     call current_token_kind
     cmp rax, TOK_RBRACKET
     jne .bad
-    
-    call advance_token
-    
+
     ; Create array type
     mov rdi, [tmp_type_id]
     mov rsi, rbx

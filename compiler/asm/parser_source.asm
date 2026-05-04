@@ -9,6 +9,8 @@
 parse_source_subset:
     mov qword [token_index], 0
     call ast_reset
+    call type_init
+    mov qword [struct_registry_count], 0
     mov rdi, AST_SOURCE_FILE
     xor rsi, rsi
     mov rdx, [src_len]
@@ -24,12 +26,23 @@ parse_source_subset:
 .use_loop:
     call current_token_kind
     cmp rax, TOK_USE
-    jne .fn_parse_loop
+    jne .struct_parse_loop
     call parse_use_decl
     test rax, rax
     jnz .fail
     call skip_newline_tokens
     jmp .use_loop
+
+.struct_parse_loop:
+    call skip_newline_tokens
+    call current_token_kind
+    cmp rax, TOK_STRUCT
+    jne .fn_parse_loop
+    call parse_struct_decl
+    test rax, rax
+    jnz .fail
+    call skip_newline_tokens
+    jmp .struct_parse_loop
 
 .fn_parse_loop:
     call skip_newline_tokens
@@ -124,6 +137,167 @@ parse_use_decl:
     mov rsi, err_bad_use
     call print_diag
     mov rax, 1
+    ret
+
+parse_struct_decl:
+    ; Parse: struct Name
+    ;         field1 type1;
+    ;         field2 type2;
+    ;         ...
+    ;         end
+    ; Input: current token at TOK_STRUCT
+    ; Output: 0 on success, 1 on failure
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+    
+    ; Get struct token position
+    call current_token_addr
+    mov r12, [rax + TOKEN_START]
+    call advance_token
+    
+    ; Parse struct name (identifier)
+    call current_token_kind
+    cmp rax, TOK_IDENT
+    jne .bad
+    
+    call current_token_addr
+    mov r13, [rax + TOKEN_START]
+    mov r14, [rax + TOKEN_LEN]
+    call advance_token
+    
+    call skip_newline_tokens
+    
+    ; Create struct AST node
+    mov rdi, AST_STRUCT_DECL
+    mov rsi, r12
+    mov rdx, r12
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .bad
+    mov r15, rax
+    
+    ; Parse fields: field type; field type; ...
+    xor rbx, rbx                ; Field counter
+.field_loop:
+    call current_token_kind
+    cmp rax, TOK_END
+    je .fields_done
+    
+    ; Parse field name
+    cmp rax, TOK_IDENT
+    jne .bad
+    
+    call current_token_addr
+    mov r8, [rax + TOKEN_START]
+    mov r9, [rax + TOKEN_LEN]
+    call advance_token
+    
+    ; Parse field type
+    call parse_any_type
+    test rax, rax
+    jz .bad
+    mov r10, rax                ; Save type ID
+    call advance_token
+    
+    ; Expect semicolon
+    call current_token_kind
+    cmp rax, TOK_SEMICOLON
+    jne .bad
+    call advance_token
+    
+    ; Create AST_STRUCT_FIELD node
+    mov rdi, AST_STRUCT_FIELD
+    mov rsi, r8                 ; field name start
+    mov rdx, r8
+    add rdx, r9                 ; field name end
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .bad
+    
+    ; Set field type tag
+    mov rdi, rax
+    mov rsi, r10
+    call ast_set_type_tag
+    
+    ; Append to struct
+    mov rdi, r15
+    mov rsi, rax
+    call ast_append_child
+    
+    inc rbx
+    call skip_newline_tokens
+    jmp .field_loop
+    
+.fields_done:
+    ; Consume end
+    call advance_token
+    
+    ; Register struct in registry
+    mov rax, [struct_registry_count]
+    cmp rax, 256
+    jae .registry_overflow
+    
+    mov rcx, rax
+    mov [struct_name_start + rcx * 8], r13
+    mov [struct_name_len + rcx * 8], r14
+    mov [struct_field_count + rcx * 8], rbx
+    
+    ; Create struct type and store type ID
+    mov rdi, r13
+    mov rsi, r14
+    mov rdx, rbx
+    mov rcx, r15
+    call type_intern_struct
+    mov r10, rax                        ; Save struct type ID
+    test r10, r10
+    jz .bad
+    
+    ; Store the returned struct type ID in the registry
+    mov rax, [struct_registry_count]
+    mov rcx, rax
+    mov [struct_type_id + rcx * 8], r10
+    mov [struct_ast_node + rcx * 8], r15
+    inc qword [struct_registry_count]
+    
+    xor rax, rax
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+    
+.registry_overflow:
+    call set_diag_from_current
+    mov rdi, src_path
+    mov rsi, err_struct_registry_overflow
+    call print_diag
+    mov rax, 1
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+    
+.bad:
+    call set_diag_from_current
+    mov rdi, src_path
+    mov rsi, err_bad_struct
+    call print_diag
+    mov rax, 1
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
     ret
 
 parse_fn_or_main:
@@ -337,8 +511,12 @@ parse_fn_param_node:
     call ast_new
     test rax, rax
     jz .fail
+    mov r14, rax
+    mov rdi, rax
+    mov rsi, [tmp_type_id]
+    call ast_set_type_tag
     mov rdi, rbx
-    mov rsi, rax
+    mov rsi, r14
     call ast_append_child
     xor rax, rax
     pop r13
@@ -395,6 +573,8 @@ parse_block:
     je .ident_stmt
     cmp rax, TOK_PRINT
     je .print_stmt
+    cmp rax, TOK_UNSAFE
+    je .unsafe_block_parse
     jmp .unsupported
 .ret:
     call parse_ret_stmt
@@ -446,6 +626,11 @@ parse_block:
     jmp .loop
 .print_stmt:
     call parse_print_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.unsafe_block_parse:
+    call parse_unsafe_block
     test rax, rax
     jnz .fail
     jmp .loop
@@ -499,6 +684,8 @@ parse_block_inner:
     je .ident_stmt
     cmp rax, TOK_PRINT
     je .print_stmt
+    cmp rax, TOK_UNSAFE
+    je .unsafe_block
     jmp .unsupported
 .ret:
     call parse_ret_stmt
@@ -553,6 +740,11 @@ parse_block_inner:
     test rax, rax
     jnz .fail
     jmp .loop
+.unsafe_block:
+    call parse_unsafe_block
+    test rax, rax
+    jnz .fail
+    jmp .loop
 .end:
     xor rax, rax
     ret
@@ -568,6 +760,69 @@ parse_block_inner:
     mov rax, 1
     ret
 .fail:
+    ret
+
+parse_unsafe_block:
+    call current_token_addr
+    mov r12, [rax + TOKEN_START]
+    call advance_token
+
+    call current_token_kind
+    cmp rax, TOK_ARROW
+    jne .bad
+    call advance_token
+
+    mov rdi, AST_BLOCK
+    mov rsi, r12
+    mov rdx, r12
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .bad
+    mov r14, rax
+
+    mov rbx, [ast_block_node]
+    mov [ast_block_node], r14
+
+    push r12
+    push r14
+    push rbx
+    call parse_block_inner
+    pop rbx
+    pop r14
+    pop r12
+    test rax, rax
+    jnz .restore_and_fail
+
+    call current_token_kind
+    cmp rax, TOK_END
+    jne .bad_block_end
+
+    mov rdi, AST_UNSAFE_BLOCK
+    mov rsi, r12
+    mov rdx, r12
+    mov rcx, r14
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .bad_block_end
+
+    mov rdi, [ast_block_node]
+    mov rsi, rax
+    call ast_append_child
+    call advance_token
+
+    mov [ast_block_node], rbx
+    xor rax, rax
+    ret
+.restore_and_fail:
+    mov [ast_block_node], rbx
+    jmp .bad
+.bad_block_end:
+    mov [ast_block_node], rbx
+.bad:
+    mov rax, 1
     ret
 
 ; Include sub-module implementations

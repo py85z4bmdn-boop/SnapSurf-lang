@@ -168,3 +168,13 @@
 .amp:
     mov rdi, TOK_AMP
     jmp .single
+
+; Left brace
+.lbrace:
+    mov rdi, TOK_LBRACE
+    jmp .single
+
+; Right brace
+.rbrace:
+    mov rdi, TOK_RBRACE
+    jmp .single

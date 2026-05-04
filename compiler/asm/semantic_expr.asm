@@ -54,8 +54,19 @@ semantic_expr_type:
     je .deref
     cmp r13, AST_ARRAY_INDEX
     je .array_index
+    cmp r13, AST_FIELD_ACCESS
+    je .field_access
     jmp .bad
 .i32:
+    cmp qword [expected_expr_type], 0
+    je .i32_default
+    mov rdi, [expected_expr_type]
+    call type_is_integer
+    test rax, rax
+    jz .i32_default
+    mov rax, [expected_expr_type]
+    jmp .done
+.i32_default:
     mov rax, TYPE_I32
     jmp .done
 .bool:
@@ -144,8 +155,10 @@ semantic_expr_type:
     je .check_bool_operands
     cmp r13, AST_BIN_OR
     je .check_bool_operands
-    cmp rax, TYPE_I32
-    jne .bad_type_current
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .bad_type_current
     jmp .continue_comparison
 .check_bool_operands:
     cmp rax, TYPE_BOOL
@@ -162,7 +175,11 @@ semantic_expr_type:
     je .check_bool_op2
     cmp r13, AST_BIN_OR
     je .check_bool_op2
-    cmp rsi, TYPE_I32
+    mov rdi, rsi
+    call type_is_integer
+    test rax, rax
+    jz .bad_type_current
+    cmp rsi, r12
     jne .bad_type_current
     jmp .bool_result
 .check_bool_op2:
@@ -172,7 +189,6 @@ semantic_expr_type:
     mov rax, TYPE_BOOL
     jmp .done
 .addr_of:
-    ; &expr: returns pointer to expr's type
     mov rdi, r12
     call ast_child
     mov rdi, rax
@@ -180,14 +196,12 @@ semantic_expr_type:
     jz .bad
     call semantic_expr_type
     test rax, rax
-    jz .done      ; Propagate error
-    ; Create pointer type by calling type_intern_ptr(inner_type, TYPE_MUT_CONST)
+    jz .done
     mov rdi, rax
-    xor rsi, rsi  ; TYPE_MUT_CONST
+    xor rsi, rsi
     call type_intern_ptr
     jmp .done
 .deref:
-    ; *expr: expects pointer, returns inner type
     mov rdi, r12
     call ast_child
     mov rdi, rax
@@ -195,16 +209,13 @@ semantic_expr_type:
     jz .bad
     call semantic_expr_type
     test rax, rax
-    jz .done      ; Propagate error
-    ; Check that it's a pointer type
-    cmp rax, 20   ; TYPE_PTR_START - pointers start at ID 20 + inner_type
-    jl .bad_pointer_type ; Not a pointer type
-    ; Extract inner type from pointer by checking TYPE kind
-    ; For now, we assume inner type is encoded in pointer ID
-    ; Pointer IDs start at 20, inner type is at index (ptr_id - 20)
-    ; But we need to query type table
+    jz .done
+    cmp rax, TYPE_PRIMITIVE_COUNT
+    jl .bad_pointer_type
     mov rdi, rax
     call type_get_inner
+    test rax, rax
+    jz .bad_pointer_type
     jmp .done
 .bad_pointer_type:
     mov rdi, r14
@@ -237,6 +248,7 @@ semantic_expr_type:
     ; Get index expression
     mov rdi, r12
     call ast_child
+    mov rdi, rax
     call ast_next
     mov rdi, rax
     test rdi, rdi
@@ -275,6 +287,57 @@ semantic_expr_type:
     xor rax, rax
     jmp .done
 .bad_type_current:
+    mov rdi, r14
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_type
+    call print_diag
+    xor rax, rax
+    jmp .done
+.field_access:
+    ; Get base expression type
+    mov rdi, r12
+    call ast_child
+    test rax, rax
+    jz .bad
+    mov rdi, rax
+    call semantic_expr_type
+    test rax, rax
+    jz .done
+    
+    ; Check if it's a struct type
+    mov rbx, rax                ; struct type ID
+    cmp rbx, TYPE_PRIMITIVE_COUNT
+    jl .bad_struct_type
+    cmp rbx, [type_count]
+    jae .bad_struct_type
+    
+    mov rax, rbx
+    imul rax, TYPE_DESC_SIZE
+    cmp byte [type_table + rax + TYPE_DESC_KIND], TYPE_KIND_STRUCT
+    jne .bad_struct_type
+    
+    ; Get field name from AST node (span)
+    mov rdi, r12
+    call ast_span_start
+    mov r13, rax                ; field name offset
+    mov rdi, r12
+    call ast_span_end
+    sub rax, r13                ; field name length
+    mov r10, rax                ; Use r10 for field name length (NOT r14!)
+    
+    ; Look up field type
+    mov rdi, rbx                ; struct type ID
+    mov rsi, r13                ; field name offset
+    mov rdx, r10                ; field name length
+    call type_lookup_struct_field
+    ; rax now has the field type (or 0 if not found)
+    test rax, rax
+    jz .bad_struct_type
+    
+    jmp .done
+    
+.bad_struct_type:
     mov rdi, r14
     call set_diag_from_expr_node
     mov rdi, src_path

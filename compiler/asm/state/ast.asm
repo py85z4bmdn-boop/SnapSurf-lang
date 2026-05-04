@@ -8,3 +8,4 @@ ast_call_stmt: resq 1
 ast_ret_stmt: resq 1
 ast_error_flag: resq 1
 ast_buf: resb AST_CAP * AST_SIZE
+ast_type_tag: resq AST_CAP

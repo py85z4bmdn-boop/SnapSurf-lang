@@ -1,0 +1,12 @@
+struct X
+    a i32;
+end
+
+fn get_field p X -> i32
+    let v i32 = p.a
+    ret v
+end
+
+fn main -> i32
+    ret 0
+end

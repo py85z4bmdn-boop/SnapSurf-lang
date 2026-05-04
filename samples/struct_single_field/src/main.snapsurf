@@ -1,0 +1,12 @@
+struct Box
+    v i32;
+end
+
+fn get_value b Box -> i32
+    let result i32 = b.v
+    ret result
+end
+
+fn main -> i32
+    ret 0
+end

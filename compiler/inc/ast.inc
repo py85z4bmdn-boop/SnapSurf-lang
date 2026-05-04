@@ -54,6 +54,16 @@
 %define AST_CONST_DECL 51
 %define AST_PRINT_STMT 52
 
+; Struct/Enum support
+%define AST_STRUCT_DECL 53
+%define AST_STRUCT_FIELD 54
+%define AST_STRUCT_LIT 55
+%define AST_FIELD_ACCESS 56
+
+%define AST_ENUM_DECL 57
+%define AST_ENUM_VARIANT 58
+%define AST_ENUM_LIT 59
+
 ; Foundation v0 extensions (manual memory + raw pointer ops)
 %define AST_MEM_MALLOC_EXPR 36
 %define AST_MEM_LOAD_I32_EXPR 37

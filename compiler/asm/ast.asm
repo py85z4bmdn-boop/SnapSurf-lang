@@ -26,6 +26,9 @@ ast_new:
     mov [ast_count], r10
     mov r11, r10
     dec r11
+    mov r9, r11
+    imul r9, 8
+    mov qword [ast_type_tag + r9], 0
     imul r11, AST_SIZE
     mov [ast_buf + r11 + AST_KIND], rdi
     mov [ast_buf + r11 + AST_SPAN_START], rsi
@@ -39,6 +42,26 @@ ast_new:
     mov rsi, err_ast_overflow
     call print_diag
     mov qword [ast_error_flag], 1
+    xor rax, rax
+    ret
+
+ast_set_type_tag:
+    test rdi, rdi
+    jz .done
+    dec rdi
+    imul rdi, 8
+    mov [ast_type_tag + rdi], rsi
+.done:
+    ret
+
+ast_get_type_tag:
+    test rdi, rdi
+    jz .none
+    dec rdi
+    imul rdi, 8
+    mov rax, [ast_type_tag + rdi]
+    ret
+.none:
     xor rax, rax
     ret
 

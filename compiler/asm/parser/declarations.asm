@@ -26,7 +26,10 @@ parse_decl_stmt:
     call advance_token
     call current_token_kind
     cmp rax, TOK_EQ
-    jne .bad
+    je .has_initializer
+    mov qword [tmp_ast_b], 0
+    jmp .make_node
+.has_initializer:
     call advance_token
 
     xor rdi, rdi
@@ -35,6 +38,7 @@ parse_decl_stmt:
     jz .fail
     mov [tmp_ast_b], rax
 
+.make_node:
     mov rdi, r15
     mov rsi, r12
     mov rdx, r12
@@ -42,6 +46,9 @@ parse_decl_stmt:
     xor r8, r8
     call ast_new
     mov r14, rax
+    mov rdi, r14
+    mov rsi, [tmp_type_id]
+    call ast_set_type_tag
     mov rdi, r14
     mov rsi, [tmp_ast_a]
     call ast_append_child

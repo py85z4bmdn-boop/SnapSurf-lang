@@ -371,7 +371,7 @@ emit_store_stmt:
     mov rdi, rbx
     call ast_next
     test rax, rax
-    jz .fail
+    jz .maybe_no_initializer
     mov rdi, rax
     call emit_expr
     test rax, rax
@@ -395,6 +395,16 @@ emit_store_stmt:
     mov rsi, asm_store_local_post
     mov rdx, asm_store_local_post_len
     call write_all
+    xor rax, rax
+    pop rbx
+    ret
+.maybe_no_initializer:
+    mov rdi, r12
+    call ast_get_type_tag
+    mov rdi, rax
+    call type_get_element_of_array
+    test rax, rax
+    jz .fail
     xor rax, rax
     pop rbx
     ret
