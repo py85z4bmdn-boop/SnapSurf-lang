@@ -16,6 +16,8 @@ ast_reset:
     mov qword [ast_error_flag], 0
     mov qword [loop_depth], 0
     mov byte [needs_print_int_helper], 0
+    mov qword [field_registry_count], 0
+    mov qword [field_name_buf_pos], 0
     ret
 
 ast_new:
@@ -73,30 +75,60 @@ ast_addr:
     ret
 
 ast_append_child:
+    ; REWRITTEN: Be extremely explicit about what we're doing
     test rdi, rdi
     jz .done
     test rsi, rsi
     jz .done
+    
     push rbx
     push r12
-    mov r12, rsi
-    call ast_addr
+    push r13
+    
+    mov r12, rsi                ; r12 = child node ID
+    mov r13, rdi                ; r13 = parent node ID
+    
+    ; Convert parent node ID to buffer address
+    mov rax, r13
+    dec rax                      ; rax = r13 - 1 (0-indexed)
+    imul rax, AST_SIZE           ; rax = (r13 - 1) * 40
+    add rax, ast_buf             ; rax = &ast_buf[(r13-1)*40]
+    
+    ; rax now points to the parent node structure
+    ; Read the current first child
     mov rbx, [rax + AST_CHILD_OR_DATA]
-    test rbx, rbx
-    jz .first
-.walk:
-    mov rdi, rbx
-    call ast_addr
-    mov rbx, [rax + AST_NEXT_OR_EXTRA]
-    test rbx, rbx
-    jz .set_next
-    jmp .walk
-.set_next:
-    mov [rax + AST_NEXT_OR_EXTRA], r12
-    jmp .out
-.first:
+    
+    ; If no first child, add our node as first child
+    cmp rbx, 0
+    jne .has_children
+    
+    ; No existing first child - set new child as first
     mov [rax + AST_CHILD_OR_DATA], r12
-.out:
+    jmp .done_pop
+    
+.has_children:
+    ; Walk to the last sibling
+    mov r13, rax                ; r13 = address of parent node
+    
+.sibling_loop:
+    ; rbx = current sibling node ID
+    mov rax, rbx
+    dec rax
+    imul rax, AST_SIZE
+    add rax, ast_buf
+    
+    ; rax now points to current sibling
+    ; Check if it has a next sibling
+    mov rbx, [rax + AST_NEXT_OR_EXTRA]
+    cmp rbx, 0
+    jne .sibling_loop
+    
+    ; rbx = 0, rax = address of last sibling
+    ; Append our new node as next sibling
+    mov [rax + AST_NEXT_OR_EXTRA], r12
+    
+.done_pop:
+    pop r13
     pop r12
     pop rbx
 .done:

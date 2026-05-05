@@ -38,3 +38,15 @@ struct_name_len: resq 256
 struct_type_id: resq 256
 struct_field_count: resq 256
 struct_ast_node: resq 256
+struct_first_field_node: resq 256    ; Node ID of first field node (bypass ast_child)
+
+; Field registry: store field information for field lookup
+; Flat table: max 256 structs * max 10 fields = 2560 field entries
+field_registry_count: resq 1
+field_struct_id: resq 2560           ; Which struct this field belongs to
+field_name_buf_pos: resq 1           ; Current position in field_name_buf  
+field_name_start: resq 2560          ; Field name offset in field_name_buf (not src_buf!)
+field_name_len: resq 2560            ; Field name length
+field_type: resq 2560                ; Field type ID
+field_name_buf: resb 25600           ; 10KB buffer for field names
+

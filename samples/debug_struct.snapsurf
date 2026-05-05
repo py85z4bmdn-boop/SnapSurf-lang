@@ -1,0 +1,9 @@
+struct Point
+  x i32;
+end
+
+fn main -> void {
+  p Point;
+  v i32 = p.x;
+  ret;
+}

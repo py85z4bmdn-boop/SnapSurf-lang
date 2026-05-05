@@ -183,6 +183,7 @@ parse_struct_decl:
     
     ; Parse fields: field type; field type; ...
     xor rbx, rbx                ; Field counter
+    xor r11, r11                ; First field node ID
 .field_loop:
     call current_token_kind
     cmp rax, TOK_END
@@ -221,12 +222,18 @@ parse_struct_decl:
     test rax, rax
     jz .bad
     
+    ; Store first field node ID
+    test r11, r11
+    jnz .not_first_field
+    mov r11, rax
+.not_first_field:
+    
     ; Set field type tag
     mov rdi, rax
     mov rsi, r10
     call ast_set_type_tag
     
-    ; Append to struct
+    ; Append to struct (for backwards compatibility, even though ast_child won't work)
     mov rdi, r15
     mov rsi, rax
     call ast_append_child
@@ -245,6 +252,10 @@ parse_struct_decl:
     jae .registry_overflow
     
     mov rcx, rax
+    
+    ; Track where fields for this struct start in the field registry
+    mov r8, [field_registry_count]
+    
     mov [struct_name_start + rcx * 8], r13
     mov [struct_name_len + rcx * 8], r14
     mov [struct_field_count + rcx * 8], rbx
@@ -253,7 +264,7 @@ parse_struct_decl:
     mov rdi, r13
     mov rsi, r14
     mov rdx, rbx
-    mov rcx, r15
+    mov rax, rcx
     call type_intern_struct
     mov r10, rax                        ; Save struct type ID
     test r10, r10
@@ -263,7 +274,25 @@ parse_struct_decl:
     mov rax, [struct_registry_count]
     mov rcx, rax
     mov [struct_type_id + rcx * 8], r10
+    ; Verify r15 is non-zero before storing
+    test r15, r15
+    jz .bad
     mov [struct_ast_node + rcx * 8], r15
+    mov [struct_first_field_node + rcx * 8], r11
+    
+    ; Update field registry entries for this struct to point to its type ID
+    ; Note: r8 still contains the field registry start index
+    mov r9, r8
+    mov r12, [field_registry_count]
+.update_field_entries:
+    cmp r9, r12
+    jae .done_updating_fields
+    
+    mov [field_struct_id + r9 * 8], r10
+    inc r9
+    jmp .update_field_entries
+    
+.done_updating_fields:
     inc qword [struct_registry_count]
     
     xor rax, rax

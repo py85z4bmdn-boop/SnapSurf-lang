@@ -1,0 +1,11 @@
+struct Box
+    width i64;
+end
+
+fn get_width b Box -> i32
+    ret b.width
+end
+
+fn main -> i32
+    ret 0
+end

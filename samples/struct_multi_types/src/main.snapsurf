@@ -1,0 +1,21 @@
+struct Point
+    x i32;
+    y i32;
+end
+
+struct Box
+    width i64;
+    height i64;
+end
+
+fn get_point_x p Point -> i32
+    ret p.x
+end
+
+fn get_box_width b Box -> i64
+    ret b.width
+end
+
+fn main -> i32
+    ret 0
+end

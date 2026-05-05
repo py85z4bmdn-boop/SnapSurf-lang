@@ -9,6 +9,8 @@ ast_kind:
 ast_child:
     call ast_addr
     mov rax, [rax + AST_CHILD_OR_DATA]
+    ; DEBUG: If this is a struct field lookup, hardcode return
+    ; (This is a test to see if the issue is elsewhere)
     ret
 
 ast_next:

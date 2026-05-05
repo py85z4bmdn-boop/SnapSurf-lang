@@ -1,0 +1,12 @@
+struct Color
+    r i64;
+    g i64;
+    b i64;
+end
+
+fn main i32
+    let c Color
+    let c_r i64 = c.r     ; Should work - r is i64
+    
+    0
+end

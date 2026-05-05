@@ -1,0 +1,13 @@
+struct TwoField
+    a i32;
+    b i32;
+end
+
+fn get_a obj TwoField -> i32
+    let x i32 = obj.a
+    ret x
+end
+
+fn main -> i32
+    ret 0
+end
