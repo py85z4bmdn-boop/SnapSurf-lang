@@ -3,7 +3,7 @@ struct MyType
 end
 
 fn get_struct -> MyType
-    ret 0
+    ret MyType { x = 0 }
 end
 
 fn main -> i32

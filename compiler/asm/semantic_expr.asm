@@ -360,16 +360,16 @@ semantic_expr_type:
     ; Get name span from the node
     mov rdi, rbx
     call ast_span_start
-    mov r14, rax                    ; r14 = name offset
+    mov [tmp_ast_a], rax            ; struct name offset
     
     mov rdi, rbx
     call ast_span_end
-    mov r13, rax                    ; r13 = name end
-    sub r13, r14                    ; r13 = name length
+    sub rax, [tmp_ast_a]
+    mov [tmp_ast_b], rax            ; struct name length
     
     ; Look up struct type by name
-    mov rdi, r14
-    mov rsi, r13
+    mov rdi, [tmp_ast_a]
+    mov rsi, [tmp_ast_b]
     call semantic_find_struct
     test rax, rax
     jz .bad
@@ -381,11 +381,13 @@ semantic_expr_type:
     cmp byte [type_table + rax + TYPE_DESC_KIND], TYPE_KIND_STRUCT
     jne .bad
     
-    ; Return the struct type ID
+    ; Return the struct type ID, rejecting mismatched expected struct types.
     cmp qword [expected_expr_type], 0
     je .struct_lit_no_expected
     
     mov rax, [expected_expr_type]
+    cmp rax, rbx
+    jne .bad_struct_type
     jmp .done
     
 .struct_lit_no_expected:

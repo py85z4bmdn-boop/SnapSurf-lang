@@ -49,7 +49,7 @@ parse_source_subset:
     call current_token_kind
     cmp rax, TOK_FN
     jne .fn_parse_done
-    
+
     ; Parse a function (can be any name, not just main)
     mov qword [parser_found_main], 0    ; Reset main flag for this iteration
     call parse_fn_or_main
@@ -62,12 +62,12 @@ parse_source_subset:
     ; Check we found at least one function
     test r15, r15
     jz .no_functions
-    
+
     ; Check for EOF or unexpected token
     call current_token_kind
     cmp rax, TOK_EOF
     je .success
-    
+
     ; Unexpected token after functions
     call print_unsupported_current
     mov rax, 1
@@ -152,24 +152,24 @@ parse_struct_decl:
     push r13
     push r14
     push r15
-    
+
     ; Get struct token position
     call current_token_addr
     mov r12, [rax + TOKEN_START]
     call advance_token
-    
+
     ; Parse struct name (identifier)
     call current_token_kind
     cmp rax, TOK_IDENT
     jne .bad
-    
+
     call current_token_addr
     mov r13, [rax + TOKEN_START]
     mov r14, [rax + TOKEN_LEN]
     call advance_token
-    
+
     call skip_newline_tokens
-    
+
     ; Create struct AST node
     mov rdi, AST_STRUCT_DECL
     mov rsi, r12
@@ -180,85 +180,93 @@ parse_struct_decl:
     test rax, rax
     jz .bad
     mov r15, rax
-    
+
+    ; Save field registry start index before field parsing loop
+    mov rax, [field_registry_count]
+    mov [tmp_field_registry_start], rax
+    mov qword [tmp_ast_a], 0
+
     ; Parse fields: field type; field type; ...
     xor rbx, rbx                ; Field counter
-    xor r11, r11                ; First field node ID
 .field_loop:
     call current_token_kind
     cmp rax, TOK_END
     je .fields_done
-    
+
     ; Parse field name
     cmp rax, TOK_IDENT
     jne .bad
-    
+
     call current_token_addr
     mov r8, [rax + TOKEN_START]
     mov r9, [rax + TOKEN_LEN]
+    mov [tmp_field_name_start], r8
+    mov [tmp_field_name_len], r9
     call advance_token
-    
+
     ; Parse field type
     call parse_any_type
     test rax, rax
     jz .bad
     mov r10, rax                ; Save type ID
     call advance_token
-    
+
     ; Expect semicolon
     call current_token_kind
     cmp rax, TOK_SEMICOLON
     jne .bad
     call advance_token
-    
+
+    mov [tmp_field_type], r10
+
     ; Create AST_STRUCT_FIELD node
     mov rdi, AST_STRUCT_FIELD
-    mov rsi, r8                 ; field name start
-    mov rdx, r8
-    add rdx, r9                 ; field name end
+    mov rsi, [tmp_field_name_start] ; field name start
+    mov rdx, [tmp_field_name_start]
+    add rdx, [tmp_field_name_len]   ; field name end
     xor rcx, rcx
     xor r8, r8
     call ast_new
     test rax, rax
     jz .bad
-    
+
     ; Store first field node ID
-    test r11, r11
+    cmp qword [tmp_ast_a], 0
     jnz .not_first_field
-    mov r11, rax
+    mov [tmp_ast_a], rax        ; Save first field node ID to memory
 .not_first_field:
-    
+
     ; Set field type tag
     mov rdi, rax
-    mov rsi, r10
+    mov rsi, [tmp_field_type]
     call ast_set_type_tag
-    
+
     ; Append to struct (for backwards compatibility, even though ast_child won't work)
     mov rdi, r15
     mov rsi, rax
     call ast_append_child
-    
-    ; Save field info before it's overwritten
-    ; We'll use a temp approach - save to memory location instead of registers
-    ; since r13, r14 hold struct name which we can't lose
-    mov [tmp_field_name_start], r8   ; Save field name start offset
-    mov [tmp_field_name_len], r9    ; Save field name length
-    mov [tmp_field_type], r10        ; Save field type ID
-    
+
     ; Get field registry entry
     mov rax, [field_registry_count]
+    cmp rax, 2560
+    jae .field_registry_overflow
     mov [tmp_field_registry_idx], rax  ; Save field registry index
-    
+
     ; Get current position in field_name_buf
     mov r11, [field_name_buf_pos]
     mov r8, r11                 ; r8 = start position
     mov r9, r11                 ; r9 = current position
-    
+
     ; Copy field name to field_name_buf
     mov r12, [tmp_field_name_len]   ; r12 = length
+    mov rax, r11
+    add rax, r12
+    jc .field_name_overflow
+    cmp rax, 25600
+    ja .field_name_overflow
     test r12, r12
     jz .name_copied
-    
+
     mov r10, [tmp_field_name_start]  ; r10 = src offset
 .copy_field_name:
     mov al, [src_buf + r10]
@@ -267,47 +275,43 @@ parse_struct_decl:
     inc r9
     dec r12
     jnz .copy_field_name
-    
+
 .name_copied:
     ; Store in field_registry using saved index
     mov rax, [tmp_field_registry_idx]
     mov r12, [tmp_field_name_len]
     mov r10, [tmp_field_type]
-    
+
     mov [field_name_start + rax * 8], r8
     mov [field_name_len + rax * 8], r12
     mov [field_type + rax * 8], r10
-    
+
     ; Update position
     mov [field_name_buf_pos], r9
     inc qword [field_registry_count]
-    
+
     inc rbx
     call skip_newline_tokens
     jmp .field_loop
-    
-    inc rbx
-    call skip_newline_tokens
-    jmp .field_loop
-    
+
 .fields_done:
     ; Consume end
     call advance_token
-    
+
     ; Register struct in registry
     mov rax, [struct_registry_count]
     cmp rax, 256
     jae .registry_overflow
-    
+
     mov rcx, rax
-    
+
     ; Track where fields for this struct start in the field registry
     mov r8, [field_registry_count]
-    
+
     mov [struct_name_start + rcx * 8], r13
     mov [struct_name_len + rcx * 8], r14
     mov [struct_field_count + rcx * 8], rbx
-    
+
     ; Create struct type and store type ID
     mov rdi, r13
     mov rsi, r14
@@ -317,32 +321,33 @@ parse_struct_decl:
     mov r10, rax                        ; Save struct type ID
     test r10, r10
     jz .bad
-    
+
     ; Store the returned struct type ID in the registry
     mov rax, [struct_registry_count]
     mov rcx, rax
     mov [struct_type_id + rcx * 8], r10
-    ; Verify r15 is non-zero before storing
+    ; Verify first field node ID was saved
+    mov r11, [tmp_ast_a]
     test r15, r15
     jz .bad
     mov [struct_ast_node + rcx * 8], r15
     mov [struct_first_field_node + rcx * 8], r11
-    
+
     ; Update field registry entries for this struct to point to its type ID
-    ; Note: r8 still contains the field registry start index
+    mov r8, [tmp_field_registry_start]  ; r8 = field registry start index
     mov r9, r8
     mov r12, [field_registry_count]
 .update_field_entries:
     cmp r9, r12
     jae .done_updating_fields
-    
+
     mov [field_struct_id + r9 * 8], r10
     inc r9
     jmp .update_field_entries
-    
+
 .done_updating_fields:
     inc qword [struct_registry_count]
-    
+
     xor rax, rax
     pop r15
     pop r14
@@ -350,7 +355,33 @@ parse_struct_decl:
     pop r12
     pop rbx
     ret
-    
+
+.field_registry_overflow:
+    call set_diag_from_current
+    mov rdi, src_path
+    mov rsi, err_field_registry_overflow
+    call print_diag
+    mov rax, 1
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+.field_name_overflow:
+    call set_diag_from_current
+    mov rdi, src_path
+    mov rsi, err_field_name_buf_overflow
+    call print_diag
+    mov rax, 1
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
 .registry_overflow:
     call set_diag_from_current
     mov rdi, src_path
@@ -363,7 +394,7 @@ parse_struct_decl:
     pop r12
     pop rbx
     ret
-    
+
 .bad:
     call set_diag_from_current
     mov rdi, src_path
@@ -497,6 +528,10 @@ parse_fn_or_main:
     call parse_any_type
     test rax, rax
     jz .bad_return_type
+    mov [tmp_type_id], rax
+    mov rdi, r13
+    mov rsi, rax
+    call ast_set_type_tag
     call advance_token
 
     mov rdi, AST_BLOCK

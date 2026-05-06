@@ -10,3 +10,4 @@ tmp_field_name_start: resq 1
 tmp_field_name_len: resq 1
 tmp_field_type: resq 1
 tmp_field_registry_idx: resq 1
+tmp_field_registry_start: resq 1

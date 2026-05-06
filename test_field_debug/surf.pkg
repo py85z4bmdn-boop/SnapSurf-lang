@@ -1,0 +1,7 @@
+package test-field
+version 1.0
+type executable
+target linux-x86_64
+runtime tiny
+entry main
+end

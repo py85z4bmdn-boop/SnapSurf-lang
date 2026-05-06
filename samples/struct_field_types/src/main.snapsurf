@@ -4,9 +4,8 @@ struct Color
     b i64;
 end
 
-fn main i32
-    let c Color
-    let c_r i64 = c.r     ; Should work - r is i64
-    
-    0
+fn main -> i32
+    let c Color = Color { r = 1, g = 2, b = 3 }
+    let c_r i64 = c.r
+    ret 0
 end

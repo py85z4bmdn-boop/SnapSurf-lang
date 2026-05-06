@@ -26,9 +26,11 @@ fn_registry_count: resq 1
 fn_name_start: resq 256
 fn_name_len: resq 256
 fn_param_count: resq 256
+fn_return_type: resq 256
 fn_ast_node: resq 256
 fn_emit_counter: resq 1
 current_fn_param_count: resq 1
+current_fn_return_type: resq 1
 tmp_saved_block: resq 1
 
 ; Struct registry: track defined struct types
@@ -49,4 +51,3 @@ field_name_start: resq 2560          ; Field name offset in field_name_buf (not 
 field_name_len: resq 2560            ; Field name length
 field_type: resq 2560                ; Field type ID
 field_name_buf: resb 25600           ; 10KB buffer for field names
-

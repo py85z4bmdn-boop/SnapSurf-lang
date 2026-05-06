@@ -42,6 +42,10 @@ semantic_check_subset:
     call semantic_function_param_count
     test rax, rax
     jnz .bad_main
+    mov rdi, [ast_main_fn]
+    call ast_get_type_tag
+    cmp rax, TYPE_I32
+    jne .bad_main
 
     mov rdi, [ast_root]
     call ast_child
@@ -113,6 +117,7 @@ semantic_init_fn_registry:
     mov qword [fn_registry_count], 0
     mov qword [fn_emit_counter], 0
     mov qword [current_fn_param_count], 0
+    mov qword [current_fn_return_type], TYPE_I32
     xor rax, rax
     ret
 
@@ -201,6 +206,15 @@ semantic_register_function:
     mov rdx, rbx
     imul rdx, 8
     mov [fn_param_count + rdx], rax
+    mov rdi, r12
+    call ast_get_type_tag
+    test rax, rax
+    jnz .return_type_ok
+    mov rax, TYPE_I32
+.return_type_ok:
+    mov rdx, rbx
+    imul rdx, 8
+    mov [fn_return_type + rdx], rax
     mov rdi, r13
     mov rsi, r14
     call source_span_is_main
@@ -362,6 +376,15 @@ semantic_check_function:
     push rbx
     push r12
     mov r12, rdi
+    mov rdi, r12
+    call ast_get_type_tag
+    test rax, rax
+    jnz .return_type_ok
+    mov rax, TYPE_I32
+.return_type_ok:
+    mov [current_fn_return_type], rax
+
+    mov rdi, r12
     call semantic_fn_block
     test rax, rax
     jz .bad
@@ -445,6 +468,11 @@ semantic_fn_call_type:
     dec rax
     imul rax, 8
     mov r14, [fn_param_count + rax]
+    mov r13, [fn_return_type + rax]
+    test r13, r13
+    jnz .return_type_known
+    mov r13, TYPE_I32
+.return_type_known:
     mov rdi, r12
     call semantic_call_arg_count
     cmp rax, r14
@@ -466,7 +494,7 @@ semantic_fn_call_type:
     mov rbx, rax
     jmp .arg_loop
 .ok:
-    mov rax, TYPE_I32
+    mov rax, r13
     jmp .out
 .not_found:
     mov rdi, r12
@@ -875,21 +903,29 @@ semantic_decl_stmt:
     pop rbx
     ret
 .type_check_struct:
+    mov [tmp_ast_c], rax
+
     ; Check if target is a struct type with single primitive field
     mov r10, [tmp_type_id]
     cmp r10, TYPE_PRIMITIVE_COUNT
     jl .type_bad
-    
+
     cmp r10, [type_count]
     jae .type_bad
-    
+
     mov r11, r10
     imul r11, TYPE_DESC_SIZE
     cmp byte [type_table + r11 + TYPE_DESC_KIND], TYPE_KIND_STRUCT
     jne .type_bad
-    
+
     ; For single-field structs, allow init with matching primitive type
     ; This provides convenient auto-wrapping of single field structs
+    mov rdi, r10
+    call type_struct_single_field_type
+    test rax, rax
+    jz .type_bad
+    cmp rax, [tmp_ast_c]
+    jne .type_bad
     jmp .add_symbol
 .no_initializer:
     mov rdi, [tmp_type_id]
@@ -1004,23 +1040,40 @@ semantic_assign_stmt:
 semantic_ret_stmt:
     push r12
     mov r12, rdi
+    mov qword [tmp_ast_a], 0
     mov rdi, r12
     call ast_child
+    mov [tmp_ast_a], rax
     mov rdi, rax
     test rdi, rdi
     jz .bad
-    mov qword [expected_expr_type], TYPE_I32
+    mov rax, [current_fn_return_type]
+    test rax, rax
+    jnz .return_type_ok
+    mov rax, TYPE_I32
+.return_type_ok:
+    mov [tmp_type_id], rax
+    mov [expected_expr_type], rax
     call semantic_expr_type
     mov qword [expected_expr_type], 0
     test rax, rax
     jz .fail
-    cmp rax, TYPE_I32
+    cmp rax, [tmp_type_id]
     jne .bad
     mov byte [return_seen], 1
     xor rax, rax
     pop r12
     ret
 .bad:
+    mov rdi, [tmp_ast_a]
+    test rdi, rdi
+    jz .bad_at_ret
+    call set_diag_from_expr_node
+    jmp .bad_print
+.bad_at_ret:
+    mov rdi, r12
+    call set_diag_from_expr_node
+.bad_print:
     mov rdi, src_path
     mov rsi, err_ret
     call print_diag
@@ -1429,36 +1482,36 @@ semantic_unsafe_block:
     push rbx
     push r12
     mov r12, rdi
-    
+
     call semantic_unsafe_enter
     test rax, rax
     jnz .fail_enter
-    
+
     mov rdi, r12
     call ast_child
     mov rbx, rax
-    
+
 .block_loop:
     test rbx, rbx
     jz .block_done
-    
+
     mov rdi, rbx
     call semantic_stmt
     test rax, rax
     jnz .fail_loop
-    
+
     mov rdi, rbx
     call ast_next
     mov rbx, rax
     jmp .block_loop
-    
+
 .block_done:
     call semantic_unsafe_leave
     xor rax, rax
     pop r12
     pop rbx
     ret
-    
+
 .fail_loop:
     call semantic_unsafe_leave
     jmp .fail_enter

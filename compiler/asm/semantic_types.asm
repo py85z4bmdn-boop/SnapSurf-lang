@@ -205,14 +205,14 @@ type_get_element_of_array:
     jb .not_derived
     cmp rdi, [type_count]
     jae .not_derived
-    
+
     ; Check type_table for this type ID
     mov rax, rdi
     imul rax, TYPE_DESC_SIZE
     mov al, byte [type_table + rax + TYPE_DESC_KIND]
     cmp al, TYPE_KIND_ARRAY
     jne .not_array
-    
+
     ; It's an array, extract element type from INNER
     mov rax, rdi
     imul rax, TYPE_DESC_SIZE
@@ -280,27 +280,27 @@ type_lookup_struct_by_name:
     push r13
     mov r12, rdi                ; name offset
     mov r13, rsi                ; name length
-    
+
     ; Defensive: Check that name length is reasonable
     cmp r13, 255
     jae .not_found
-    
+
     xor rbx, rbx
 .loop:
     ; Defensive: Check bounds against registry count
     mov rax, [struct_registry_count]
     cmp rbx, rax
     jae .not_found
-    
+
     ; Defensive: Check that index won't overflow arrays (256 entries max)
     cmp rbx, 256
     jae .not_found
-    
+
     ; Compare lengths
     mov rax, [struct_name_len + rbx * 8]
     cmp rax, r13
     jne .next
-    
+
     ; Compare bytes: both name_start fields are offsets into src_buf
     mov rdi, [struct_name_start + rbx * 8]   ; stored name offset
     mov rsi, r12                              ; input name offset
@@ -315,18 +315,18 @@ type_lookup_struct_by_name:
     jne .next
     inc rcx
     jmp .cmp_loop
-    
+
 .found:
     mov rax, [struct_type_id + rbx * 8]
     pop r13
     pop r12
     pop rbx
     ret
-    
+
 .next:
     inc rbx
     jmp .loop
-    
+
 .not_found:
     xor rax, rax
     pop r13
@@ -346,18 +346,18 @@ type_intern_struct:
     mov r12, rdi                ; struct name offset (into src_buf)
     mov r13, rsi                ; name length
     mov r14, rdx                ; field count
-    
+
     ; Check for existing struct with same name
     xor rbx, rbx                ; Index counter
 .find_struct:
     cmp rbx, [struct_registry_count]
     jae .create_new
-    
+
     ; Compare names
     mov rax, [struct_name_len + rbx * 8]
     cmp rax, r13
     jne .next_struct
-    
+
     ; Compare bytes - both are offsets into src_buf
     mov rdi, r12                ; input name offset
     mov rsi, [struct_name_start + rbx * 8]  ; stored name offset
@@ -372,7 +372,7 @@ type_intern_struct:
     jne .next_struct
     inc rcx
     jmp .cmp_loop
-    
+
 .next_struct:
     inc rbx
     jmp .find_struct
@@ -391,20 +391,20 @@ type_intern_struct:
     mov rax, [type_count]
     cmp rax, TYPE_TBL_CAP
     jae .overflow
-    
+
     mov rbx, rax
     mov rax, rbx
     imul rax, TYPE_DESC_SIZE
-    
+
     ; Set struct descriptor
     mov byte [type_table + rax + TYPE_DESC_KIND], TYPE_KIND_STRUCT
     mov byte [type_table + rax + TYPE_DESC_MUT], TYPE_MUT_CONST
     mov dword [type_table + rax + TYPE_DESC_INNER], 0
     mov qword [type_table + rax + TYPE_DESC_SIZE_PARAM], r14
-    
+
     mov rax, rbx
     inc qword [type_count]
-    
+
     pop r14
     pop r13
     pop r12
@@ -427,20 +427,20 @@ semantic_find_struct:
     push r12
     push r13
     push r14
-    
+
     mov r12, rdi                    ; r12 = name offset
     mov r13, rsi                    ; r13 = name length
-    
+
     xor rbx, rbx                    ; rbx = loop counter
 .loop:
     cmp rbx, [struct_registry_count]
     jge .not_found
-    
+
     mov rax, rbx
     imul rax, 8
     cmp [struct_name_len + rax], r13
     jne .next
-    
+
     ; Length matches, compare bytes
     mov r14, [struct_name_start + rax]
     xor rcx, rcx
@@ -453,11 +453,11 @@ semantic_find_struct:
     jne .next
     inc rcx
     jmp .compare
-    
+
 .next:
     inc rbx
     jmp .loop
-    
+
 .found:
     mov rax, rbx
     imul rax, 8
@@ -467,7 +467,7 @@ semantic_find_struct:
     pop r12
     pop rbx
     ret
-    
+
 .not_found:
     xor rax, rax
     pop r14
@@ -484,44 +484,65 @@ type_lookup_struct_field:
     push r12
     push r13
     push r14
-    
+
     mov r12, rdi                    ; r12 = struct type ID
     mov r13, rsi                    ; r13 = field name offset (src_buf)
     mov r14, rdx                    ; r14 = field name length
-    
+
+    ; First, check if field_registry_count is positive
+    mov rax, [field_registry_count]
+    test rax, rax
+    jz .not_found
+
     xor rbx, rbx                    ; rbx = field registry index
 .search_loop:
     cmp rbx, [field_registry_count]
     jge .not_found
-    
+
+    ; Bounds check on array index
+    cmp rbx, 2560
+    jae .not_found
+
     ; Check if this field belongs to our struct
     mov rax, rbx
     imul rax, 8
-    cmp [field_struct_id + rax], r12
+
+    ; Defensive check: make sure array access won't go out of bounds
+    mov rcx, [field_struct_id + rax]
+    cmp rcx, r12
     jne .next_field
-    
+
     ; Check field name length
-    cmp [field_name_len + rax], r14
+    mov rcx, [field_name_len + rax]
+    cmp rcx, r14
     jne .next_field
-    
+
     ; Compare field names byte-by-byte
     ; Registry stores name in field_name_buf at offset [field_name_start]
     mov r10, [field_name_start + rax]    ; r10 = offset in field_name_buf
+
+    ; Bounds check: field_name_buf[r10..r10+r14) must stay inside the buffer.
+    mov rax, r10
+    add rax, r14
+    jc .next_field
+    cmp rax, 25600
+    ja .next_field
+
     mov rcx, r14
     xor r11, r11                    ; r11 = byte counter
 .name_compare:
     cmp r11, rcx
     jge .found
-    
+
     ; Compare src_buf[r13+r11] with field_name_buf[r10+r11]
     mov al, [src_buf + r13 + r11]
     mov dl, [field_name_buf + r10 + r11]
     cmp al, dl
     jne .next_field
-    
+
     inc r11
     jmp .name_compare
-    
+
 .found:
     ; Return the field type
     mov rax, rbx
@@ -532,12 +553,60 @@ type_lookup_struct_field:
     pop r12
     pop rbx
     ret
-    
+
 .next_field:
     inc rbx
     jmp .search_loop
-    
+
 .not_found:
+    xor rax, rax
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+; type_struct_single_field_type: return the primitive field type for one-field structs
+; Input: rdi = struct type ID
+; Output: rax = field type ID if exactly one field exists, otherwise 0
+type_struct_single_field_type:
+    push rbx
+    push r12
+    push r13
+    push r14
+
+    mov r12, rdi
+    xor r13, r13                    ; matching field count
+    xor r14, r14                    ; matching field type
+    xor rbx, rbx
+.loop:
+    cmp rbx, [field_registry_count]
+    jae .done
+    cmp rbx, 2560
+    jae .done
+
+    mov rax, rbx
+    imul rax, 8
+    cmp [field_struct_id + rax], r12
+    jne .next
+
+    inc r13
+    mov r14, [field_type + rax]
+.next:
+    inc rbx
+    jmp .loop
+
+.done:
+    cmp r13, 1
+    jne .not_single
+    mov rax, r14
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+.not_single:
     xor rax, rax
     pop r14
     pop r13

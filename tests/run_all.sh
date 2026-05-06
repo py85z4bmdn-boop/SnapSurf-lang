@@ -29,6 +29,9 @@ if strings build/surf | grep -i "rust_stage0" > /dev/null; then
 fi
 
 ./build/surf check examples/hello
+./build/surf check examples/test_if > build/test-output/example_test_if.check
+./build/surf check examples/test_bool > build/test-output/example_test_bool.check
+./build/surf check examples/simple_compare > build/test-output/example_simple_compare.check
 
 ./build/surf dump-tokens examples/hello > build/test-output/hello.tokens
 cmp build/test-output/hello.tokens tests/lexer/hello.tokens.expected
@@ -142,5 +145,43 @@ run_fail continue_outside_loop
 run_fail extra_top_level_end
 run_fail conditional_return_missing
 run_fail primitive_mismatch
+
+run_struct_sample() {
+    name="$1"
+    ./build/surf check "samples/$name" > "build/test-output/sample_$name.out" 2>&1
+    grep '^check ok$' "build/test-output/sample_$name.out" > /dev/null
+}
+
+run_struct_sample_fail() {
+    name="$1"
+    expected="$2"
+    if ./build/surf check "samples/$name" > "build/test-output/sample_$name.out" 2>&1; then
+        echo "expected struct sample failure for $name"
+        exit 1
+    fi
+    grep "$expected" "build/test-output/sample_$name.out" > /dev/null
+}
+
+run_struct_sample struct_assign_prim
+run_struct_sample struct_basic
+run_struct_sample struct_field
+run_struct_sample struct_field_types
+run_struct_sample struct_literal_fields
+run_struct_sample struct_literal_init
+run_struct_sample struct_literal_multi
+run_struct_sample struct_minimal
+run_struct_sample struct_multi
+run_struct_sample struct_multi_types
+run_struct_sample struct_param
+run_struct_sample struct_param_assign
+run_struct_sample struct_return
+run_struct_sample struct_short
+run_struct_sample struct_single_field
+run_struct_sample struct_two_field_test
+run_struct_sample struct_two_fields
+run_struct_sample struct_var
+run_struct_sample test_struct_field
+run_struct_sample_fail struct_invalid "E0206 invalid struct declaration"
+run_struct_sample_fail struct_type_mismatch "E0403 return type mismatch"
 
 echo "foundation asm tests passed"
