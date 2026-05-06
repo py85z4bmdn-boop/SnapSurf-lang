@@ -1,0 +1,8 @@
+package struct-literal-init
+version 1.0
+type executable
+target linux-x86_64
+runtime tiny
+entry main
+requires syscall
+end

@@ -238,6 +238,54 @@ parse_struct_decl:
     mov rsi, rax
     call ast_append_child
     
+    ; Save field info before it's overwritten
+    ; We'll use a temp approach - save to memory location instead of registers
+    ; since r13, r14 hold struct name which we can't lose
+    mov [tmp_field_name_start], r8   ; Save field name start offset
+    mov [tmp_field_name_len], r9    ; Save field name length
+    mov [tmp_field_type], r10        ; Save field type ID
+    
+    ; Get field registry entry
+    mov rax, [field_registry_count]
+    mov [tmp_field_registry_idx], rax  ; Save field registry index
+    
+    ; Get current position in field_name_buf
+    mov r11, [field_name_buf_pos]
+    mov r8, r11                 ; r8 = start position
+    mov r9, r11                 ; r9 = current position
+    
+    ; Copy field name to field_name_buf
+    mov r12, [tmp_field_name_len]   ; r12 = length
+    test r12, r12
+    jz .name_copied
+    
+    mov r10, [tmp_field_name_start]  ; r10 = src offset
+.copy_field_name:
+    mov al, [src_buf + r10]
+    mov [field_name_buf + r9], al
+    inc r10
+    inc r9
+    dec r12
+    jnz .copy_field_name
+    
+.name_copied:
+    ; Store in field_registry using saved index
+    mov rax, [tmp_field_registry_idx]
+    mov r12, [tmp_field_name_len]
+    mov r10, [tmp_field_type]
+    
+    mov [field_name_start + rax * 8], r8
+    mov [field_name_len + rax * 8], r12
+    mov [field_type + rax * 8], r10
+    
+    ; Update position
+    mov [field_name_buf_pos], r9
+    inc qword [field_registry_count]
+    
+    inc rbx
+    call skip_newline_tokens
+    jmp .field_loop
+    
     inc rbx
     call skip_newline_tokens
     jmp .field_loop

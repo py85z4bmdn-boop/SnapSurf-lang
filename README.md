@@ -85,7 +85,7 @@ make test-rust-prototype
 That target is optional and is not part of root `make` or `make test`.
 
 ## LICENSE
-This project is using Apache 2.0 License
+This project is using Apache 2.0 License.
 
 ## Author
-The author of this project is đặng gia minh
+The author of this project is đặng gia minh.

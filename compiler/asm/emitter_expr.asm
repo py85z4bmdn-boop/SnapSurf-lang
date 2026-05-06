@@ -63,6 +63,8 @@ emit_expr:
     je .array_index
     cmp r13, AST_FIELD_ACCESS
     je .field_access
+    cmp r13, AST_STRUCT_LIT
+    je .struct_lit
     jmp .fail
 .int:
     mov rdi, r12
@@ -260,6 +262,55 @@ emit_expr:
     call emit_expr
     test rax, rax
     jnz .fail
+    jmp .ok
+.struct_lit:
+    ; Struct literal: Type { field1 = expr1, field2 = expr2, ... }
+    ; For now, initialize by evaluating field expressions left-to-right
+    ; and accumulating in rax. Final implementation will place fields at offsets.
+    
+    ; Get the struct type name from first child
+    mov rdi, r12
+    call ast_child
+    test rax, rax
+    jz .fail
+    
+    mov r14, rax                    ; r14 = struct type name node
+    
+    ; Get the next sibling (first field value)
+    mov rdi, r14
+    call ast_next
+    mov r13, rax                    ; r13 = first field value expression (or NULL)
+    
+    ; For struct literals with fields, evaluate each field expression
+    xor r15, r15                    ; r15 = field counter
+.field_eval_loop:
+    test r13, r13
+    jz .struct_lit_done
+    
+    ; Emit the field expression
+    mov rdi, r13
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Result is in rax, would normally store to struct field offset
+    ; For now, keep accumulating in rax
+    
+    ; Move to next field expression
+    mov rdi, r13
+    call ast_next
+    mov r13, rax
+    inc r15
+    jmp .field_eval_loop
+    
+.struct_lit_done:
+    ; If no fields were evaluated, return 0 (struct initialized to zero)
+    ; Otherwise return the last field value (temporary until proper struct layout)
+    test r15, r15
+    jnz .ok
+    
+    xor rbx, rbx
+    call emit_mov_rax_imm
     jmp .ok
 .binary:
     mov rdi, r12

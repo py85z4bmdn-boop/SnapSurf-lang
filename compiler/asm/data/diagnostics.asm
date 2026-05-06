@@ -20,6 +20,8 @@ err_missing_arrow: db "E0204 '->' expected in function signature", 0
 err_bad_use: db "E0205 invalid use declaration", 0
 err_bad_struct: db "E0206 invalid struct declaration", 0
 err_struct_registry_overflow: db "E0207 too many struct definitions", 0
+err_field_registry_overflow: db "E0208 too many struct fields", 0
+err_field_name_buf_overflow: db "E0209 field name buffer overflow", 0
 err_fn_registry_overflow: db "E0301 function registry overflow (max 128 functions)", 0
 err_fn_not_found: db "E0404 function not found", 0
 err_fn_param_mismatch: db "E0404 function call argument count mismatch", 0

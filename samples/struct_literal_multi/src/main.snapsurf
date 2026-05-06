@@ -1,0 +1,18 @@
+struct Config
+    debug i32;
+    verbose i32;
+    level i32;
+end
+
+fn check_config cfg Config -> i32
+    let d i32 = cfg.debug
+    let v i32 = cfg.verbose
+    let l i32 = cfg.level
+    ret 0
+end
+
+fn main -> i32
+    let cfg1 Config = Config { debug = 1, verbose = 0, level = 5 }
+    let result i32 = check_config(cfg1)
+    ret result
+end

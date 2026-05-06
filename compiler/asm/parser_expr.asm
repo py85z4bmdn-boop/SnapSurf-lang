@@ -118,6 +118,8 @@ parse_prefix_expr:
     je .var_call
     cmp rax, TOK_DOT
     je .var_field
+    cmp rax, TOK_LBRACE
+    je .var_struct_lit
     mov rdi, rax
     call token_starts_expr
     test rax, rax
@@ -135,6 +137,10 @@ parse_prefix_expr:
 .var_call:
     mov rdi, r12
     call parse_fn_call_expr
+    ret
+.var_struct_lit:
+    mov rdi, r12
+    call parse_struct_lit_expr
     ret
 .neg:
     call advance_token
@@ -390,6 +396,109 @@ parse_field_access_expr:
     ret
     
 .bad:
+    pop r13
+    pop r12
+    pop rbx
+    xor rax, rax
+    ret
+
+; parse_struct_lit_expr: Parse struct literal { field = expr, field = expr, ... }
+; rdi = base identifier node (struct type name)
+; Returns rax = AST_STRUCT_LIT node or 0 on error
+parse_struct_lit_expr:
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+    
+    mov r12, rdi                    ; r12 = struct type name node
+    
+    ; Expect LBRACE
+    call current_token_kind
+    cmp rax, TOK_LBRACE
+    jne .bad
+    call advance_token
+    
+    ; Create struct literal node
+    mov rdi, AST_STRUCT_LIT
+    xor rsi, rsi
+    xor rdx, rdx
+    mov rcx, r12                    ; type name as child
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .bad
+    
+    mov r13, rax                    ; r13 = struct literal node
+    
+    ; Parse fields: field = expr (comma-separated, no trailing comma)
+.field_loop:
+    call current_token_kind
+    cmp rax, TOK_RBRACE
+    je .end_fields
+    
+    ; Expect IDENT for field name
+    cmp rax, TOK_IDENT
+    jne .bad
+    
+    mov rdi, [token_index]
+    call token_addr
+    mov rbx, [rax + TOKEN_START]    ; field name start
+    mov r14, rbx
+    add r14, [rax + TOKEN_LEN]      ; field name end
+    
+    call advance_token
+    
+    ; Expect EQ
+    call current_token_kind
+    cmp rax, TOK_EQ
+    jne .bad
+    
+    call advance_token
+    
+    ; Parse field value expression
+    xor rdi, rdi
+    call parse_expr_min
+    test rax, rax
+    jz .bad
+    
+    mov r15, rax                    ; r15 = field value expression
+    
+    ; Create field assignment node (we'll use a temporary approach)
+    ; Store field name in scratch and append value to struct literal
+    mov rdi, r13
+    mov rsi, r15
+    call ast_append_child
+    
+    ; Check for comma or end
+    call current_token_kind
+    cmp rax, TOK_COMMA
+    jne .check_end
+    
+    call advance_token
+    jmp .field_loop
+    
+.check_end:
+    call current_token_kind
+    cmp rax, TOK_RBRACE
+    je .end_fields
+    jmp .bad
+    
+.end_fields:
+    call advance_token              ; consume RBRACE
+    
+    mov rax, r13
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+    
+.bad:
+    pop r15
+    pop r14
     pop r13
     pop r12
     pop rbx

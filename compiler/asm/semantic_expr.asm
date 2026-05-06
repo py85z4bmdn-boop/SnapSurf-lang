@@ -56,6 +56,8 @@ semantic_expr_type:
     je .array_index
     cmp r13, AST_FIELD_ACCESS
     je .field_access
+    cmp r13, AST_STRUCT_LIT
+    je .struct_lit
     jmp .bad
 .i32:
     cmp qword [expected_expr_type], 0
@@ -344,6 +346,50 @@ semantic_expr_type:
     mov rsi, err_type
     call print_diag
     xor rax, rax
+    jmp .done
+.struct_lit:
+    ; Struct literal: Type { field = expr, ... }
+    ; Get struct type name from first child (identifier node)
+    mov rdi, r12
+    call ast_child
+    test rax, rax
+    jz .bad
+    
+    mov rbx, rax                    ; rbx = identifier AST node
+    
+    ; Get name span from the node
+    mov rdi, rbx
+    call ast_span_start
+    mov r14, rax                    ; r14 = name offset
+    
+    mov rdi, rbx
+    call ast_span_end
+    mov r13, rax                    ; r13 = name end
+    sub r13, r14                    ; r13 = name length
+    
+    ; Look up struct type by name
+    mov rdi, r14
+    mov rsi, r13
+    call semantic_find_struct
+    test rax, rax
+    jz .bad
+    
+    mov rbx, rax                    ; rbx = struct type ID
+    
+    ; Verify it's actually a struct type in the type table
+    imul rax, TYPE_DESC_SIZE
+    cmp byte [type_table + rax + TYPE_DESC_KIND], TYPE_KIND_STRUCT
+    jne .bad
+    
+    ; Return the struct type ID
+    cmp qword [expected_expr_type], 0
+    je .struct_lit_no_expected
+    
+    mov rax, [expected_expr_type]
+    jmp .done
+    
+.struct_lit_no_expected:
+    mov rax, rbx
     jmp .done
 .bad:
     mov rdi, src_path

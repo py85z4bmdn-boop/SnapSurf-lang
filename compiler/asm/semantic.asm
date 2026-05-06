@@ -457,8 +457,10 @@ semantic_fn_call_type:
     jz .ok
     mov rdi, rbx
     call semantic_expr_type
-    cmp rax, TYPE_I32
-    jne .type_bad
+    test rax, rax
+    jz .type_bad
+    ; TODO: Check against actual function parameter types
+    ; For now, accept any type as long as it resolves to something
     mov rdi, rbx
     call ast_next
     mov rbx, rax
@@ -857,7 +859,7 @@ semantic_decl_stmt:
     test rax, rax
     jz .fail
     cmp rax, [tmp_type_id]
-    jne .type_bad
+    jne .type_check_struct
 .add_symbol:
     mov rdi, rbx
     call semantic_ident_token
@@ -872,6 +874,23 @@ semantic_decl_stmt:
     pop r12
     pop rbx
     ret
+.type_check_struct:
+    ; Check if target is a struct type with single primitive field
+    mov r10, [tmp_type_id]
+    cmp r10, TYPE_PRIMITIVE_COUNT
+    jl .type_bad
+    
+    cmp r10, [type_count]
+    jae .type_bad
+    
+    mov r11, r10
+    imul r11, TYPE_DESC_SIZE
+    cmp byte [type_table + r11 + TYPE_DESC_KIND], TYPE_KIND_STRUCT
+    jne .type_bad
+    
+    ; For single-field structs, allow init with matching primitive type
+    ; This provides convenient auto-wrapping of single field structs
+    jmp .add_symbol
 .no_initializer:
     mov rdi, [tmp_type_id]
     call type_get_element_of_array

@@ -1,0 +1,16 @@
+struct Rectangle
+    width i32;
+    height i32;
+end
+
+fn area r Rectangle -> i32
+    let w i32 = r.width
+    let h i32 = r.height
+    ret 0
+end
+
+fn main -> i32
+    let rect Rectangle = Rectangle { width = 10, height = 20 }
+    let a i32 = area(rect)
+    ret 0
+end

@@ -419,36 +419,126 @@ type_intern_struct:
     pop rbx
     ret
 
-; type_lookup_struct_field: Find field type in a struct by field name
-; Input: rdi = struct type ID, rsi = field name offset, rdx = field name length
-; Output: rax = field type ID, or 0 if not found
-type_lookup_struct_field:
-; type_lookup_struct_field: Find field type in a struct by field name
-; Input: rdi = struct type ID, rsi = field name offset, rdx = field name length
-; Output: rax = field type ID, or 0 if not found
-type_lookup_struct_field:
-    ; rdi = struct type ID
-    ; rsi = field name offset (in src_buf)
-    ; rdx = field name length
-    ; Returns: rax = field type (or 0 if not found)
-    
+; semantic_find_struct: Find struct type ID by name
+; Input: rdi = struct name offset in src_buf, rsi = name length
+; Output: rax = struct type ID, or 0 if not found
+semantic_find_struct:
     push rbx
     push r12
     push r13
     push r14
     
-    mov r12, rdi                ; r12 = struct type ID
-    mov r13, rsi                ; r13 = field name offset (in src_buf)
-    mov r14, rdx                ; r14 = field name length
+    mov r12, rdi                    ; r12 = name offset
+    mov r13, rsi                    ; r13 = name length
     
-    ; TEMPORARY: Use fallback for now until field registry is debugged
-    mov rax, 3
-    jmp .return_rax
+    xor rbx, rbx                    ; rbx = loop counter
+.loop:
+    cmp rbx, [struct_registry_count]
+    jge .not_found
     
-    ; Real lookup would go here - currently disabled because field name
-    ; comparison is failing. Will fix in next phase.
+    mov rax, rbx
+    imul rax, 8
+    cmp [struct_name_len + rax], r13
+    jne .next
     
-.return_rax:
+    ; Length matches, compare bytes
+    mov r14, [struct_name_start + rax]
+    xor rcx, rcx
+.compare:
+    cmp rcx, r13
+    jge .found
+    mov al, [src_buf + r12 + rcx]
+    mov dl, [src_buf + r14 + rcx]
+    cmp al, dl
+    jne .next
+    inc rcx
+    jmp .compare
+    
+.next:
+    inc rbx
+    jmp .loop
+    
+.found:
+    mov rax, rbx
+    imul rax, 8
+    mov rax, [struct_type_id + rax]
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+    
+.not_found:
+    xor rax, rax
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+; type_lookup_struct_field: Find field type in a struct by field name
+; Input: rdi = struct type ID, rsi = field name offset (src_buf), rdx = field name length
+; Output: rax = field type ID, or 0 if not found
+type_lookup_struct_field:
+    push rbx
+    push r12
+    push r13
+    push r14
+    
+    mov r12, rdi                    ; r12 = struct type ID
+    mov r13, rsi                    ; r13 = field name offset (src_buf)
+    mov r14, rdx                    ; r14 = field name length
+    
+    xor rbx, rbx                    ; rbx = field registry index
+.search_loop:
+    cmp rbx, [field_registry_count]
+    jge .not_found
+    
+    ; Check if this field belongs to our struct
+    mov rax, rbx
+    imul rax, 8
+    cmp [field_struct_id + rax], r12
+    jne .next_field
+    
+    ; Check field name length
+    cmp [field_name_len + rax], r14
+    jne .next_field
+    
+    ; Compare field names byte-by-byte
+    ; Registry stores name in field_name_buf at offset [field_name_start]
+    mov r10, [field_name_start + rax]    ; r10 = offset in field_name_buf
+    mov rcx, r14
+    xor r11, r11                    ; r11 = byte counter
+.name_compare:
+    cmp r11, rcx
+    jge .found
+    
+    ; Compare src_buf[r13+r11] with field_name_buf[r10+r11]
+    mov al, [src_buf + r13 + r11]
+    mov dl, [field_name_buf + r10 + r11]
+    cmp al, dl
+    jne .next_field
+    
+    inc r11
+    jmp .name_compare
+    
+.found:
+    ; Return the field type
+    mov rax, rbx
+    imul rax, 8
+    mov rax, [field_type + rax]
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+    
+.next_field:
+    inc rbx
+    jmp .search_loop
+    
+.not_found:
+    xor rax, rax
     pop r14
     pop r13
     pop r12
