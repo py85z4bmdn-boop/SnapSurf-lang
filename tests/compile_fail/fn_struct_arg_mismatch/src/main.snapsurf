@@ -1,0 +1,16 @@
+struct A
+    x i32;
+end
+
+struct B
+    x i32;
+end
+
+fn takes_a a A -> i32
+    ret 0
+end
+
+fn main -> i32
+    let b B = B { x = 1 }
+    ret takes_a(b)
+end

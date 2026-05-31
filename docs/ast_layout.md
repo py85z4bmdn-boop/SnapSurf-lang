@@ -1,6 +1,6 @@
 # SnapSurf AST Layout
 
-ASM foundation status: PARTIAL AST arena implemented for the foundation v0
+FASM foundation status: AST arena implemented for the current foundation
 expression/local subset.
 
 AST node layout:

@@ -1,0 +1,13 @@
+segment readable writeable
+tmp_payload: rq 1
+tmp_ast_a: rq 1
+tmp_ast_b: rq 1
+tmp_ast_c: rq 1
+tmp_token: rq 1
+tmp_type_id: rq 1
+expected_expr_type: rq 1
+tmp_field_name_start: rq 1
+tmp_field_name_len: rq 1
+tmp_field_type: rq 1
+tmp_field_registry_idx: rq 1
+tmp_field_registry_start: rq 1

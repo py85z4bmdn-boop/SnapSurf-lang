@@ -35,5 +35,5 @@ Foundation nodes:
 - `UnaryNeg`
 
 The AST separates implemented items, statements, and expressions. Full
-functions, parameters, control flow, user types, and type references are not
-implemented in the ASM foundation AST yet.
+future language features beyond the current foundation subset are not
+implemented in the FASM foundation AST yet.

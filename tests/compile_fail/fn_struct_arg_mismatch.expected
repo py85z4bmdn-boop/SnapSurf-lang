@@ -1,0 +1,1 @@
+tests/compile_fail/fn_struct_arg_mismatch/src/main.snapsurf:15:17 E0405 function call argument type mismatch

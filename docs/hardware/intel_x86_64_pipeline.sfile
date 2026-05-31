@@ -1,7 +1,7 @@
 # SnapSurf Intel x86_64 Pipeline Notes
 
-Scope: root ASM/NASM foundation only. These notes constrain compiler/runtime
-work; they are not executed by `make`.
+Scope: root FASM/CMake foundation only. These notes constrain compiler/runtime
+work; they are not executed by CMake.
 
 Target baseline:
 - Linux x86_64 ELF64.
@@ -10,7 +10,8 @@ Target baseline:
   for the first six integer arguments.
 
 Current generated-call contract:
-- `_start` calls `main`.
+- `_start` calls `fn_main`; generated user function labels are prefixed with
+  `fn_` so SnapSurf names cannot collide with FASM instruction mnemonics.
 - Every SnapSurf function emits:
   - `push rbp`
   - `mov rbp, rsp`

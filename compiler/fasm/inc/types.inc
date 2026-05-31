@@ -1,0 +1,55 @@
+; SnapSurf foundation type IDs and descriptor layout.
+; Current executable subset only accepts TYPE_I32 local declarations and
+; TYPE_BOOL literals for diagnostics. The wider primitive tag space is reserved
+; now so semantic tables do not bake in a one-type universe.
+
+TYPE_DESC_SIZE = 16
+TYPE_DESC_KIND = 0
+TYPE_DESC_MUT = 1
+TYPE_DESC_INNER = 4
+TYPE_DESC_SIZE_PARAM = 8
+
+TYPE_KIND_INVALID = 0
+TYPE_KIND_PRIM = 1
+TYPE_KIND_PTR = 2
+TYPE_KIND_ARRAY = 3
+TYPE_KIND_SLICE = 4
+TYPE_KIND_TUPLE = 5
+TYPE_KIND_FN = 6
+TYPE_KIND_STRUCT = 7
+TYPE_KIND_ENUM = 8
+
+TYPE_MUT_CONST = 0
+TYPE_MUT_MUT = 1
+
+TYPE_TBL_CAP = 256
+TYPE_PRIMITIVE_COUNT = 20
+
+TYPE_INVALID = 0
+TYPE_I8 = 1
+TYPE_I16 = 2
+TYPE_I32 = 3
+TYPE_I64 = 4
+TYPE_I128 = 5
+TYPE_ISIZE = 6
+TYPE_U8 = 7
+TYPE_U16 = 8
+TYPE_U32 = 9
+TYPE_U64 = 10
+TYPE_U128 = 11
+TYPE_USIZE = 12
+TYPE_F32 = 13
+TYPE_F64 = 14
+TYPE_BOOL = 15
+TYPE_CHAR = 16
+TYPE_STR = 17
+TYPE_UNIT = 18
+TYPE_NEVER = 19
+TYPE_PTR = 20
+TYPE_REF = 21
+TYPE_ARRAY = 22
+TYPE_SLICE = 23
+TYPE_TUPLE = 24
+TYPE_FN = 25
+TYPE_STRUCT = 26
+TYPE_ENUM = 27

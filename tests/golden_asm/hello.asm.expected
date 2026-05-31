@@ -1,18 +1,18 @@
-default rel
-global _start
-section .text
+format ELF64 executable 3
+entry _start
+segment readable executable
 _start:
-    call main
+    call fn_main
     mov edi, eax
     mov eax, 60
     syscall
 
-main:
+fn_main:
     push rbp
     mov rbp, rsp
     mov rax, 1
     mov rdi, 1
-    lea rsi, [rel .Lstr0]
+    lea rsi, [.Lstr0]
     mov rdx, 15
     syscall
     mov rax, 0
@@ -20,6 +20,6 @@ main:
     pop rbp
     ret
 
-section .rodata
+segment readable
 .Lstr0:
     db 72, 101, 108, 108, 111, 32, 83, 110, 97, 112, 83, 117, 114, 102, 10

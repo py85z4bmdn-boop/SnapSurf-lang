@@ -1,0 +1,4 @@
+fn main -> i32
+    let value i32 = 240
+    ret not value
+end

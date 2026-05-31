@@ -1,0 +1,4 @@
+fn main -> i32
+    let left i32 = 40
+    ret left shr 2
+end

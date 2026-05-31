@@ -1,0 +1,11 @@
+fn main -> i32
+    let signed8 i8 = 127
+    let unsigned8 u8 = 255
+    let signed16 i16 = 32767
+    let unsigned16 u16 = 65535
+    if signed8 == 127 and unsigned8 == 255 and signed16 == 32767 and unsigned16 == 65535 ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

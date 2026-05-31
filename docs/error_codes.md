@@ -1,6 +1,6 @@
 # SnapSurf Error Codes
 
-Implemented by the ASM foundation slice:
+Implemented by the FASM foundation slice:
 
 - `E0001` UTF-8 BOM is not allowed
 - `E0002` invalid UTF-8 sequence
@@ -34,5 +34,5 @@ Implemented by the ASM foundation slice:
 - `E0904` unsupported target
 - `E0905` unsupported runtime
 - `E0906` executable package requires src/main.snapsurf
-- `E1001` NASM emit failed
+- `E1001` FASM emit/build failed
 - `E1002` build artifact path error

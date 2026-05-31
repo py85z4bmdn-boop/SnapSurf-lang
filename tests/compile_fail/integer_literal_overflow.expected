@@ -1,0 +1,1 @@
+tests/compile_fail/integer_literal_overflow/src/main.snapsurf:2:23 E0106 integer literal overflow

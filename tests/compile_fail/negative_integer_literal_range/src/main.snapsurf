@@ -1,0 +1,4 @@
+fn main -> i32
+    let too_small i8 = -129
+    ret 0
+end

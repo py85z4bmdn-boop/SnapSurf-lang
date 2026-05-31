@@ -613,3 +613,80 @@ type_struct_single_field_type:
     pop r12
     pop rbx
     ret
+
+; type_struct_field_index: return 0-based field index within a struct
+; Input: rdi = struct type ID, rsi = field name offset (src_buf), rdx = field name length
+; Output: rax = field index (0-based), or -1 if not found
+type_struct_field_index:
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+
+    mov r12, rdi                    ; struct type ID
+    mov r13, rsi                    ; field name offset (src_buf)
+    mov r14, rdx                    ; field name length
+    xor r15, r15                    ; field index counter within this struct
+
+    xor rbx, rbx
+.loop:
+    cmp rbx, [field_registry_count]
+    jae .not_found
+    cmp rbx, 2560
+    jae .not_found
+
+    mov rax, rbx
+    imul rax, 8
+
+    cmp [field_struct_id + rax], r12
+    jne .next
+
+    ; This field belongs to our struct — check name
+    mov rcx, [field_name_len + rax]
+    cmp rcx, r14
+    jne .next_same_struct
+
+    mov r10, [field_name_start + rax]
+    mov rax, r10
+    add rax, r14
+    jc .next_same_struct
+    cmp rax, 25600
+    ja .next_same_struct
+
+    xor r11, r11
+.cmp:
+    cmp r11, r14
+    jge .found
+
+    mov al, [src_buf + r13 + r11]
+    mov dl, [field_name_buf + r10 + r11]
+    cmp al, dl
+    jne .next_same_struct
+
+    inc r11
+    jmp .cmp
+
+.found:
+    mov rax, r15
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+.next_same_struct:
+    inc r15
+.next:
+    inc rbx
+    jmp .loop
+
+.not_found:
+    mov rax, -1
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret

@@ -5,9 +5,14 @@ Foundation blocks use an opener plus `end`.
 Valid foundation openers:
 
 - `fn ...`
+- `if ... ->`
+- `elif ... ->`
+- `else ->`
+- `while ... ->`
+- `loop ->`
 
-`end` closes the `fn main -> i32` block. Missing `end` and extra `end` are
-syntax errors. Indentation is not semantic.
+`end` closes the active block. Missing `end` and extra `end` are syntax
+errors. Indentation is not semantic.
 
 Curly braces are forbidden as foundation block delimiters. They are not
 reserved for normal block syntax.
@@ -20,5 +25,5 @@ fn main -> i32
 end
 ```
 
-Nested blocks, `if`, `else`, `loop`, `while`, and `unsafe` block syntax are
-not implemented in the ASM foundation compiler yet.
+Generalized block syntax beyond the current foundation control-flow subset is
+not complete yet.

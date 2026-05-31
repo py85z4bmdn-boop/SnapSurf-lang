@@ -254,11 +254,80 @@ emit_expr:
     call write_all
     jmp .ok
 .field_access:
-    ; p.field: For now, emit base variable address
-    ; TODO: Add field offset calculation once field layout is available
+    ; p.field: load field value from struct variable on the stack.
+    ; Struct layout: fields occupy consecutive 8-byte slots.
+    ; Field n of variable at base_slot is at [rbp - (base_slot + n) * 8].
     mov rdi, r12
     call ast_child
+    test rax, rax
+    jz .fail
+    mov r14, rax                    ; r14 = base expression node
+
+    ; Check if base is a simple VAR_REF
+    mov rdi, r14
+    call ast_kind
+    cmp rax, AST_VAR_REF
+    jne .field_access_fallback
+
+    ; Get base variable slot
+    mov rdi, r14
+    call ast_child
     mov rdi, rax
+    call symbol_slot_for_token
+    test rax, rax
+    jz .fail
+    mov r15, rax                    ; r15 = base slot number
+
+    ; Get base variable type for field index lookup
+    mov rdi, r14
+    call ast_child
+    mov rdi, rax
+    call symbol_find
+    test rax, rax
+    jz .fail
+    dec rax
+    imul rax, 8
+    mov rbx, [sym_type + rax]       ; rbx = struct type ID
+
+    ; Get field name from the FIELD_ACCESS span
+    mov rdi, r12
+    call ast_span_start
+    mov r13, rax                    ; field name offset
+    mov rdi, r12
+    call ast_span_end
+    sub rax, r13                    ; field name length
+    mov r14, rax
+
+    ; Look up field index
+    mov rdi, rbx
+    mov rsi, r13
+    mov rdx, r14
+    call type_struct_field_index
+    cmp rax, -1
+    je .fail
+
+    ; Compute slot offset: (base_slot + field_index) * 8
+    add rax, r15
+    imul rax, 8
+    mov rbx, rax
+
+    ; Emit: mov rax, [rbp - offset]
+    mov rdi, [out_fd]
+    mov rsi, asm_load_local_pre
+    mov rdx, asm_load_local_pre_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_load_local_post
+    mov rdx, asm_load_local_post_len
+    call write_all
+    jmp .ok
+
+.field_access_fallback:
+    ; Non-variable base: emit base expression (partial support)
+    mov rdi, r14
     call emit_expr
     test rax, rax
     jnz .fail

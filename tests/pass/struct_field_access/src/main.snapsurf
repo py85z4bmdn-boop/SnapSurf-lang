@@ -1,0 +1,13 @@
+struct Point
+    x i32;
+    y i32;
+end
+
+fn get_y p Point -> i32
+    let val i32 = p.y
+    ret val
+end
+
+fn main -> i32
+    ret 0
+end

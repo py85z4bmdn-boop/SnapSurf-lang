@@ -1,0 +1,4 @@
+fn main -> i32
+    let left i32 = 10
+    ret left xor 3
+end

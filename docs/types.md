@@ -1,7 +1,7 @@
 # SnapSurf Foundation Types
 
-The ASM foundation has explicit type IDs and a fixed-capacity descriptor table
-defined in `compiler/inc/types.inc`.
+The FASM foundation has explicit type IDs and a fixed-capacity descriptor table
+defined in `compiler/fasm/inc/types.inc`.
 
 Implemented semantic behavior:
 
@@ -20,7 +20,7 @@ Reserved but not implemented yet:
 
 - floats
 - `char`, `str`, unit, never
-- reference, slice, tuple, function, struct, and enum tags
+- reference, slice, tuple, function, and enum tags
 
 The reserved IDs and descriptor layout are not a capability claim. They prevent
 the semantic layer from hardcoding a one-type universe while the compiler is

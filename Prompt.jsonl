@@ -1,0 +1,336 @@
+{
+  "role": "Principal System Language Designer",
+  "description": "Comprehensive list of features and requirements for a complete systems and algorithmic programming language, distilled from multi-language comparisons (Java, NASM/FASM, Fortran, C, Rust). Use this prompt to guide deep analysis and design decisions.",
+  "turing_completeness": {
+    "requirements": [
+      "Variables and assignment for storing and changing state",
+      "Arithmetic operators: +, -, *, /, %, exponentiation",
+      "Conditional branching: if/else, compare and jump",
+      "Looping and recursion: while, for, goto, function recursion",
+      "Basic I/O: reading input and writing output",
+      "Subroutines: call and return semantics"
+    ]
+  },
+  "type_system": {
+    "primitive_types": [
+      "Signed integers: i8, i16, i32, i64, i128",
+      "Unsigned integers: u8, u16, u32, u64, u128",
+      "Floating point: f32, f64 (IEEE 754)",
+      "Boolean type: bool",
+      "Character/rune type: ASCII or Unicode",
+      "Unit/void type"
+    ],
+    "composite_types": [
+      "Array and slice types with length and element type",
+      "Struct or record types with named fields",
+      "Union/variant types sharing memory",
+      "Enum types with named variants",
+      "Tuple types",
+      "Function types treating functions as values"
+    ],
+    "pointer_reference_types": [
+      "Raw pointer type *T for direct memory access",
+      "Immutable reference &T",
+      "Mutable reference &mut T",
+      "Pointers to pointers **T",
+      "Pointer-sized integer type usize for pointer arithmetic"
+    ],
+    "advanced_features": [
+      "Static type checking rather than dynamic typing",
+      "Type inference for variables",
+      "Generics / parametric polymorphism",
+      "Type aliasing and newtype patterns",
+      "Trait or interface system for ad‑hoc polymorphism",
+      "Coercion rules: when implicit conversions occur",
+      "Defined integer overflow behaviour: panic, wrap, saturate"
+    ]
+  },
+  "memory_model": {
+    "memory_regions": [
+      "Stack for local variables and call frames",
+      "Heap for dynamic allocation with lifetime beyond function scope",
+      "BSS for zero‑initialised global/static data",
+      "Data section for initialised global/static data",
+      "Text section for executable instructions"
+    ],
+    "heap_management_strategies": {
+      "manual": "malloc/free style (C, assembly) providing speed but risk of leaks and use‑after‑free",
+      "garbage_collection": "automatic memory reclamation with pause times (Java, Go)",
+      "reference_counting": "automatic management with cycle issues (Swift, Python)",
+      "ownership_borrow": "compile‑time checked lifetimes (Rust)",
+      "arena_region": "bulk freeing and cache‑friendly patterns (Zig, custom allocators)"
+    },
+    "alignment_layout": [
+      "Struct padding and explicit layout control",
+      "Cache line alignment (e.g. 64‑byte lines on x86‑64)",
+      "SIMD alignment for 16/32/64‑byte vectors",
+      "Ability to query sizeof and offsetof for types"
+    ],
+    "volatile_and_ordering": [
+      "Volatile qualifiers to prevent compiler reordering around I/O mapped memory",
+      "Memory ordering semantics: acquire, release, sequential consistency",
+      "Memory fences/barriers at assembly level (MFENCE, LFENCE, SFENCE)"
+    ]
+  },
+  "control_flow": {
+    "core_constructs": [
+      "if/else",
+      "while",
+      "for",
+      "break/continue",
+      "return"
+    ],
+    "advanced_constructs": [
+      "Switch/match statements for pattern matching",
+      "Infinite loops with break returning a value",
+      "Goto or labelled breaks for low‑level code generation",
+      "Iterator style loops (for i in range)",
+      "Do‑while loops guaranteeing at least one execution"
+    ],
+    "non_local_flow": [
+      "Exception handling mechanisms (try/catch)",
+      "Result or Option types for functional error handling",
+      "Long jump mechanisms (setjmp/longjmp) as unsafe constructs",
+      "Coroutines and generators for cooperative scheduling",
+      "Async/await syntax for asynchronous operations"
+    ],
+    "error_handling_strategies": [
+      "Error codes returned by functions (C/assembly)",
+      "Exceptions with stack unwinding and catch blocks",
+      "Result/Option types to force explicit handling",
+      "Panic semantics for unrecoverable errors"
+    ]
+  },
+  "function_system": {
+    "definition": "Functions must have a name, parameter list, return type and body; first‑class functions treat functions as values",
+    "calling_conventions": {
+      "SystemV_AMD64": {
+        "args": "rdi, rsi, rdx, rcx, r8, r9 then stack",
+        "returns": "rax and rdx for 128‑bit",
+        "caller_saved": "rax, rcx, rdx, rsi, rdi, r8–r11",
+        "callee_saved": "rbx, rbp, r12–r15"
+      },
+      "Windows_x64": {
+        "args": "rcx, rdx, r8, r9 then stack",
+        "shadow_space": "caller allocates 32 bytes of space"
+      }
+    },
+    "advanced_features": [
+      "Recursion and tail call optimisation",
+      "Variadic arguments (e.g. printf)",
+      "Default and named parameters",
+      "Multiple return values",
+      "Closures and lambdas capturing outer variables",
+      "Inline functions to suggest no call frame",
+      "Function overloading where supported"
+    ]
+  },
+  "module_system": {
+    "features": [
+      "Modules and namespaces with explicit import/export",
+      "Visibility modifiers (public, private, protected)",
+      "Separate compilation of modules",
+      "Name collision avoidance via namespace scoping",
+      "Cycle detection and error reporting in module dependencies",
+      "Package system with version constraints and registries"
+    ]
+  },
+  "io_system": {
+    "standard_io": [
+      "print/eprint functions for stdout and stderr",
+      "Reading lines from stdin",
+      "Formatted output and input (printf/scanf)"
+    ],
+    "file_io": [
+      "Open files with path and mode",
+      "Read/write bytes to file descriptors",
+      "Seek and close operations"
+    ],
+    "syscall_interface": "Direct invocation of OS syscalls (e.g. Linux syscall with mov rax, rdi, rsi, etc.) or via wrapper functions"
+  },
+  "standard_library": {
+    "math": [
+      "abs, min, max, clamp",
+      "power and roots: pow, sqrt, cbrt",
+      "trigonometric functions: sin, cos, tan and inverses",
+      "logarithms and exponentials",
+      "floor, ceil, round, trunc",
+      "Greatest common divisor and least common multiple",
+      "Bitcount operations: popcount, leading/trailing zeros"
+    ],
+    "string": [
+      "Length, concatenation and slicing",
+      "Searching: find, contains, starts_with, ends_with",
+      "Splitting and joining, trimming",
+      "Case conversion to upper/lower",
+      "Parsing from and converting to numeric types",
+      "Formatted string interpolation",
+      "Unicode support"
+    ],
+    "memory": [
+      "malloc, realloc, free",
+      "memcpy, memmove, memset, memcmp"
+    ],
+    "collections": [
+      "Arrays and slices for contiguous memory",
+      "Vectors or dynamic arrays",
+      "Hash maps and hash sets for O(1) access",
+      "Balanced trees (BTreeMap) for ordered maps",
+      "Linked lists for O(1) insert/delete",
+      "Deques for double ended queues",
+      "Binary heaps and priority queues",
+      "Stacks and queues built on top of dynamic arrays"
+    ],
+    "concurrency": [
+      "Thread spawning APIs",
+      "Mutex and read–write locks",
+      "Atomic primitives (AtomicInt, AtomicBool)",
+      "Channels for message passing"
+    ],
+    "time": [
+      "Current time retrieval",
+      "Sleeping for a duration",
+      "Measuring elapsed time",
+      "Getting Unix timestamps"
+    ]
+  },
+  "compilation_toolchain": {
+    "pipeline": [
+      "Lexical analysis",
+      "Parsing into AST",
+      "Semantic analysis (type checking, scope resolution)",
+      "Intermediate representation generation",
+      "Optimisation passes",
+      "Register allocation",
+      "Target code generation",
+      "Assembly to object file",
+      "Linking to produce executable or library"
+    ],
+    "debug_info": [
+      "DWARF format on Unix",
+      "PDB format on Windows",
+      "Source line mapping",
+      "Variable location and type encoding"
+    ],
+    "build_systems": [
+      "Makefile",
+      "Ninja",
+      "CMake",
+      "Cargo-like integrated build and dependency tools"
+    ],
+    "package_manager": [
+      "Dependency resolution with semantic versioning",
+      "Lock files for reproducible builds",
+      "Public and private registries",
+      "Build script integration"
+    ]
+  },
+  "abi_interoperability": {
+    "c_abi": "Ability to declare and call functions with C linkage for interop with libc and OS APIs",
+    "ffi": "Foreign function interface to call into external libraries and expose functions to other languages",
+    "object_formats": [
+      "ELF for Linux",
+      "COFF/PE for Windows",
+      "Mach-O for macOS"
+    ],
+    "linkage": [
+      "Static and dynamic linking",
+      "Weak and strong symbols"
+    ]
+  },
+  "meta_programming": {
+    "macro_system": "Support for macros: textual substitution (C style) and hygienic macros (Rust style)",
+    "generics_templates": "Parametric types and functions with monomorphisation or dynamic dispatch",
+    "compile_time_evaluation": "Constant expressions and compile‑time function evaluation"
+  },
+  "algorithm_features": {
+    "bitwise_operations": [
+      "AND, OR, XOR, NOT, shifts",
+      "Logical right shift",
+      "Rotate left/right"
+    ],
+    "high_precision_arithmetic": [
+      "Big integer types",
+      "Checked, wrapping and saturating arithmetic"
+    ],
+    "simd_intrinsics": "Intrinsic functions for SSE/AVX and portable SIMD abstractions",
+    "iterators": "Lazy iterators with functional combinators (map, filter, fold)",
+    "pattern_matching": "Match expression with guards and range patterns"
+  },
+  "concurrency_model": {
+    "thread_models": [
+      "Thread‑per‑task",
+      "M:N threading (coroutines)",
+      "Async/await",
+      "Actor model with message passing"
+    ],
+    "synchronization": [
+      "Mutex",
+      "Read–write lock",
+      "Semaphore",
+      "Condition variable",
+      "Spinlock",
+      "Barrier"
+    ],
+    "atomic_operations": [
+      "Load/store",
+      "Add/subtract",
+      "And/or/xor",
+      "Compare and swap",
+      "Fetch and add"
+    ],
+    "memory_models": [
+      "Sequential consistency",
+      "Acquire/release",
+      "Relaxed ordering"
+    ]
+  },
+  "formal_specification": {
+    "grammar": "EBNF grammar defining program, declarations, statements, expressions, types and blocks",
+    "type_rules": "Inference rules specifying typing of expressions and statements",
+    "operational_semantics": "Formal evaluation order and side effect semantics",
+    "undefined_behavior": "Inventory of operations that are undefined, implementation‑defined or unspecified"
+  },
+  "development_roadmap": {
+    "current_status": "Lexer, parser, AST, symbol table, semantic checks and simple stack‑based NASM emitter implemented",
+    "missing_features": [
+      "Full type system including floats, structs, arrays and pointers",
+      "Control flow constructs (if/else, loops)",
+      "Function calls with proper calling convention and recursion",
+      "Heap allocation and memory management",
+      "Basic standard library functions (math, I/O)",
+      "Error handling strategy",
+      "Module system and multi‑file builds",
+      "Debug information generation",
+      "Proper ELF symbol export and linking",
+      "Package manager and ecosystem tools"
+    ],
+    "priority_phases": {
+      "phase_1": [
+        "Implement control flow",
+        "Function calls and recursion",
+        "Pointer support",
+        "Struct definitions"
+      ],
+      "phase_2": [
+        "Array types and bounds checking",
+        "Floating point arithmetic",
+        "String type",
+        "I/O syscalls"
+      ],
+      "phase_3": [
+        "Module and multi‑file compilation",
+        "C FFI",
+        "Error handling (Result)",
+        "Debug info (DWARF)"
+      ],
+      "phase_4": [
+        "Generics",
+        "Optimisation passes",
+        "Register allocation",
+        "Collections library",
+        "Concurrency primitives"
+      ]
+    }
+  }
+}

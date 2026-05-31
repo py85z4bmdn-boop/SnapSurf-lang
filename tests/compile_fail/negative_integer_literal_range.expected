@@ -1,0 +1,1 @@
+tests/compile_fail/negative_integer_literal_range/src/main.snapsurf:2:25 E0501 type mismatch

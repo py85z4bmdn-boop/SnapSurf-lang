@@ -3,7 +3,7 @@ set -eu
 
 mkdir -p build/test-output
 
-if [ -e Cargo.toml ] || [ -e Cargo.lock ] || [ -e package.json ] || [ -e tsconfig.json ] || [ -e pyproject.toml ] || [ -e setup.py ] || [ -e CMakeLists.txt ] || [ -e build.zig ] || [ -e go.mod ]; then
+if [ -e Cargo.toml ] || [ -e Cargo.lock ] || [ -e package.json ] || [ -e tsconfig.json ] || [ -e pyproject.toml ] || [ -e setup.py ] || [ -e Makefile ] || [ -e build.zig ] || [ -e go.mod ]; then
     echo "forbidden root build metadata exists"
     exit 1
 fi
@@ -13,6 +13,10 @@ grep "ELF 64-bit" build/test-output/surf.file > /dev/null
 
 if strings build/surf | grep -i "cargo" > /dev/null; then
     echo "build/surf contains cargo reference"
+    exit 1
+fi
+if strings build/surf | grep -i "nasm" > /dev/null; then
+    echo "build/surf contains nasm reference"
     exit 1
 fi
 if strings build/surf | grep -i "rust" > /dev/null; then
@@ -108,9 +112,23 @@ run_exit while_continue 45
 run_exit loop_break 7
 run_exit scoping 10
 run_exit const_folding_simple 14
+run_exit arithmetic_pow 32
+run_exit bitwise_not 15
+run_exit bitwise_and 8
+run_exit bitwise_or 15
+run_exit bitwise_xor 9
+run_exit bitwise_shl 16
+run_exit bitwise_shr 10
+run_exit bitwise_rol 1
+run_exit bitwise_ror 16
 run_exit pointer_deref 100
 run_exit array_index_basic 0
 run_exit primitive_i64 0
+run_exit primitive_pointer_sized 0
+run_exit typed_int_literal_compare 0
+run_exit integer_literal_boundaries 0
+run_exit negative_integer_literals 0
+run_exit struct_field_access 0
 
 run_fail() {
     name="$1"
@@ -145,6 +163,11 @@ run_fail continue_outside_loop
 run_fail extra_top_level_end
 run_fail conditional_return_missing
 run_fail primitive_mismatch
+run_fail integer_literal_range
+run_fail integer_literal_overflow
+run_fail negative_integer_literal_range
+run_fail fn_arg_type_mismatch
+run_fail fn_struct_arg_mismatch
 
 run_struct_sample() {
     name="$1"
@@ -184,4 +207,4 @@ run_struct_sample test_struct_field
 run_struct_sample_fail struct_invalid "E0206 invalid struct declaration"
 run_struct_sample_fail struct_type_mismatch "E0403 return type mismatch"
 
-echo "foundation asm tests passed"
+echo "foundation fasm tests passed"

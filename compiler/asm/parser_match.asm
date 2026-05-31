@@ -224,41 +224,34 @@ parse_pointer_type:
 parse_any_type:
     call current_token_kind
     
-    ; Check if it's a pointer type
     cmp rax, TOK_STAR
     je .try_ptr
     
-    ; Check if it's an array type (starting with [)
     cmp rax, TOK_LBRACKET
     je .try_array
     
-    ; Otherwise must be regular type (identifier)
     cmp rax, TOK_IDENT
     jne .not_type
     
-    ; Parse primitive type
     call parse_type_keyword
     test rax, rax
-    jnz .primitive_found          ; Found primitive type
-    
-    ; Not a primitive; check if it's a struct type
+    jnz .primitive_found
+
     call current_token_addr
     mov rdi, [rax + TOKEN_START]
     mov rsi, [rax + TOKEN_LEN]
     call type_lookup_struct_by_name
     test rax, rax
-    jz .not_type                 ; Not a recognized type
+    jz .not_type
     
 .primitive_found:
-    mov [tmp_type_id], rax
+    push rax                      ; save type ID on stack
     
-    ; Check if followed by [N] for array
     call current_token_kind
     cmp rax, TOK_LBRACKET
-    jne .done_type
+    jne .done_type_pop
     
-    ; It's an array of primitives
-    mov rdi, [tmp_type_id]
+    pop rdi                       ; restore type ID as arg
     call parse_array_type_suffix
     ret
 
@@ -267,14 +260,13 @@ parse_any_type:
     test rax, rax
     jz .not_type
     
-    mov [tmp_type_id], rax
+    push rax                      ; save ptr type ID on stack
     
-    ; After pointer, check for array of pointers [N]
     call current_token_kind
     cmp rax, TOK_LBRACKET
-    jne .done_type
+    jne .done_type_pop
     
-    mov rdi, [tmp_type_id]
+    pop rdi                       ; restore ptr type ID as arg
     call parse_array_type_suffix
     ret
 
@@ -286,8 +278,8 @@ parse_any_type:
     xor rax, rax
     ret
 
-.done_type:
-    mov rax, [tmp_type_id]
+.done_type_pop:
+    pop rax                       ; restore type ID
     ret
 
 

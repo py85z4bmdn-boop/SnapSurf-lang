@@ -1,0 +1,4 @@
+fn main -> i32
+    let too_big u64 = 18446744073709551616
+    ret 0
+end

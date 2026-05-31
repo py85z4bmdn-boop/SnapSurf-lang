@@ -1,6 +1,6 @@
 # SnapSurf Diagnostics
 
-Current ASM foundation diagnostics are printed as:
+Current FASM foundation diagnostics are printed as:
 
 ```text
 path:line:column ERROR_CODE message
@@ -40,8 +40,8 @@ Implemented foundation codes:
 - `E0904` unsupported target
 - `E0905` unsupported runtime
 - `E0906` executable package requires src/main.snapsurf
-- `E1001` NASM emit failed
+- `E1001` FASM emit/build failed
 - `E1002` build artifact path error
 
 Multi-error recovery, notes, help text, related spans, and max-error handling
-are not implemented in the ASM foundation compiler yet.
+are not implemented in the FASM foundation compiler yet.

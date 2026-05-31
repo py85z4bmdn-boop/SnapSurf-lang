@@ -1,0 +1,1 @@
+tests/compile_fail/fn_arg_type_mismatch/src/main.snapsurf:7:19 E0405 function call argument type mismatch

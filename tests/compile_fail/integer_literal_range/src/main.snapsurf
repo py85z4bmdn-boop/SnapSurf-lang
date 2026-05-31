@@ -1,0 +1,4 @@
+fn main -> i32
+    let small u8 = 256
+    ret 0
+end

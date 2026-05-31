@@ -1,0 +1,10 @@
+fn main -> i32
+    let min8 i8 = -128
+    let min16 i16 = -32768
+    let min32 i32 = -2147483648
+    if min8 < 0 and min16 < 0 and min32 < 0 and -128 == min8 ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

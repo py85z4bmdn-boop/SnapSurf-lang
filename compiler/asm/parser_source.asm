@@ -305,9 +305,6 @@ parse_struct_decl:
 
     mov rcx, rax
 
-    ; Track where fields for this struct start in the field registry
-    mov r8, [field_registry_count]
-
     mov [struct_name_start + rcx * 8], r13
     mov [struct_name_len + rcx * 8], r14
     mov [struct_field_count + rcx * 8], rbx

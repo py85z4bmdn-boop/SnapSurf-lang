@@ -1,0 +1,13 @@
+fn main -> i32
+    let words usize = 5
+    let bytes usize = words * 8
+    let expected_bytes usize = 40
+    let delta isize = 3
+    let adjusted isize = delta + 9
+    let expected_adjusted isize = 12
+    if bytes == expected_bytes and adjusted == expected_adjusted ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

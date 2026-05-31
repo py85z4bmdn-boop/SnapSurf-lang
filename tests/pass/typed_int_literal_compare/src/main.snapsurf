@@ -1,0 +1,9 @@
+fn main -> i32
+    let words usize = 40
+    let delta isize = 12
+    if words == 40 and 12 == delta ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

@@ -1,7 +1,7 @@
 # SnapSurf Intel Register Discipline
 
-Compiler-internal NASM routines:
-- Follow `compiler/inc/calling_conv.inc`.
+Compiler-internal FASM routines:
+- Follow `compiler/fasm/inc/calling_conv.inc`.
 - Save `rbx`, `r12`, `r13`, `r14`, and `r15` when a routine keeps state in them
   across nested calls.
 - Treat `rax`, `rcx`, `rdx`, `rsi`, `rdi`, and `r8-r11` as scratch unless the

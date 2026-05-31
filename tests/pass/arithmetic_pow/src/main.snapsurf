@@ -1,0 +1,5 @@
+fn main -> i32
+    let base i32 = 2
+    let exp i32 = 5
+    ret base pow exp
+end

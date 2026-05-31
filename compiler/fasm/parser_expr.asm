@@ -1,0 +1,544 @@
+; Status: PARTIAL.
+; Pratt expression parser for current integer/bool/local expression subset.
+
+parse_expr_min:
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+    push rdi
+    call parse_prefix_expr
+    test rax, rax
+    jz .fail
+    mov r13, rax
+.loop:
+    call current_token_kind
+    mov rdi, rax
+    call infix_binding_power
+    test rax, rax
+    jz .done
+    cmp rax, [rsp]
+    jb .done
+    mov r14, rdx
+    mov rbx, rax
+    call advance_token
+    mov rdi, rbx
+    inc rdi
+    call parse_expr_min
+    test rax, rax
+    jz .fail
+    mov r15, rax
+    mov rdi, r14
+    xor rsi, rsi
+    xor rdx, rdx
+    xor rcx, rcx
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .fail
+    mov rbx, rax
+    mov rdi, rbx
+    mov rsi, r13
+    call ast_append_child
+    mov rdi, rbx
+    mov rsi, r15
+    call ast_append_child
+    mov r13, rbx
+    jmp .loop
+.done:
+    mov rax, r13
+    add rsp, 8
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+.fail:
+    xor rax, rax
+    add rsp, 8
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+parse_prefix_expr:
+    call current_token_kind
+    cmp rax, TOK_INT
+    je .int
+    cmp rax, TOK_TRUE
+    je .true
+    cmp rax, TOK_FALSE
+    je .false
+    cmp rax, TOK_IDENT
+    je .var
+    cmp rax, TOK_MINUS
+    je .neg
+    cmp rax, TOK_NOT
+    je .not
+    cmp rax, TOK_AMP
+    je .addr
+    cmp rax, TOK_STAR
+    je .deref
+    cmp rax, TOK_LPAREN
+    je .group
+    jmp .bad
+.int:
+    mov rdi, [token_index]
+    call parse_int_node_at
+    mov r12, rax
+    call advance_token
+    mov rax, r12
+    ret
+.true:
+    mov rdi, 1
+    call parse_bool_node
+    mov r12, rax
+    call advance_token
+    mov rax, r12
+    ret
+.false:
+    xor rdi, rdi
+    call parse_bool_node
+    mov r12, rax
+    call advance_token
+    mov rax, r12
+    ret
+.var:
+    call parse_var_ref_node
+    mov r12, rax
+    call advance_token
+    call current_token_kind
+    cmp rax, TOK_LBRACKET
+    je .var_index
+    cmp rax, TOK_LPAREN
+    je .var_call
+    cmp rax, TOK_DOT
+    je .var_field
+    cmp rax, TOK_LBRACE
+    je .var_struct_lit
+    mov rdi, rax
+    call token_starts_expr
+    test rax, rax
+    jnz .var_call
+    mov rax, r12
+    ret
+.var_index:
+    mov rdi, r12
+    call parse_array_index_expr
+    ret
+.var_field:
+    mov rdi, r12
+    call parse_field_access_expr
+    ret
+.var_call:
+    mov rdi, r12
+    call parse_fn_call_expr
+    ret
+.var_struct_lit:
+    mov rdi, r12
+    call parse_struct_lit_expr
+    ret
+.neg:
+    call advance_token
+    mov rdi, 30
+    call parse_expr_min
+    test rax, rax
+    jz .fail
+    mov r12, rax
+    mov rdi, AST_UNARY_NEG
+    xor rsi, rsi
+    xor rdx, rdx
+    mov rcx, r12
+    xor r8, r8
+    call ast_new
+    ret
+.not:
+    call advance_token
+    mov rdi, 30
+    call parse_expr_min
+    test rax, rax
+    jz .fail
+    mov r12, rax
+    mov rdi, AST_UNARY_NOT
+    xor rsi, rsi
+    xor rdx, rdx
+    mov rcx, r12
+    xor r8, r8
+    call ast_new
+    ret
+.addr:
+    call advance_token
+    mov rdi, 30
+    call parse_expr_min
+    test rax, rax
+    jz .fail
+    mov r12, rax
+    mov rdi, AST_ADDR_OF
+    xor rsi, rsi
+    xor rdx, rdx
+    mov rcx, r12
+    xor r8, r8
+    call ast_new
+    ret
+.deref:
+    call advance_token
+    mov rdi, 30
+    call parse_expr_min
+    test rax, rax
+    jz .fail
+    mov r12, rax
+    mov rdi, AST_DEREF
+    xor rsi, rsi
+    xor rdx, rdx
+    mov rcx, r12
+    xor r8, r8
+    call ast_new
+    ret
+.group:
+    call advance_token
+    xor rdi, rdi
+    call parse_expr_min
+    test rax, rax
+    jz .fail
+    mov r12, rax
+    call current_token_kind
+    cmp rax, TOK_RPAREN
+    jne .bad
+    call advance_token
+    mov rax, r12
+    ret
+.bad:
+    call print_unsupported_current
+.fail:
+    xor rax, rax
+    ret
+
+infix_binding_power:
+    cmp rdi, TOK_OR
+    je .or_op
+    cmp rdi, TOK_AND
+    je .and_op
+    cmp rdi, TOK_GT
+    je .gt
+    cmp rdi, TOK_LT
+    je .lt
+    cmp rdi, TOK_GE
+    je .ge
+    cmp rdi, TOK_LE
+    je .le
+    cmp rdi, TOK_EE
+    je .ee
+    cmp rdi, TOK_NE
+    je .ne
+    cmp rdi, TOK_XOR
+    je .xor_op
+    cmp rdi, TOK_SHL
+    je .shl_op
+    cmp rdi, TOK_SHR
+    je .shr_op
+    cmp rdi, TOK_ROL
+    je .rol_op
+    cmp rdi, TOK_ROR
+    je .ror_op
+    cmp rdi, TOK_POW
+    je .pow_op
+    cmp rdi, TOK_PLUS
+    je .add
+    cmp rdi, TOK_MINUS
+    je .sub
+    cmp rdi, TOK_STAR
+    je .mul
+    cmp rdi, TOK_SLASH
+    je .div
+    cmp rdi, TOK_PERCENT
+    je .mod
+    xor rax, rax
+    xor rdx, rdx
+    ret
+.or_op:
+    mov rax, 5
+    mov rdx, AST_BIN_OR
+    ret
+.and_op:
+    mov rax, 6
+    mov rdx, AST_BIN_AND
+    ret
+.gt:
+    mov rax, 8
+    mov rdx, AST_BIN_GT
+    ret
+.lt:
+    mov rax, 8
+    mov rdx, AST_BIN_LT
+    ret
+.ge:
+    mov rax, 8
+    mov rdx, AST_BIN_GE
+    ret
+.le:
+    mov rax, 8
+    mov rdx, AST_BIN_LE
+    ret
+.ee:
+    mov rax, 8
+    mov rdx, AST_BIN_EE
+    ret
+.ne:
+    mov rax, 8
+    mov rdx, AST_BIN_NE
+    ret
+.xor_op:
+    mov rax, 9
+    mov rdx, AST_BIN_XOR
+    ret
+.shl_op:
+    mov rax, 9
+    mov rdx, AST_BIN_SHL
+    ret
+.shr_op:
+    mov rax, 9
+    mov rdx, AST_BIN_SHR
+    ret
+.rol_op:
+    mov rax, 9
+    mov rdx, AST_BIN_ROL
+    ret
+.ror_op:
+    mov rax, 9
+    mov rdx, AST_BIN_ROR
+    ret
+.pow_op:
+    mov rax, 30
+    mov rdx, AST_BIN_POW
+    ret
+.add:
+    mov rax, 10
+    mov rdx, AST_BIN_ADD
+    ret
+.sub:
+    mov rax, 10
+    mov rdx, AST_BIN_SUB
+    ret
+.mul:
+    mov rax, 20
+    mov rdx, AST_BIN_MUL
+    ret
+.div:
+    mov rax, 20
+    mov rdx, AST_BIN_DIV
+    ret
+.mod:
+    mov rax, 20
+    mov rdx, AST_BIN_MOD
+    ret
+
+; parse_array_index_expr: Parse array[index] expression
+; Input: rdi = array expression node
+; Output: rax = AST_ARRAY_INDEX node, or 0 on error
+parse_array_index_expr:
+    push rdi            ; Save array expression
+    push r12
+    
+    call current_token_kind
+    cmp rax, TOK_LBRACKET
+    jne .bad
+    
+    call advance_token
+    
+    ; Parse index expression
+    xor rdi, rdi
+    call parse_expr_min
+    test rax, rax
+    jz .bad
+    
+    mov r12, rax        ; Save index expression
+    
+    ; Expect ]
+    call current_token_kind
+    cmp rax, TOK_RBRACKET
+    jne .bad
+    
+    call advance_token
+    
+    ; Create AST_ARRAY_INDEX node
+    mov rdi, AST_ARRAY_INDEX
+    xor rsi, rsi
+    xor rdx, rdx
+    mov rcx, [rsp + 8]  ; array expression
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .bad
+    
+    mov rbx, rax
+    mov rdi, rbx
+    mov rsi, r12        ; index expression
+    call ast_append_child
+    
+    mov rax, rbx
+    pop r12
+    pop rdi
+    ret
+
+.bad:
+    pop r12
+    pop rdi
+    xor rax, rax
+    ret
+
+; parse_field_access_expr: Parse p.field
+; Input: rdi = base variable expression AST node
+; Output: rax = AST_FIELD_ACCESS node
+parse_field_access_expr:
+    push rbx
+    push r12
+    push r13
+    mov r12, rdi        ; Save base expression
+    
+    ; Current token should be TOK_DOT
+    call current_token_kind
+    cmp rax, TOK_DOT
+    jne .bad
+    call advance_token
+    
+    ; Expect field name (identifier)
+    call current_token_kind
+    cmp rax, TOK_IDENT
+    jne .bad
+    
+    call current_token_addr
+    mov rbx, [rax + TOKEN_START]    ; Field name start
+    mov r13, rbx
+    add r13, [rax + TOKEN_LEN]      ; Field name end
+    call advance_token
+    
+    ; Create AST_FIELD_ACCESS node
+    mov rdi, AST_FIELD_ACCESS
+    mov rsi, rbx                    ; span start
+    mov rdx, r13                    ; span end
+    mov rcx, r12                    ; base expression (child)
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .bad
+    
+    pop r13
+    pop r12
+    pop rbx
+    ret
+    
+.bad:
+    pop r13
+    pop r12
+    pop rbx
+    xor rax, rax
+    ret
+
+; parse_struct_lit_expr: Parse struct literal { field = expr, field = expr, ... }
+; rdi = base identifier node (struct type name)
+; Returns rax = AST_STRUCT_LIT node or 0 on error
+parse_struct_lit_expr:
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+    
+    mov r12, rdi                    ; r12 = struct type name node
+    
+    ; Expect LBRACE
+    call current_token_kind
+    cmp rax, TOK_LBRACE
+    jne .bad
+    call advance_token
+    
+    ; Create struct literal node
+    mov rdi, AST_STRUCT_LIT
+    xor rsi, rsi
+    xor rdx, rdx
+    mov rcx, r12                    ; type name as child
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .bad
+    
+    mov r13, rax                    ; r13 = struct literal node
+    
+    ; Parse fields: field = expr (comma-separated, no trailing comma)
+.field_loop:
+    call current_token_kind
+    cmp rax, TOK_RBRACE
+    je .end_fields
+    
+    ; Expect IDENT for field name
+    cmp rax, TOK_IDENT
+    jne .bad
+    
+    mov rdi, [token_index]
+    call token_addr
+    mov rbx, [rax + TOKEN_START]    ; field name start
+    mov r14, rbx
+    add r14, [rax + TOKEN_LEN]      ; field name end
+    
+    call advance_token
+    
+    ; Expect EQ
+    call current_token_kind
+    cmp rax, TOK_EQ
+    jne .bad
+    
+    call advance_token
+    
+    ; Parse field value expression
+    xor rdi, rdi
+    call parse_expr_min
+    test rax, rax
+    jz .bad
+    
+    mov r15, rax                    ; r15 = field value expression
+    
+    ; Create field assignment node (we'll use a temporary approach)
+    ; Store field name in scratch and append value to struct literal
+    mov rdi, r13
+    mov rsi, r15
+    call ast_append_child
+    
+    ; Check for comma or end
+    call current_token_kind
+    cmp rax, TOK_COMMA
+    jne .check_end
+    
+    call advance_token
+    jmp .field_loop
+    
+.check_end:
+    call current_token_kind
+    cmp rax, TOK_RBRACE
+    je .end_fields
+    jmp .bad
+    
+.end_fields:
+    call advance_token              ; consume RBRACE
+    
+    mov rax, r13
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+    
+.bad:
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    xor rax, rax
+    ret
+
+include "compiler/fasm/parser/function_calls.asm"

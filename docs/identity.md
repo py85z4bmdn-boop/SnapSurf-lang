@@ -1,6 +1,6 @@
 # SnapSurf Foundation Identity
 
-Status: foundation contract, ASM/NASM implementation in progress.
+Status: foundation contract, active FASM/CMake regression passes.
 
 The official language name is `SnapSurf`.
 
@@ -20,31 +20,36 @@ convert input paths.
 Foundation target identity:
 
 - Target: `linux-x86_64`
-- Backend: NASM x86_64
-- Object format: ELF64
-- Linker: `ld`
+- Backend: FASM x86_64
+- Active compiler output format: ELF64 executable
+- Linker: none in the active root compiler build
 - Runtime modes in foundation: `tiny`, `none`
 
 Implementation identity:
 
-SnapSurf is ASM/NASM-first as a foundation implementation policy.
+SnapSurf is FASM-first as a foundation implementation policy.
 
 Current repository reality:
 
-- `compiler/asm/` now contains the ASM/NASM hello-world foundation slice.
+- `compiler/fasm/` contains the active FASM compiler path.
+- `compiler/asm/` remains old reference material and is not the active root
+  build path.
 - `runtime/asm/` contains the tiny runtime reference modules.
-- `build/surf` is produced from NASM/x86_64 assembly by the root Makefile.
+- `build/surf` is produced from FASM/x86_64 assembly by root CMake.
 - `prototypes/rust_stage0/` is a Rust Stage 0 bootstrap prototype only.
-- That prototype emits NASM and invokes `nasm` plus `ld`.
 - The Rust prototype is not used by the foundation build path.
 
 Correct current claim:
 
-`ASM/NASM foundation slice can compile the hello-world package through NASM/ld.`
+`FASM/CMake root build produces build/surf, and check can verify package-file
+presence, lex, parse, run semantic checks, and generate FASM programs for the
+current foundation regression suite.`
 
 Forbidden current claim:
 
-`ASM/NASM foundation complete.`
+`FASM foundation complete.`
+`SnapSurf is self-hosting.`
+`SnapSurf language design is complete.`
 
 The Rust prototype has no external crates and does not introduce JS, TS,
 Python, Node, npm, a VM, bytecode runtime, GC, hidden allocator, or parser

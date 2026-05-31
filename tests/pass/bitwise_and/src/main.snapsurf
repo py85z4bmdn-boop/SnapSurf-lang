@@ -1,0 +1,4 @@
+fn main -> i32
+    let left i32 = 12
+    ret left and 10
+end
