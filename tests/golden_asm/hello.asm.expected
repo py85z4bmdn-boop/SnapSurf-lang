@@ -16,6 +16,7 @@ fn_main:
     mov rdx, 15
     syscall
     mov rax, 0
+    movsxd rax, eax
     mov rsp, rbp
     pop rbp
     ret

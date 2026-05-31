@@ -1,6 +1,10 @@
 fn main -> i32
-    let base i32 = 1
-    let value i32 = base shl 63
-    let count i32 = 1
-    ret value rol count
+    let base i64 = 1
+    let value i64 = base shl 63
+    let count i64 = 1
+    if value rol count == 1 ->
+        ret 1
+    else ->
+        ret 0
+    end
 end

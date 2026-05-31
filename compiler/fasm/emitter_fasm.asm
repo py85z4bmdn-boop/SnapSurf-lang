@@ -178,70 +178,96 @@ emit_user_function:
 emit_function_param_spills:
     push rbx
     push r12
+    push r13
+    push r14
     xor r12, r12
     mov rbx, [current_fn_param_count]
 .loop:
     cmp r12, rbx
     jae .done
+    mov rdi, r12
+    call emit_move_arg_register_to_rax
+    test rax, rax
+    jnz .fail
+    mov rax, r12
+    imul rax, 8
+    mov r13, [sym_type + rax]
+    mov r14, [sym_slot + rax]
+    mov rdi, r13
+    call emit_normalize_rax_for_type
+    test rax, rax
+    jnz .fail
     mov rdi, [out_fd]
     mov rsi, asm_store_local_pre
     mov rdx, asm_store_local_pre_len
     call write_all
-    mov rax, r12
-    inc rax
+    mov rax, r14
     imul rax, 8
     mov rdi, [out_fd]
     call write_u64_fd
     mov rdi, [out_fd]
-    cmp r12, 0
-    je .rdi
-    cmp r12, 1
-    je .rsi
-    cmp r12, 2
-    je .rdx
-    cmp r12, 3
-    je .rcx
-    cmp r12, 4
-    je .r8
-    cmp r12, 5
-    je .r9
-    jmp .fail
-.rdi:
-    mov rsi, asm_store_param_rdi_post
-    mov rdx, asm_store_param_rdi_post_len
-    jmp .write
-.rsi:
-    mov rsi, asm_store_param_rsi_post
-    mov rdx, asm_store_param_rsi_post_len
-    jmp .write
-.rdx:
-    mov rsi, asm_store_param_rdx_post
-    mov rdx, asm_store_param_rdx_post_len
-    jmp .write
-.rcx:
-    mov rsi, asm_store_param_rcx_post
-    mov rdx, asm_store_param_rcx_post_len
-    jmp .write
-.r8:
-    mov rsi, asm_store_param_r8_post
-    mov rdx, asm_store_param_r8_post_len
-    jmp .write
-.r9:
-    mov rsi, asm_store_param_r9_post
-    mov rdx, asm_store_param_r9_post_len
-.write:
+    mov rsi, asm_store_local_post
+    mov rdx, asm_store_local_post_len
     call write_all
     inc r12
     jmp .loop
 .done:
     mov rax, 1
+    pop r14
+    pop r13
     pop r12
     pop rbx
     ret
 .fail:
     xor rax, rax
+    pop r14
+    pop r13
     pop r12
     pop rbx
+    ret
+
+emit_move_arg_register_to_rax:
+    cmp rdi, 0
+    je .rdi
+    cmp rdi, 1
+    je .rsi
+    cmp rdi, 2
+    je .rdx
+    cmp rdi, 3
+    je .rcx
+    cmp rdi, 4
+    je .r8
+    cmp rdi, 5
+    je .r9
+    mov rax, 1
+    ret
+.rdi:
+    mov rsi, asm_mov_rax_rdi
+    mov rdx, asm_mov_rax_rdi_len
+    jmp .write
+.rsi:
+    mov rsi, asm_mov_rax_rsi
+    mov rdx, asm_mov_rax_rsi_len
+    jmp .write
+.rdx:
+    mov rsi, asm_mov_rax_rdx
+    mov rdx, asm_mov_rax_rdx_len
+    jmp .write
+.rcx:
+    mov rsi, asm_mov_rax_rcx
+    mov rdx, asm_mov_rax_rcx_len
+    jmp .write
+.r8:
+    mov rsi, asm_mov_rax_r8
+    mov rdx, asm_mov_rax_r8_len
+    jmp .write
+.r9:
+    mov rsi, asm_mov_rax_r9
+    mov rdx, asm_mov_rax_r9_len
+.write:
+    mov rdi, [out_fd]
+    call write_all
+    xor rax, rax
     ret
 
 emit_block:
@@ -311,6 +337,10 @@ emit_stmt:
     call emit_expr
     test rax, rax
     jnz .fail
+    mov rdi, [current_fn_return_type]
+    call emit_normalize_rax_for_type
+    test rax, rax
+    jnz .fail
     mov rdi, [out_fd]
     mov rsi, asm_ret_epilogue
     mov rdx, asm_ret_epilogue_len
@@ -367,6 +397,10 @@ emit_stmt:
 
 emit_store_stmt:
     push rbx
+    push r12
+    push r13
+    push r14
+    push r15
     mov r12, rdi
     call ast_child
     mov rbx, rax
@@ -383,9 +417,19 @@ emit_store_stmt:
     mov rdi, rbx
     call ast_child
     mov rdi, rax
-    call symbol_slot_for_token
+    call symbol_find
     test rax, rax
     jz .fail
+    dec rax
+    imul rax, 8
+    mov r15, rax
+    mov r14, [sym_slot + r15]
+    mov r13, [sym_type + r15]
+    mov rdi, r13
+    call emit_normalize_rax_for_type
+    test rax, rax
+    jnz .fail
+    mov rax, r14
     imul rax, 8
     mov rbx, rax
     mov rdi, [out_fd]
@@ -400,6 +444,10 @@ emit_store_stmt:
     mov rdx, asm_store_local_post_len
     call write_all
     xor rax, rax
+    pop r15
+    pop r14
+    pop r13
+    pop r12
     pop rbx
     ret
 .maybe_no_initializer:
@@ -410,9 +458,65 @@ emit_store_stmt:
     test rax, rax
     jz .fail
     xor rax, rax
+    pop r15
+    pop r14
+    pop r13
+    pop r12
     pop rbx
     ret
 .fail:
     mov rax, 1
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+emit_normalize_rax_for_type:
+    push rbx
+    mov rbx, rdi
+    cmp rbx, TYPE_I8
+    je .i8
+    cmp rbx, TYPE_U8
+    je .u8
+    cmp rbx, TYPE_I16
+    je .i16
+    cmp rbx, TYPE_U16
+    je .u16
+    cmp rbx, TYPE_I32
+    je .i32
+    cmp rbx, TYPE_U32
+    je .u32
+    xor rax, rax
+    pop rbx
+    ret
+.i8:
+    mov rsi, asm_norm_i8
+    mov rdx, asm_norm_i8_len
+    jmp .write
+.u8:
+    mov rsi, asm_norm_u8
+    mov rdx, asm_norm_u8_len
+    jmp .write
+.i16:
+    mov rsi, asm_norm_i16
+    mov rdx, asm_norm_i16_len
+    jmp .write
+.u16:
+    mov rsi, asm_norm_u16
+    mov rdx, asm_norm_u16_len
+    jmp .write
+.i32:
+    mov rsi, asm_norm_i32
+    mov rdx, asm_norm_i32_len
+    jmp .write
+.u32:
+    mov rsi, asm_norm_u32
+    mov rdx, asm_norm_u32_len
+.write:
+    mov rdi, [out_fd]
+    call write_all
+    xor rax, rax
     pop rbx
     ret

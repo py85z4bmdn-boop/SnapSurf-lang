@@ -25,10 +25,34 @@ asm_store_param_r8_post: db "], r8",10
 asm_store_param_r8_post_len = $ - asm_store_param_r8_post
 asm_store_param_r9_post: db "], r9",10
 asm_store_param_r9_post_len = $ - asm_store_param_r9_post
+asm_mov_rax_rdi: db "    mov rax, rdi",10
+asm_mov_rax_rdi_len = $ - asm_mov_rax_rdi
+asm_mov_rax_rsi: db "    mov rax, rsi",10
+asm_mov_rax_rsi_len = $ - asm_mov_rax_rsi
+asm_mov_rax_rdx: db "    mov rax, rdx",10
+asm_mov_rax_rdx_len = $ - asm_mov_rax_rdx
+asm_mov_rax_rcx: db "    mov rax, rcx",10
+asm_mov_rax_rcx_len = $ - asm_mov_rax_rcx
+asm_mov_rax_r8: db "    mov rax, r8",10
+asm_mov_rax_r8_len = $ - asm_mov_rax_r8
+asm_mov_rax_r9: db "    mov rax, r9",10
+asm_mov_rax_r9_len = $ - asm_mov_rax_r9
 asm_load_local_pre: db "    mov rax, [rbp - "
 asm_load_local_pre_len = $ - asm_load_local_pre
 asm_load_local_post: db "]",10
 asm_load_local_post_len = $ - asm_load_local_post
+asm_norm_i8: db "    movsx rax, al",10
+asm_norm_i8_len = $ - asm_norm_i8
+asm_norm_u8: db "    movzx rax, al",10
+asm_norm_u8_len = $ - asm_norm_u8
+asm_norm_i16: db "    movsx rax, ax",10
+asm_norm_i16_len = $ - asm_norm_i16
+asm_norm_u16: db "    movzx rax, ax",10
+asm_norm_u16_len = $ - asm_norm_u16
+asm_norm_i32: db "    movsxd rax, eax",10
+asm_norm_i32_len = $ - asm_norm_i32
+asm_norm_u32: db "    mov eax, eax",10
+asm_norm_u32_len = $ - asm_norm_u32
 asm_push_rax: db "    push rax",10
 asm_push_rax_len = $ - asm_push_rax
 asm_add_rax: db "    pop rcx",10,"    add rax, rcx",10
@@ -55,6 +79,14 @@ asm_cmp_ge: db "    pop rcx",10,"    cmp rcx, rax",10,"    setge al",10,"    mov
 asm_cmp_ge_len = $ - asm_cmp_ge
 asm_cmp_le: db "    pop rcx",10,"    cmp rcx, rax",10,"    setle al",10,"    movzx rax, al",10
 asm_cmp_le_len = $ - asm_cmp_le
+asm_cmp_ugt: db "    pop rcx",10,"    cmp rcx, rax",10,"    seta al",10,"    movzx rax, al",10
+asm_cmp_ugt_len = $ - asm_cmp_ugt
+asm_cmp_ult: db "    pop rcx",10,"    cmp rcx, rax",10,"    setb al",10,"    movzx rax, al",10
+asm_cmp_ult_len = $ - asm_cmp_ult
+asm_cmp_uge: db "    pop rcx",10,"    cmp rcx, rax",10,"    setae al",10,"    movzx rax, al",10
+asm_cmp_uge_len = $ - asm_cmp_uge
+asm_cmp_ule: db "    pop rcx",10,"    cmp rcx, rax",10,"    setbe al",10,"    movzx rax, al",10
+asm_cmp_ule_len = $ - asm_cmp_ule
 asm_cmp_ee: db "    pop rcx",10,"    cmp rcx, rax",10,"    sete al",10,"    movzx rax, al",10
 asm_cmp_ee_len = $ - asm_cmp_ee
 asm_cmp_ne: db "    pop rcx",10,"    cmp rcx, rax",10,"    setne al",10,"    movzx rax, al",10

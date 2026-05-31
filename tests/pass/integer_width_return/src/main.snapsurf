@@ -1,0 +1,13 @@
+fn ret_wrapped value u8 -> u8
+    let one u8 = 1
+    ret value + one
+end
+
+fn main -> i32
+    let max u8 = 255
+    if ret_wrapped(max) == 0 ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

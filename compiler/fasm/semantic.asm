@@ -644,6 +644,13 @@ semantic_rebuild_function_for_emit:
     mov r12, rdi
     call semantic_reset_symbols
     mov rdi, r12
+    call ast_get_type_tag
+    test rax, rax
+    jnz .return_type_ok
+    mov rax, TYPE_I32
+.return_type_ok:
+    mov [current_fn_return_type], rax
+    mov rdi, r12
     call semantic_bind_params
     test rax, rax
     jnz .fail

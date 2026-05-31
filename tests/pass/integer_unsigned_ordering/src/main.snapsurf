@@ -1,0 +1,9 @@
+fn main -> i32
+    let low u64 = 1
+    let high u64 = 9223372036854775808
+    if high > low and low < high and high >= low and low <= high and 1 < high and high > 1 ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

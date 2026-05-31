@@ -1,0 +1,25 @@
+fn main -> i32
+    mut unsigned8 u8 = 255
+    let one8 u8 = 1
+    unsigned8 = unsigned8 + one8
+    mut signed8 i8 = 127
+    let signed_one8 i8 = 1
+    signed8 = signed8 + signed_one8
+    mut unsigned16 u16 = 65535
+    let one16 u16 = 1
+    unsigned16 = unsigned16 + one16
+    mut signed16 i16 = 32767
+    let signed_one16 i16 = 1
+    signed16 = signed16 + signed_one16
+    mut unsigned32 u32 = 4294967295
+    let one32 u32 = 1
+    unsigned32 = unsigned32 + one32
+    mut signed32 i32 = 2147483647
+    let signed_one32 i32 = 1
+    signed32 = signed32 + signed_one32
+    if unsigned8 == 0 and signed8 == -128 and unsigned16 == 0 and signed16 == -32768 and unsigned32 == 0 and signed32 == -2147483648 ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

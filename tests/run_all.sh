@@ -128,6 +128,10 @@ run_exit primitive_pointer_sized 0
 run_exit typed_int_literal_compare 0
 run_exit integer_literal_boundaries 0
 run_exit negative_integer_literals 0
+run_exit integer_width_wrap 0
+run_exit integer_width_param 0
+run_exit integer_width_return 0
+run_exit integer_unsigned_ordering 0
 run_exit struct_field_access 0
 
 run_fail() {
