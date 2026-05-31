@@ -410,8 +410,18 @@ emit_store_stmt:
     call ast_next
     test rax, rax
     jz .maybe_no_initializer
-    mov rdi, rax
+    mov r15, rax
+    mov r13, [expected_expr_type]
+    mov rdi, r12
+    call ast_get_type_tag
+    test rax, rax
+    jnz .initializer_type_known
+    mov rax, TYPE_I32
+.initializer_type_known:
+    mov [expected_expr_type], rax
+    mov rdi, r15
     call emit_expr
+    mov [expected_expr_type], r13
     test rax, rax
     jnz .fail
     mov rdi, rbx

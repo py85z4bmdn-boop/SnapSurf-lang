@@ -1,0 +1,1 @@
+tests/compile_fail/division_by_zero_nested_const_expr/src/main.snapsurf:2:14 E0509 division by zero

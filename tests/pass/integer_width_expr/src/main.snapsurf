@@ -1,0 +1,17 @@
+fn main -> i32
+    let max8 u8 = 255
+    let one8 u8 = 1
+    let max16 u16 = 65535
+    let one16 u16 = 1
+    let max32 u32 = 4294967295
+    let one32 u32 = 1
+    let signed8 i8 = 127
+    let signed_one8 i8 = 1
+    let min8 i8 = -128
+    let shift8 u8 = 8
+    if max8 + one8 == 0 and signed8 + signed_one8 == -128 and max16 + one16 == 0 and max32 + one32 == 0 and not max8 == 0 and one8 shl shift8 == 0 and -min8 == -128 ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

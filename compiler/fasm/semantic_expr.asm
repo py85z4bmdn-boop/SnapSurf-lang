@@ -152,9 +152,14 @@ semantic_expr_type:
     je .unary_neg_lit_default
     mov rdi, rbx
     call semantic_expr_type
-    cmp rax, TYPE_I32
-    jne .bad_type_current
-    mov rax, TYPE_I32
+    test rax, rax
+    jz .done
+    mov r15, rax
+    mov rdi, r15
+    call semantic_type_is_signed_integer
+    test rax, rax
+    jz .bad_type_current
+    mov rax, r15
     jmp .done
 .unary_neg_lit_default:
     mov rdi, rbx
@@ -204,24 +209,75 @@ semantic_expr_type:
     test rbx, rbx
     jz .bad
     mov rdi, rbx
+    call ast_kind
+    mov r15, rax
+    mov rdi, rbx
     call semantic_expr_type
     test rax, rax
     jz .done
     mov r12, rax
     mov rdi, rbx
     call ast_next
-    test rax, rax
+    mov r11, rax
+    test r11, r11
     jz .bad
-    mov rdi, rax
+    mov rax, [expected_expr_type]
+    push rax
+    push r11
+    mov [expected_expr_type], r12
+    mov rdi, r11
     call semantic_expr_type
+    pop r11
+    pop qword [expected_expr_type]
     test rax, rax
     jz .done
+    cmp r15, AST_INT_LIT
+    je .binary_i32_store_right_and_retype_left
+    cmp r15, AST_UNARY_NEG
+    jne .binary_i32_no_retype
+.binary_i32_store_right_and_retype_left:
+    mov r15, rax
+    cmp r12, r15
+    je .binary_i32_check
+    push r11
+    push r15
+    mov rax, [expected_expr_type]
+    push rax
+    mov [expected_expr_type], r15
+    mov rdi, rbx
+    call semantic_expr_type
+    pop qword [expected_expr_type]
+    pop r15
+    pop r11
+    test rax, rax
+    jz .done
+    mov r12, rax
+    jmp .binary_i32_check
+.binary_i32_no_retype:
+    mov r15, rax
+.binary_i32_check:
     mov rdi, r12
-    mov rsi, rax
+    mov rsi, r15
     mov rdx, r13
+    push r11
     call type_check_binary
+    pop r11
     test rax, rax
     jz .bad_type_current
+    cmp r13, AST_BIN_DIV
+    je .binary_i32_check_zero_divisor
+    cmp r13, AST_BIN_MOD
+    je .binary_i32_check_zero_divisor
+    mov rax, r12
+    jmp .done
+.binary_i32_check_zero_divisor:
+    push r11
+    mov rdi, r11
+    call semantic_expr_is_zero_int_const
+    pop r11
+    test rax, rax
+    jnz .bad_div_zero
+    mov rax, r12
     jmp .done
 .binary_bool_or_int:
     mov rdi, r12
@@ -233,16 +289,31 @@ semantic_expr_type:
     test rbx, rbx
     jz .bad
     mov rdi, rbx
+    call ast_kind
+    mov r15, rax
+    mov rdi, rbx
     call semantic_expr_type
     test rax, rax
     jz .done
     mov r12, rax
     mov rdi, rbx
     call ast_next
-    test rax, rax
+    mov r11, rax
+    test r11, r11
     jz .bad
-    mov rdi, rax
+    cmp r12, TYPE_BOOL
+    je .binary_bool_or_int_right_no_expected
+    mov rax, [expected_expr_type]
+    push rax
+    mov [expected_expr_type], r12
+    mov rdi, r11
     call semantic_expr_type
+    pop qword [expected_expr_type]
+    jmp .binary_bool_or_int_right_typed
+.binary_bool_or_int_right_no_expected:
+    mov rdi, r11
+    call semantic_expr_type
+.binary_bool_or_int_right_typed:
     test rax, rax
     jz .done
     mov r13, rax
@@ -256,6 +327,25 @@ semantic_expr_type:
     call type_is_integer
     test rax, rax
     jz .bad_type_current
+    cmp r15, AST_INT_LIT
+    je .binary_bool_or_int_retype_left
+    cmp r15, AST_UNARY_NEG
+    jne .binary_bool_or_int_compare
+.binary_bool_or_int_retype_left:
+    cmp r13, r12
+    je .binary_bool_or_int_compare
+    push r13
+    mov rax, [expected_expr_type]
+    push rax
+    mov [expected_expr_type], r13
+    mov rdi, rbx
+    call semantic_expr_type
+    pop qword [expected_expr_type]
+    pop r13
+    test rax, rax
+    jz .done
+    mov r12, rax
+.binary_bool_or_int_compare:
     cmp r13, r12
     jne .bad_type_current
     mov rax, r12
@@ -451,6 +541,14 @@ semantic_expr_type:
     call set_diag_from_expr_node
     mov rdi, src_path
     mov rsi, err_type
+    call print_diag
+    xor rax, rax
+    jmp .done
+.bad_div_zero:
+    mov rdi, r11
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_div_zero
     call print_diag
     xor rax, rax
     jmp .done
@@ -682,6 +780,205 @@ semantic_neg_int_literal_fits_type:
 .bad:
     xor rax, rax
 .done:
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+semantic_expr_is_zero_int_const:
+    call semantic_expr_const_int_value
+    test rax, rax
+    jz .no
+    test rdx, rdx
+    jnz .no
+    mov rax, 1
+    ret
+.no:
+    xor rax, rax
+    ret
+
+semantic_expr_const_int_value:
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+    mov r12, rdi
+    test r12, r12
+    jz .no
+    mov rdi, r12
+    call ast_kind
+    mov r13, rax
+    cmp r13, AST_INT_LIT
+    je .int_lit
+    cmp r13, AST_UNARY_NEG
+    je .unary_neg
+    cmp r13, AST_BIN_ADD
+    je .binary
+    cmp r13, AST_BIN_SUB
+    je .binary
+    cmp r13, AST_BIN_MUL
+    je .binary
+    cmp r13, AST_BIN_DIV
+    je .binary
+    cmp r13, AST_BIN_MOD
+    je .binary
+    cmp r13, AST_BIN_XOR
+    je .binary
+    cmp r13, AST_BIN_SHL
+    je .binary
+    cmp r13, AST_BIN_SHR
+    je .binary
+    cmp r13, AST_BIN_ROL
+    je .binary
+    cmp r13, AST_BIN_ROR
+    je .binary
+    cmp r13, AST_BIN_POW
+    je .binary
+    jmp .no
+.int_lit:
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call token_addr
+    mov rdx, [rax + TOKEN_PAYLOAD]
+    mov rax, 1
+    jmp .done
+.unary_neg:
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call semantic_expr_const_int_value
+    test rax, rax
+    jz .no
+    neg rdx
+    mov rax, 1
+    jmp .done
+.binary:
+    mov rdi, r12
+    call ast_child
+    mov rbx, rax
+    test rbx, rbx
+    jz .no
+    mov rdi, rbx
+    call ast_next
+    mov r15, rax
+    test r15, r15
+    jz .no
+    mov rdi, rbx
+    call semantic_expr_const_int_value
+    test rax, rax
+    jz .no
+    mov r14, rdx
+    mov rdi, r15
+    call semantic_expr_const_int_value
+    test rax, rax
+    jz .no
+    mov r15, rdx
+    cmp r13, AST_BIN_ADD
+    je .fold_add
+    cmp r13, AST_BIN_SUB
+    je .fold_sub
+    cmp r13, AST_BIN_MUL
+    je .fold_mul
+    cmp r13, AST_BIN_DIV
+    je .fold_div
+    cmp r13, AST_BIN_MOD
+    je .fold_mod
+    cmp r13, AST_BIN_XOR
+    je .fold_xor
+    cmp r13, AST_BIN_SHL
+    je .fold_shl
+    cmp r13, AST_BIN_SHR
+    je .fold_shr
+    cmp r13, AST_BIN_ROL
+    je .fold_rol
+    cmp r13, AST_BIN_ROR
+    je .fold_ror
+    cmp r13, AST_BIN_POW
+    je .fold_pow
+    jmp .no
+.fold_add:
+    mov rdx, r14
+    add rdx, r15
+    jmp .yes
+.fold_sub:
+    mov rdx, r14
+    sub rdx, r15
+    jmp .yes
+.fold_mul:
+    mov rdx, r14
+    imul rdx, r15
+    jmp .yes
+.fold_div:
+    test r15, r15
+    jz .no
+    mov rax, 0x8000000000000000
+    cmp r14, rax
+    jne .fold_div_safe
+    cmp r15, -1
+    je .no
+.fold_div_safe:
+    mov rax, r14
+    cqo
+    idiv r15
+    mov rdx, rax
+    jmp .yes
+.fold_mod:
+    test r15, r15
+    jz .no
+    mov rax, 0x8000000000000000
+    cmp r14, rax
+    jne .fold_mod_safe
+    cmp r15, -1
+    je .no
+.fold_mod_safe:
+    mov rax, r14
+    cqo
+    idiv r15
+    jmp .yes
+.fold_xor:
+    mov rdx, r14
+    xor rdx, r15
+    jmp .yes
+.fold_shl:
+    mov rdx, r14
+    mov rcx, r15
+    shl rdx, cl
+    jmp .yes
+.fold_shr:
+    mov rdx, r14
+    mov rcx, r15
+    shr rdx, cl
+    jmp .yes
+.fold_rol:
+    mov rdx, r14
+    mov rcx, r15
+    rol rdx, cl
+    jmp .yes
+.fold_ror:
+    mov rdx, r14
+    mov rcx, r15
+    ror rdx, cl
+    jmp .yes
+.fold_pow:
+    mov rdx, 1
+    mov rcx, r15
+    cmp rcx, 0
+    jle .yes
+.fold_pow_loop:
+    imul rdx, r14
+    dec rcx
+    jnz .fold_pow_loop
+    jmp .yes
+.yes:
+    mov rax, 1
+    jmp .done
+.no:
+    xor rax, rax
+.done:
+    pop r15
+    pop r14
     pop r13
     pop r12
     pop rbx

@@ -218,6 +218,10 @@ emit_logical_expr:
     jmp .ok
 
 .ok:
+    mov rdi, r12
+    call emit_normalize_expr_result
+    test rax, rax
+    jnz .fail
     xor rax, rax
     pop r13
     pop r12

@@ -43,6 +43,7 @@ err_symbol_overflow: db "E0505 symbol table overflow", 0
 err_scope_overflow: db "E0506 scope depth exceeded", 0
 err_loop_control: db "E0507 break/continue outside loop", 0
 err_unsafe_op: db "E0508 unsafe operation outside unsafe block", 0
+err_div_zero: db "E0509 division by zero", 0
 err_ast_overflow: db "E0301 AST arena overflow", 0
 err_cap: db "E0801 missing required capability", 0
 err_syscall_cap: db "E0802 syscall used without requires syscall", 0

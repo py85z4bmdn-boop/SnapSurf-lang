@@ -132,6 +132,8 @@ run_exit integer_width_wrap 0
 run_exit integer_width_param 0
 run_exit integer_width_return 0
 run_exit integer_unsigned_ordering 0
+run_exit integer_width_expr 0
+run_exit integer_unsigned_div_mod 0
 run_exit struct_field_access 0
 
 run_fail() {
@@ -170,6 +172,12 @@ run_fail primitive_mismatch
 run_fail integer_literal_range
 run_fail integer_literal_overflow
 run_fail negative_integer_literal_range
+run_fail division_by_zero_literal
+run_fail modulo_by_zero_literal
+run_fail division_by_zero_const_expr
+run_fail modulo_by_zero_const_expr
+run_fail division_by_zero_nested_const_expr
+run_fail modulo_by_zero_nested_const_expr
 run_fail fn_arg_type_mismatch
 run_fail fn_struct_arg_mismatch
 

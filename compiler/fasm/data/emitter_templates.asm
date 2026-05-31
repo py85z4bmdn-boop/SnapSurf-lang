@@ -65,6 +65,10 @@ asm_div_rax: db "    mov rcx, rax",10,"    pop rax",10,"    cqo",10,"    idiv rc
 asm_div_rax_len = $ - asm_div_rax
 asm_mod_rax: db "    mov rcx, rax",10,"    pop rax",10,"    cqo",10,"    idiv rcx",10,"    mov rax, rdx",10
 asm_mod_rax_len = $ - asm_mod_rax
+asm_udiv_rax: db "    mov rcx, rax",10,"    pop rax",10,"    xor rdx, rdx",10,"    div rcx",10
+asm_udiv_rax_len = $ - asm_udiv_rax
+asm_umod_rax: db "    mov rcx, rax",10,"    pop rax",10,"    xor rdx, rdx",10,"    div rcx",10,"    mov rax, rdx",10
+asm_umod_rax_len = $ - asm_umod_rax
 asm_neg_rax: db "    neg rax",10
 asm_neg_rax_len = $ - asm_neg_rax
 asm_not_rax: db "    test rax, rax",10,"    setz al",10,"    movzx rax, al",10

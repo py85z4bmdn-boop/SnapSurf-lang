@@ -124,6 +124,10 @@ emit_expr:
     mov rsi, asm_neg_rax
     mov rdx, asm_neg_rax_len
     call write_all
+    mov rdi, r12
+    call emit_normalize_expr_result
+    test rax, rax
+    jnz .fail
     jmp .ok
 .not:
     mov rdi, r12
@@ -148,6 +152,10 @@ emit_expr:
     mov rsi, asm_bit_not_rax
     mov rdx, asm_bit_not_rax_len
     call write_all
+    mov rdi, r12
+    call emit_normalize_expr_result
+    test rax, rax
+    jnz .fail
     jmp .ok
 .not_bool:
     mov rdi, [out_fd]
@@ -453,10 +461,19 @@ emit_binary_expr:
     jz .fail
     mov rbx, rax
 
+    mov rdi, r12
+    call semantic_expr_type
+    test rax, rax
+    jz .fail
+    mov rdi, rax
+    call emit_type_is_unsigned_integer
+    mov r15, rax
+
     ; Try constant folding optimization
     mov rdi, r13
     mov rsi, r14
     mov rdx, rbx
+    mov rcx, r15
     call try_fold_binary_expr
     cmp rax, 1
     je .runtime
@@ -465,7 +482,7 @@ emit_binary_expr:
 
     ; Folding succeeded - folded result is in rbx, emit it
     call emit_mov_rax_imm
-    jmp .ok
+    jmp .normalize_result
 
 .runtime:
     ; No folding possible - use runtime evaluation
@@ -509,61 +526,77 @@ emit_binary_expr:
     mov rsi, asm_add_rax
     mov rdx, asm_add_rax_len
     call write_all
-    jmp .ok
+    jmp .normalize_result
 .sub:
     mov rdi, [out_fd]
     mov rsi, asm_sub_rax
     mov rdx, asm_sub_rax_len
     call write_all
-    jmp .ok
+    jmp .normalize_result
 .mul:
     mov rdi, [out_fd]
     mov rsi, asm_mul_rax
     mov rdx, asm_mul_rax_len
     call write_all
-    jmp .ok
+    jmp .normalize_result
 .div:
+    test r15, r15
+    jnz .udiv
     mov rdi, [out_fd]
     mov rsi, asm_div_rax
     mov rdx, asm_div_rax_len
     call write_all
-    jmp .ok
+    jmp .normalize_result
+.udiv:
+    mov rdi, [out_fd]
+    mov rsi, asm_udiv_rax
+    mov rdx, asm_udiv_rax_len
+    call write_all
+    jmp .normalize_result
 .mod:
+    test r15, r15
+    jnz .umod
     mov rdi, [out_fd]
     mov rsi, asm_mod_rax
     mov rdx, asm_mod_rax_len
     call write_all
-    jmp .ok
+    jmp .normalize_result
+.umod:
+    mov rdi, [out_fd]
+    mov rsi, asm_umod_rax
+    mov rdx, asm_umod_rax_len
+    call write_all
+    jmp .normalize_result
 .xor:
     mov rdi, [out_fd]
     mov rsi, asm_xor_rax
     mov rdx, asm_xor_rax_len
     call write_all
-    jmp .ok
+    jmp .normalize_result
 .shl:
     mov rdi, [out_fd]
     mov rsi, asm_shl_rax
     mov rdx, asm_shl_rax_len
     call write_all
-    jmp .ok
+    jmp .normalize_result
 .shr:
     mov rdi, [out_fd]
     mov rsi, asm_shr_rax
     mov rdx, asm_shr_rax_len
     call write_all
-    jmp .ok
+    jmp .normalize_result
 .rol:
     mov rdi, [out_fd]
     mov rsi, asm_rol_rax
     mov rdx, asm_rol_rax_len
     call write_all
-    jmp .ok
+    jmp .normalize_result
 .ror:
     mov rdi, [out_fd]
     mov rsi, asm_ror_rax
     mov rdx, asm_ror_rax_len
     call write_all
-    jmp .ok
+    jmp .normalize_result
 .pow:
     mov r14, [label_counter]
     inc qword [label_counter]
@@ -613,6 +646,12 @@ emit_binary_expr:
     mov rsi, asm_label_post
     mov rdx, asm_label_post_len
     call write_all
+    jmp .normalize_result
+.normalize_result:
+    mov rdi, r12
+    call emit_normalize_expr_result
+    test rax, rax
+    jnz .fail
     jmp .ok
 .ok:
     xor rax, rax
@@ -631,8 +670,27 @@ emit_binary_expr:
     pop rbx
     ret
 
+emit_normalize_expr_result:
+    push rbx
+    mov rbx, rdi
+    mov rdi, rbx
+    call semantic_expr_type
+    test rax, rax
+    jz .fail
+    mov rdi, rax
+    call emit_normalize_rax_for_type
+    test rax, rax
+    jnz .fail
+    xor rax, rax
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
+    pop rbx
+    ret
+
 ; try_fold_binary_expr: Attempt to fold binary expression at compile-time
-; Input: rdi = operation kind, rsi = left node, rdx = right node
+; Input: rdi = operation kind, rsi = left node, rdx = right node, rcx = unsigned integer flag
 ; Output: rax = -1 (folded, result in rbx), 0 (overflow), 1 (can't fold - not constants)
 ; Modifies: rax, rbx, rcx, r8, r9
 try_fold_binary_expr:
@@ -643,6 +701,7 @@ try_fold_binary_expr:
     mov r12, rdi        ; operation kind
     mov r13, rsi        ; left node
     mov r10, rdx        ; right node
+    mov r11, rcx        ; unsigned integer operation flag
 
     ; Check if left is integer literal
     mov rdi, r13
@@ -709,17 +768,32 @@ try_fold_binary_expr:
 .fold_div:
     cmp r9, 0
     je .fold_div_by_zero
+    test r11, r11
+    jnz .fold_udiv
     mov rax, r8
     cqo
     idiv r9
+    jmp .folded_ok
+.fold_udiv:
+    mov rax, r8
+    xor rdx, rdx
+    div r9
     jmp .folded_ok
 
 .fold_mod:
     cmp r9, 0
     je .fold_mod_by_zero
+    test r11, r11
+    jnz .fold_umod
     mov rax, r8
     cqo
     idiv r9
+    mov rax, rdx
+    jmp .folded_ok
+.fold_umod:
+    mov rax, r8
+    xor rdx, rdx
+    div r9
     mov rax, rdx
     jmp .folded_ok
 

@@ -1,0 +1,13 @@
+fn main -> i32
+    let high u64 = 9223372036854775809
+    let two u64 = 2
+    let half u64 = 4611686018427387904
+    let one u64 = 1
+    let folded_div u64 = 9223372036854775809 / 2
+    let folded_mod u64 = 9223372036854775809 % 2
+    if high / two == half and high % two == one and folded_div == half and folded_mod == one ->
+        ret 0
+    else ->
+        ret 1
+    end
+end
