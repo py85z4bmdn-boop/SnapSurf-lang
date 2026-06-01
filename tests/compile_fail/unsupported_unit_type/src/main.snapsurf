@@ -1,0 +1,4 @@
+fn main -> i32
+    let nothing unit
+    ret 0
+end

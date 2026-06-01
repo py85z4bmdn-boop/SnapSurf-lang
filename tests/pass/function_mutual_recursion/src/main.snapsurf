@@ -1,0 +1,19 @@
+fn even n i32 -> i32
+    if n == 0 ->
+        ret 1
+    else ->
+        ret odd(n - 1)
+    end
+end
+
+fn odd n i32 -> i32
+    if n == 0 ->
+        ret 0
+    else ->
+        ret even(n - 1)
+    end
+end
+
+fn main -> i32
+    ret even(10) + odd(9) * 10
+end

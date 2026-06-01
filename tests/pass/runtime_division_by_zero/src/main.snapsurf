@@ -1,0 +1,4 @@
+fn main -> i32
+    let z i32 = 0
+    ret 10 / z
+end

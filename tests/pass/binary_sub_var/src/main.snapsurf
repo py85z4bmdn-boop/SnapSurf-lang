@@ -1,0 +1,5 @@
+fn main -> i32
+    let left i32 = 10
+    let right i32 = 3
+    ret left - right
+end

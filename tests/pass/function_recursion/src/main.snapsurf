@@ -1,0 +1,11 @@
+fn fact n i32 -> i32
+    if n <= 1 ->
+        ret 1
+    else ->
+        ret n * fact(n - 1)
+    end
+end
+
+fn main -> i32
+    ret fact(5)
+end

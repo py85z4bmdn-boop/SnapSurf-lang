@@ -500,13 +500,29 @@ semantic_expr_type:
     call ast_child
     mov rdi, rax
     call ast_next
-    mov rdi, rax
+    mov r15, rax
+    mov rdi, r15
     test rdi, rdi
     jz .bad
     call semantic_expr_type
-    ; Index must be integer type
-    cmp rax, TYPE_I32
-    jne .bad_array_index ; Index not integer
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .bad_array_index
+    mov rdi, r15
+    call semantic_expr_const_int_value
+    test rax, rax
+    jz .array_index_bounds_ok
+    test rdx, rdx
+    js .bad_array_bounds
+    mov r14, rdx
+    mov rdi, rbx
+    call type_array_count
+    test rax, rax
+    jz .array_index_bounds_ok
+    cmp r14, rax
+    jae .bad_array_bounds
+.array_index_bounds_ok:
     
     ; Result type is the element type
     mov rdi, rbx
@@ -525,6 +541,14 @@ semantic_expr_type:
     call set_diag_from_expr_node
     mov rdi, src_path
     mov rsi, err_type
+    call print_diag
+    xor rax, rax
+    jmp .done
+.bad_array_bounds:
+    mov rdi, r15
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_array_bounds
     call print_diag
     xor rax, rax
     jmp .done

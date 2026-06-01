@@ -1,0 +1,10 @@
+fn main -> i32
+    let base i64 = 2
+    let exp i64 = 5
+    let value i64 = base pow exp
+    if value == 32 ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

@@ -1,0 +1,6 @@
+fn main -> i32
+    let max i64 = 9223372036854775807
+    let one i64 = 1
+    let x i64 = max + one
+    ret 0
+end

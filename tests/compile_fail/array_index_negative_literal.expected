@@ -1,0 +1,1 @@
+tests/compile_fail/array_index_negative_literal/src/main.snapsurf:3:14 E0510 array index out of bounds

@@ -1,0 +1,6 @@
+fn main -> i32
+    let base i64 = 3037000500
+    let exp i64 = 2
+    let x i64 = base pow exp
+    ret 0
+end

@@ -1,0 +1,1 @@
+tests/compile_fail/unsupported_unit_type/src/main.snapsurf:2:17 E0511 unsupported primitive type

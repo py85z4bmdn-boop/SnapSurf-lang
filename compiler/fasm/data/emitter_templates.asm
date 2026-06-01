@@ -69,8 +69,38 @@ asm_udiv_rax: db "    mov rcx, rax",10,"    pop rax",10,"    xor rdx, rdx",10," 
 asm_udiv_rax_len = $ - asm_udiv_rax
 asm_umod_rax: db "    mov rcx, rax",10,"    pop rax",10,"    xor rdx, rdx",10,"    div rcx",10,"    mov rax, rdx",10
 asm_umod_rax_len = $ - asm_umod_rax
+asm_div_zero_check_pre: db "    test rax, rax",10,"    jnz .L"
+asm_div_zero_check_pre_len = $ - asm_div_zero_check_pre
+asm_div_zero_trap: db "    mov edi, 102",10,"    mov eax, 60",10,"    syscall",10
+asm_div_zero_trap_len = $ - asm_div_zero_trap
+asm_sdiv_overflow_check_pre: db "    cmp rax, -1",10,"    jne .L"
+asm_sdiv_overflow_check_pre_len = $ - asm_sdiv_overflow_check_pre
+asm_sdiv_overflow_check_mid: db 10,"    mov rdx, 0x8000000000000000",10,"    cmp qword [rsp], rdx",10,"    jne .L"
+asm_sdiv_overflow_check_mid_len = $ - asm_sdiv_overflow_check_mid
+asm_sdiv_overflow_trap: db "    mov edi, 103",10,"    mov eax, 60",10,"    syscall",10
+asm_sdiv_overflow_trap_len = $ - asm_sdiv_overflow_trap
+asm_sadd_overflow_check_pre: db "    pop rcx",10,"    add rax, rcx",10,"    jno .L"
+asm_sadd_overflow_check_pre_len = $ - asm_sadd_overflow_check_pre
+asm_sadd_overflow_trap: db "    mov edi, 104",10,"    mov eax, 60",10,"    syscall",10
+asm_sadd_overflow_trap_len = $ - asm_sadd_overflow_trap
+asm_ssub_overflow_check_pre: db "    mov rcx, rax",10,"    pop rax",10,"    sub rax, rcx",10,"    jno .L"
+asm_ssub_overflow_check_pre_len = $ - asm_ssub_overflow_check_pre
+asm_ssub_overflow_trap: db "    mov edi, 105",10,"    mov eax, 60",10,"    syscall",10
+asm_ssub_overflow_trap_len = $ - asm_ssub_overflow_trap
+asm_smul_overflow_check_pre: db "    pop rcx",10,"    imul rax, rcx",10,"    jno .L"
+asm_smul_overflow_check_pre_len = $ - asm_smul_overflow_check_pre
+asm_smul_overflow_trap: db "    mov edi, 106",10,"    mov eax, 60",10,"    syscall",10
+asm_smul_overflow_trap_len = $ - asm_smul_overflow_trap
 asm_neg_rax: db "    neg rax",10
 asm_neg_rax_len = $ - asm_neg_rax
+asm_abs_rax: db "    cqo",10,"    xor rax, rdx",10,"    sub rax, rdx",10
+asm_abs_rax_len = $ - asm_abs_rax
+asm_min_rax: db "    pop rcx",10,"    cmp rcx, rax",10,"    cmovl rax, rcx",10
+asm_min_rax_len = $ - asm_min_rax
+asm_max_rax: db "    pop rcx",10,"    cmp rcx, rax",10,"    cmovg rax, rcx",10
+asm_max_rax_len = $ - asm_max_rax
+asm_clamp_rax: db "    pop rcx",10,"    pop rdx",10,"    cmp rdx, rcx",10,"    cmovl rdx, rcx",10,"    cmp rdx, rax",10,"    cmovg rdx, rax",10,"    mov rax, rdx",10
+asm_clamp_rax_len = $ - asm_clamp_rax
 asm_not_rax: db "    test rax, rax",10,"    setz al",10,"    movzx rax, al",10
 asm_not_rax_len = $ - asm_not_rax
 asm_bit_not_rax: db "    not rax",10
@@ -113,6 +143,12 @@ asm_pow_init_pre: db "    pop rcx",10,"    mov r8, rax",10,"    mov rax, 1",10,"
 asm_pow_init_pre_len = $ - asm_pow_init_pre
 asm_pow_loop_body_pre: db "    imul rax, rcx",10,"    dec r8",10,"    jnz .L"
 asm_pow_loop_body_pre_len = $ - asm_pow_loop_body_pre
+asm_pow_loop_body_checked_pre: db "    imul rax, rcx",10,"    jo .L"
+asm_pow_loop_body_checked_pre_len = $ - asm_pow_loop_body_checked_pre
+asm_pow_loop_body_checked_mid: db "    dec r8",10,"    jnz .L"
+asm_pow_loop_body_checked_mid_len = $ - asm_pow_loop_body_checked_mid
+asm_spow_overflow_trap: db "    mov edi, 107",10,"    mov eax, 60",10,"    syscall",10
+asm_spow_overflow_trap_len = $ - asm_spow_overflow_trap
 asm_jz_pre: db "    test rax, rax",10,"    jz .L"
 asm_jz_pre_len = $ - asm_jz_pre
 asm_jz_post: db 10
@@ -165,6 +201,14 @@ asm_mov_rax_at_rax: db "    mov rax, [rax]",10
 asm_mov_rax_at_rax_len = $ - asm_mov_rax_at_rax
 asm_mov_rcx_rax: db "    mov rcx, rax",10
 asm_mov_rcx_rax_len = $ - asm_mov_rcx_rax
+asm_array_bounds_neg_pre: db "    cmp rax, 0",10,"    jl .L"
+asm_array_bounds_neg_pre_len = $ - asm_array_bounds_neg_pre
+asm_array_bounds_upper_pre: db "    cmp rax, "
+asm_array_bounds_upper_pre_len = $ - asm_array_bounds_upper_pre
+asm_array_bounds_upper_post: db 10,"    jb .L"
+asm_array_bounds_upper_post_len = $ - asm_array_bounds_upper_post
+asm_array_bounds_trap: db "    mov edi, 101",10,"    mov eax, 60",10,"    syscall",10
+asm_array_bounds_trap_len = $ - asm_array_bounds_trap
 asm_mov_rax_at_rcx_rax_8: db "    mov rax, [rcx + rax*8]",10
 asm_mov_rax_at_rcx_rax_8_len = $ - asm_mov_rax_at_rcx_rax_8
 

@@ -1,0 +1,1 @@
+tests/compile_fail/unsupported_f32_type/src/main.snapsurf:2:15 E0511 unsupported primitive type

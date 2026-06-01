@@ -1,0 +1,7 @@
+fn value -> f32
+    ret 0
+end
+
+fn main -> i32
+    ret value
+end

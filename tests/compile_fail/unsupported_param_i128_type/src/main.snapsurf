@@ -1,0 +1,7 @@
+fn take x i128 -> i32
+    ret 0
+end
+
+fn main -> i32
+    ret take 1
+end

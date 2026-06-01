@@ -1,0 +1,6 @@
+fn main -> i32
+    match 1 ->
+        ret 1
+    end
+    ret 0
+end

@@ -1,0 +1,4 @@
+fn main -> i32
+    let ch char = 1
+    ret 0
+end

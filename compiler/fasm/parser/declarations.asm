@@ -21,7 +21,7 @@ parse_decl_stmt:
 
     call parse_any_type
     test rax, rax
-    jz .bad
+    jz .bad_type
     mov [tmp_type_id], rax
     call advance_token
     call current_token_kind
@@ -65,6 +65,15 @@ parse_decl_stmt:
 .fail:
     mov rax, 1
     ret
+.bad_type:
+    call current_is_unsupported_primitive_type
+    test rax, rax
+    jz .bad
+    call set_diag_from_current
+    mov rdi, src_path
+    mov rsi, err_unsupported_primitive
+    call print_diag
+    jmp .fail
 
 parse_assign_stmt:
     call current_token_addr

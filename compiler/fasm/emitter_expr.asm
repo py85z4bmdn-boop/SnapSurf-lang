@@ -234,10 +234,19 @@ emit_expr:
     call write_all
     jmp .ok
 .array_index:
-    ; arr[idx]: compute base address, then load element.
+    ; arr[idx]: compute base address, bounds-check idx, then load element.
     mov rdi, r12
     call ast_child
     mov r14, rax
+    test r14, r14
+    jz .fail
+    mov rdi, r14
+    call semantic_expr_type
+    test rax, rax
+    jz .fail
+    mov rdi, rax
+    call type_array_count
+    mov r15, rax
     mov rdi, r14
     call ast_kind
     cmp rax, AST_VAR_REF
@@ -269,10 +278,10 @@ emit_expr:
     call write_all
 .array_index_base_done:
     
-    ; Save array pointer in rcx
+    ; Save array pointer across index evaluation.
     mov rdi, [out_fd]
-    mov rsi, asm_mov_rcx_rax
-    mov rdx, asm_mov_rcx_rax_len
+    mov rsi, asm_push_rax
+    mov rdx, asm_push_rax_len
     call write_all
     
     ; Emit index expression
@@ -284,6 +293,75 @@ emit_expr:
     call emit_expr
     test rax, rax
     jnz .fail
+
+    mov rdi, [out_fd]
+    mov rsi, asm_pop_rcx
+    mov rdx, asm_pop_rcx_len
+    call write_all
+
+    mov r14, [label_counter]
+    inc qword [label_counter]
+    mov r13, [label_counter]
+    inc qword [label_counter]
+
+    mov rdi, [out_fd]
+    mov rsi, asm_array_bounds_neg_pre
+    mov rdx, asm_array_bounds_neg_pre_len
+    call write_all
+    mov rax, r14
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_jz_post
+    mov rdx, asm_jz_post_len
+    call write_all
+
+    mov rdi, [out_fd]
+    mov rsi, asm_array_bounds_upper_pre
+    mov rdx, asm_array_bounds_upper_pre_len
+    call write_all
+    mov rax, r15
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_array_bounds_upper_post
+    mov rdx, asm_array_bounds_upper_post_len
+    call write_all
+    mov rax, r13
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_jz_post
+    mov rdx, asm_jz_post_len
+    call write_all
+
+    mov rdi, [out_fd]
+    mov rsi, asm_label_pre
+    mov rdx, asm_label_pre_len
+    call write_all
+    mov rax, r14
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_label_post
+    mov rdx, asm_label_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_array_bounds_trap
+    mov rdx, asm_array_bounds_trap_len
+    call write_all
+
+    mov rdi, [out_fd]
+    mov rsi, asm_label_pre
+    mov rdx, asm_label_pre_len
+    call write_all
+    mov rax, r13
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_label_post
+    mov rdx, asm_label_post_len
+    call write_all
     
     ; Load value at [rcx + rax*8] (assuming 64-bit values)
     mov rdi, [out_fd]
@@ -522,26 +600,71 @@ emit_binary_expr:
     je .pow
     jmp .fail
 .add:
+    mov rdi, r12
+    call semantic_expr_type
+    test rax, rax
+    jz .fail
+    cmp rax, TYPE_I64
+    je .add_checked
+    cmp rax, TYPE_ISIZE
+    je .add_checked
     mov rdi, [out_fd]
     mov rsi, asm_add_rax
     mov rdx, asm_add_rax_len
     call write_all
     jmp .normalize_result
+.add_checked:
+    call emit_signed_add_overflow_check
+    test rax, rax
+    jnz .fail
+    jmp .normalize_result
 .sub:
+    mov rdi, r12
+    call semantic_expr_type
+    test rax, rax
+    jz .fail
+    cmp rax, TYPE_I64
+    je .sub_checked
+    cmp rax, TYPE_ISIZE
+    je .sub_checked
     mov rdi, [out_fd]
     mov rsi, asm_sub_rax
     mov rdx, asm_sub_rax_len
     call write_all
     jmp .normalize_result
+.sub_checked:
+    call emit_signed_sub_overflow_check
+    test rax, rax
+    jnz .fail
+    jmp .normalize_result
 .mul:
+    mov rdi, r12
+    call semantic_expr_type
+    test rax, rax
+    jz .fail
+    cmp rax, TYPE_I64
+    je .mul_checked
+    cmp rax, TYPE_ISIZE
+    je .mul_checked
     mov rdi, [out_fd]
     mov rsi, asm_mul_rax
     mov rdx, asm_mul_rax_len
     call write_all
     jmp .normalize_result
+.mul_checked:
+    call emit_signed_mul_overflow_check
+    test rax, rax
+    jnz .fail
+    jmp .normalize_result
 .div:
+    call emit_divisor_zero_check
+    test rax, rax
+    jnz .fail
     test r15, r15
     jnz .udiv
+    call emit_signed_div_overflow_check
+    test rax, rax
+    jnz .fail
     mov rdi, [out_fd]
     mov rsi, asm_div_rax
     mov rdx, asm_div_rax_len
@@ -554,8 +677,14 @@ emit_binary_expr:
     call write_all
     jmp .normalize_result
 .mod:
+    call emit_divisor_zero_check
+    test rax, rax
+    jnz .fail
     test r15, r15
     jnz .umod
+    call emit_signed_div_overflow_check
+    test rax, rax
+    jnz .fail
     mov rdi, [out_fd]
     mov rsi, asm_mod_rax
     mov rdx, asm_mod_rax_len
@@ -598,6 +727,14 @@ emit_binary_expr:
     call write_all
     jmp .normalize_result
 .pow:
+    mov rdi, r12
+    call semantic_expr_type
+    test rax, rax
+    jz .fail
+    cmp rax, TYPE_I64
+    je .pow_checked
+    cmp rax, TYPE_ISIZE
+    je .pow_checked
     mov r14, [label_counter]
     inc qword [label_counter]
     mov r15, [label_counter]
@@ -647,6 +784,95 @@ emit_binary_expr:
     mov rdx, asm_label_post_len
     call write_all
     jmp .normalize_result
+.pow_checked:
+    mov r14, [label_counter]
+    inc qword [label_counter]
+    mov r15, [label_counter]
+    inc qword [label_counter]
+    mov r13, [label_counter]
+    inc qword [label_counter]
+    mov rdi, [out_fd]
+    mov rsi, asm_pow_init_pre
+    mov rdx, asm_pow_init_pre_len
+    call write_all
+    mov rax, r15
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_jz_post
+    mov rdx, asm_jz_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_label_pre
+    mov rdx, asm_label_pre_len
+    call write_all
+    mov rax, r14
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_label_post
+    mov rdx, asm_label_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_pow_loop_body_checked_pre
+    mov rdx, asm_pow_loop_body_checked_pre_len
+    call write_all
+    mov rax, r13
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_jz_post
+    mov rdx, asm_jz_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_pow_loop_body_checked_mid
+    mov rdx, asm_pow_loop_body_checked_mid_len
+    call write_all
+    mov rax, r14
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_jz_post
+    mov rdx, asm_jz_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_jmp_pre
+    mov rdx, asm_jmp_pre_len
+    call write_all
+    mov rax, r15
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_jz_post
+    mov rdx, asm_jz_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_label_pre
+    mov rdx, asm_label_pre_len
+    call write_all
+    mov rax, r13
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_label_post
+    mov rdx, asm_label_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_spow_overflow_trap
+    mov rdx, asm_spow_overflow_trap_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_label_pre
+    mov rdx, asm_label_pre_len
+    call write_all
+    mov rax, r15
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_label_post
+    mov rdx, asm_label_post_len
+    call write_all
+    jmp .normalize_result
 .normalize_result:
     mov rdi, r12
     call emit_normalize_expr_result
@@ -667,6 +893,183 @@ emit_binary_expr:
     pop r14
     pop r13
     pop r12
+    pop rbx
+    ret
+
+emit_signed_div_overflow_check:
+    push rbx
+    mov rbx, [label_counter]
+    inc qword [label_counter]
+    mov rdi, [out_fd]
+    mov rsi, asm_sdiv_overflow_check_pre
+    mov rdx, asm_sdiv_overflow_check_pre_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_sdiv_overflow_check_mid
+    mov rdx, asm_sdiv_overflow_check_mid_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_jz_post
+    mov rdx, asm_jz_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_sdiv_overflow_trap
+    mov rdx, asm_sdiv_overflow_trap_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_label_pre
+    mov rdx, asm_label_pre_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_label_post
+    mov rdx, asm_label_post_len
+    call write_all
+    xor rax, rax
+    pop rbx
+    ret
+
+emit_divisor_zero_check:
+    push rbx
+    mov rbx, [label_counter]
+    inc qword [label_counter]
+    mov rdi, [out_fd]
+    mov rsi, asm_div_zero_check_pre
+    mov rdx, asm_div_zero_check_pre_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_jz_post
+    mov rdx, asm_jz_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_div_zero_trap
+    mov rdx, asm_div_zero_trap_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_label_pre
+    mov rdx, asm_label_pre_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_label_post
+    mov rdx, asm_label_post_len
+    call write_all
+    xor rax, rax
+    pop rbx
+    ret
+
+emit_signed_add_overflow_check:
+    push rbx
+    mov rbx, [label_counter]
+    inc qword [label_counter]
+    mov rdi, [out_fd]
+    mov rsi, asm_sadd_overflow_check_pre
+    mov rdx, asm_sadd_overflow_check_pre_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_jz_post
+    mov rdx, asm_jz_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_sadd_overflow_trap
+    mov rdx, asm_sadd_overflow_trap_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_label_pre
+    mov rdx, asm_label_pre_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_label_post
+    mov rdx, asm_label_post_len
+    call write_all
+    xor rax, rax
+    pop rbx
+    ret
+
+emit_signed_sub_overflow_check:
+    push rbx
+    mov rbx, [label_counter]
+    inc qword [label_counter]
+    mov rdi, [out_fd]
+    mov rsi, asm_ssub_overflow_check_pre
+    mov rdx, asm_ssub_overflow_check_pre_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_jz_post
+    mov rdx, asm_jz_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_ssub_overflow_trap
+    mov rdx, asm_ssub_overflow_trap_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_label_pre
+    mov rdx, asm_label_pre_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_label_post
+    mov rdx, asm_label_post_len
+    call write_all
+    xor rax, rax
+    pop rbx
+    ret
+
+emit_signed_mul_overflow_check:
+    push rbx
+    mov rbx, [label_counter]
+    inc qword [label_counter]
+    mov rdi, [out_fd]
+    mov rsi, asm_smul_overflow_check_pre
+    mov rdx, asm_smul_overflow_check_pre_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_jz_post
+    mov rdx, asm_jz_post_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_smul_overflow_trap
+    mov rdx, asm_smul_overflow_trap_len
+    call write_all
+    mov rdi, [out_fd]
+    mov rsi, asm_label_pre
+    mov rdx, asm_label_pre_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_label_post
+    mov rdx, asm_label_post_len
+    call write_all
+    xor rax, rax
     pop rbx
     ret
 
@@ -751,16 +1154,37 @@ try_fold_binary_expr:
     jmp .cant_fold_badop
 
 .fold_add:
+    test r11, r11
+    jnz .fold_add_unsigned
+    mov rax, r8
+    add rax, r9
+    jo .fold_overflow
+    jmp .folded_ok
+.fold_add_unsigned:
     mov rax, r8
     add rax, r9
     jmp .folded_ok
 
 .fold_sub:
+    test r11, r11
+    jnz .fold_sub_unsigned
+    mov rax, r8
+    sub rax, r9
+    jo .fold_overflow
+    jmp .folded_ok
+.fold_sub_unsigned:
     mov rax, r8
     sub rax, r9
     jmp .folded_ok
 
 .fold_mul:
+    test r11, r11
+    jnz .fold_mul_unsigned
+    mov rax, r8
+    imul rax, r9
+    jo .fold_overflow
+    jmp .folded_ok
+.fold_mul_unsigned:
     mov rax, r8
     imul rax, r9
     jmp .folded_ok
@@ -832,7 +1256,14 @@ try_fold_binary_expr:
     cmp rcx, 0
     jle .folded_ok
 .fold_pow_loop:
+    test r11, r11
+    jnz .fold_pow_unsigned
     imul rax, r8
+    jo .fold_overflow
+    jmp .fold_pow_after_mul
+.fold_pow_unsigned:
+    imul rax, r8
+.fold_pow_after_mul:
     dec rcx
     jnz .fold_pow_loop
     jmp .folded_ok
@@ -844,7 +1275,8 @@ try_fold_binary_expr:
 
 .fold_div_by_zero:
 .fold_mod_by_zero:
-    mov rax, 0          ; Division by zero - can't fold
+.fold_overflow:
+    mov rax, 0          ; Can't fold safely; use runtime lowering
     jmp .try_fold_done
 
 .cant_fold_noleft:
@@ -872,6 +1304,28 @@ emit_fn_call_expr:
     test rax, rax
     jz .fail
     mov r13, rax
+    mov rdi, r13
+    call ast_span_start
+    mov r12, rax
+    mov rdi, r13
+    call ast_span_end
+    sub rax, r12
+    mov rdi, r12
+    mov rsi, rax
+    call semantic_find_function
+    test rax, rax
+    jnz .user_call
+    mov rdi, rbx
+    mov rsi, r13
+    call emit_builtin_math_call_expr
+    test rdx, rdx
+    jz .user_call
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+.user_call:
     mov qword [tmp_arg_count], 0
     mov rdi, r13
     call ast_next
@@ -937,6 +1391,189 @@ emit_fn_call_expr:
 .fail:
     mov rax, 1
     pop r13
+    pop r12
+    pop rbx
+    ret
+
+emit_builtin_math_call_expr:
+    push rbx
+    push r12
+    push r13
+    push r14
+    mov r12, rdi
+    mov r13, rsi
+    mov rdi, r13
+    call ast_kind
+    cmp rax, AST_VAR_REF
+    jne .not_builtin
+    mov rdi, r13
+    call ast_child
+    mov r14, rax
+    mov rdi, r14
+    mov rsi, text_abs
+    mov rdx, 3
+    call token_text_eq
+    test rax, rax
+    jnz .abs_builtin
+    mov rdi, r14
+    mov rsi, text_min
+    mov rdx, 3
+    call token_text_eq
+    test rax, rax
+    jnz .min_builtin
+    mov rdi, r14
+    mov rsi, text_max
+    mov rdx, 3
+    call token_text_eq
+    test rax, rax
+    jnz .max_builtin
+    mov rdi, r14
+    mov rsi, text_clamp
+    mov rdx, 5
+    call token_text_eq
+    test rax, rax
+    jnz .clamp_builtin
+.not_builtin:
+    xor rax, rax
+    xor rdx, rdx
+    jmp .out
+.abs_builtin:
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rdi, rax
+    call emit_expr
+    test rax, rax
+    jnz .fail_handled
+    mov rdi, [out_fd]
+    mov rsi, asm_abs_rax
+    mov rdx, asm_abs_rax_len
+    call write_all
+    jmp .ok_handled
+.min_builtin:
+    mov rsi, asm_min_rax
+    mov rdx, asm_min_rax_len
+    mov rdi, r12
+    call emit_two_arg_math_builtin
+    test rax, rax
+    jnz .fail_handled
+    jmp .ok_handled
+.max_builtin:
+    mov rsi, asm_max_rax
+    mov rdx, asm_max_rax_len
+    mov rdi, r12
+    call emit_two_arg_math_builtin
+    test rax, rax
+    jnz .fail_handled
+    jmp .ok_handled
+.clamp_builtin:
+    call emit_clamp_builtin
+    test rax, rax
+    jnz .fail_handled
+    jmp .ok_handled
+.ok_handled:
+    xor rax, rax
+    mov rdx, 1
+    jmp .out
+.fail_handled:
+    mov rax, 1
+    mov rdx, 1
+.out:
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+emit_two_arg_math_builtin:
+    push rbx
+    push r12
+    push r13
+    push r14
+    mov rbx, rdi
+    mov r13, rsi
+    mov r14, rdx
+    mov rdi, rbx
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov r12, rax
+    mov rdi, r12
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    mov rdi, [out_fd]
+    mov rsi, asm_push_rax
+    mov rdx, asm_push_rax_len
+    call write_all
+    mov rdi, r12
+    call ast_next
+    mov rdi, rax
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    mov rdi, [out_fd]
+    mov rsi, r13
+    mov rdx, r14
+    call write_all
+    xor rax, rax
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+emit_clamp_builtin:
+    push rbx
+    push r12
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax
+    mov rdi, rbx
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    mov rdi, [out_fd]
+    mov rsi, asm_push_rax
+    mov rdx, asm_push_rax_len
+    call write_all
+    mov rdi, rbx
+    call ast_next
+    mov r12, rax
+    mov rdi, r12
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    mov rdi, [out_fd]
+    mov rsi, asm_push_rax
+    mov rdx, asm_push_rax_len
+    call write_all
+    mov rdi, r12
+    call ast_next
+    mov rdi, rax
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    mov rdi, [out_fd]
+    mov rsi, asm_clamp_rax
+    mov rdx, asm_clamp_rax_len
+    call write_all
+    xor rax, rax
+    pop r12
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
     pop r12
     pop rbx
     ret

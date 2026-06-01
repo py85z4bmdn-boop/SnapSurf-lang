@@ -1,0 +1,10 @@
+fn main -> i32
+    let left i64 = 10
+    let right i64 = 3
+    let value i64 = left - right
+    if value == 7 ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

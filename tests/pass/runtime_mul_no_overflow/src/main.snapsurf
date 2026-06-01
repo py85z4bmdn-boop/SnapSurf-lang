@@ -1,0 +1,10 @@
+fn main -> i32
+    let left i64 = 6
+    let right i64 = 7
+    let value i64 = left * right
+    if value == 42 ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

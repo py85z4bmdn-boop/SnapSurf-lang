@@ -1,0 +1,1 @@
+tests/compile_fail/unsupported_u128_type/src/main.snapsurf:2:14 E0511 unsupported primitive type

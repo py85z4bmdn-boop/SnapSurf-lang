@@ -1,0 +1,7 @@
+fn main -> i32
+    let a i32 = abs(-12)
+    let b i32 = min(a, 7)
+    let c i32 = max(b, 9)
+    let d i32 = clamp(c, 0, 8)
+    ret d
+end

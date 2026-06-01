@@ -1,0 +1,6 @@
+fn main -> i32
+    for i in range(0, 3) ->
+        ret i
+    end
+    ret 0
+end

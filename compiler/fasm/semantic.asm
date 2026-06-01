@@ -552,6 +552,11 @@ semantic_fn_call_type:
     jmp .out
 .not_found:
     mov rdi, r12
+    mov rsi, rbx
+    call semantic_builtin_math_call_type
+    test rdx, rdx
+    jnz .out
+    mov rdi, r12
     call set_diag_from_expr_node
     mov rdi, src_path
     mov rsi, err_fn_not_found
@@ -617,6 +622,195 @@ semantic_call_arg_count:
     jmp .loop
 .done:
     mov rax, r12
+    pop r12
+    pop rbx
+    ret
+
+semantic_builtin_math_call_type:
+    push rbx
+    push r12
+    push r13
+    push r14
+    push r15
+    mov r12, rdi
+    mov r13, rsi
+    mov rdi, r13
+    call ast_kind
+    cmp rax, AST_VAR_REF
+    jne .not_builtin
+    mov rdi, r13
+    call ast_child
+    mov r14, rax
+    mov rdi, r14
+    mov rsi, text_abs
+    mov rdx, 3
+    call token_text_eq
+    test rax, rax
+    jnz .abs_builtin
+    mov rdi, r14
+    mov rsi, text_min
+    mov rdx, 3
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_builtin
+    mov rdi, r14
+    mov rsi, text_max
+    mov rdx, 3
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_builtin
+    mov rdi, r14
+    mov rsi, text_clamp
+    mov rdx, 5
+    call token_text_eq
+    test rax, rax
+    jnz .three_arg_builtin
+.not_builtin:
+    xor rax, rax
+    xor rdx, rdx
+    jmp .out
+.abs_builtin:
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, 1
+    jne .arity_bad
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax
+    mov r15, [expected_expr_type]
+    mov rdi, rbx
+    call semantic_expr_type
+    mov [expected_expr_type], r15
+    test rax, rax
+    jz .handled_error
+    mov [tmp_type_id], rax
+    mov rdi, rax
+    call semantic_type_is_signed_integer
+    test rax, rax
+    jz .arg1_type_bad
+    mov rax, [tmp_type_id]
+    jmp .handled_type
+.two_arg_builtin:
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, 2
+    jne .arity_bad
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax
+    mov rdi, rbx
+    call ast_next
+    mov r14, rax
+    mov r15, [expected_expr_type]
+    mov rdi, rbx
+    call semantic_expr_type
+    test rax, rax
+    jz .restore_handled_error
+    mov [tmp_type_id], rax
+    mov rdi, rax
+    call semantic_type_is_signed_integer
+    test rax, rax
+    jz .restore_arg1_type_bad
+    mov rax, [tmp_type_id]
+    mov [expected_expr_type], rax
+    mov rdi, r14
+    call semantic_expr_type
+    mov [expected_expr_type], r15
+    test rax, rax
+    jz .handled_error
+    cmp rax, [tmp_type_id]
+    jne .arg2_type_bad
+    mov rax, [tmp_type_id]
+    jmp .handled_type
+.three_arg_builtin:
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, 3
+    jne .arity_bad
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax
+    mov rdi, rbx
+    call ast_next
+    mov r14, rax
+    mov rdi, r14
+    call ast_next
+    mov [tmp_ast_c], rax
+    mov r15, [expected_expr_type]
+    mov rdi, rbx
+    call semantic_expr_type
+    test rax, rax
+    jz .restore_handled_error
+    mov [tmp_type_id], rax
+    mov rdi, rax
+    call semantic_type_is_signed_integer
+    test rax, rax
+    jz .restore_arg1_type_bad
+    mov rax, [tmp_type_id]
+    mov [expected_expr_type], rax
+    mov rdi, r14
+    call semantic_expr_type
+    test rax, rax
+    jz .restore_handled_error
+    cmp rax, [tmp_type_id]
+    jne .restore_arg2_type_bad
+    mov rax, [tmp_type_id]
+    mov [expected_expr_type], rax
+    mov rdi, [tmp_ast_c]
+    call semantic_expr_type
+    mov [expected_expr_type], r15
+    test rax, rax
+    jz .handled_error
+    cmp rax, [tmp_type_id]
+    jne .arg3_type_bad
+    mov rax, [tmp_type_id]
+    jmp .handled_type
+.restore_handled_error:
+    mov [expected_expr_type], r15
+    jmp .handled_error
+.restore_arg1_type_bad:
+    mov [expected_expr_type], r15
+    jmp .arg1_type_bad
+.restore_arg2_type_bad:
+    mov [expected_expr_type], r15
+    jmp .arg2_type_bad
+.arity_bad:
+    mov rdi, r12
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_fn_param_mismatch
+    call print_diag
+    jmp .handled_error
+.arg1_type_bad:
+    mov rdi, rbx
+    jmp .arg_type_bad
+.arg2_type_bad:
+    mov rdi, r14
+    jmp .arg_type_bad
+.arg3_type_bad:
+    mov rdi, [tmp_ast_c]
+.arg_type_bad:
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_fn_arg_type
+    call print_diag
+    jmp .handled_error
+.handled_error:
+    xor rax, rax
+    mov rdx, 1
+    jmp .out
+.handled_type:
+    mov rdx, 1
+.out:
+    pop r15
+    pop r14
+    pop r13
     pop r12
     pop rbx
     ret

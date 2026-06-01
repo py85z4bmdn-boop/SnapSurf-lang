@@ -97,8 +97,6 @@ token_starts_expr:
     je .yes
     cmp rdi, TOK_FALSE
     je .yes
-    cmp rdi, TOK_MINUS
-    je .yes
     cmp rdi, TOK_NOT
     je .yes
     cmp rdi, TOK_LPAREN

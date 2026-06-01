@@ -524,7 +524,7 @@ parse_fn_or_main:
 
     call parse_any_type
     test rax, rax
-    jz .bad_return_type
+    jz .bad_return_type_or_unsupported
     mov [tmp_type_id], rax
     mov rdi, r13
     mov rsi, rax
@@ -589,6 +589,16 @@ parse_fn_or_main:
     call print_diag
     mov rax, 1
     ret
+.bad_return_type_or_unsupported:
+    call current_is_unsupported_primitive_type
+    test rax, rax
+    jz .bad_return_type
+    call set_diag_from_current
+    mov rdi, src_path
+    mov rsi, err_unsupported_primitive
+    call print_diag
+    mov rax, 1
+    ret
 .fail:
     mov rax, 1
     ret
@@ -643,6 +653,15 @@ parse_fn_param_node:
     pop rbx
     ret
 .bad_type:
+    call current_is_unsupported_primitive_type
+    test rax, rax
+    jz .bad_type_generic
+    call set_diag_from_current
+    mov rdi, src_path
+    mov rsi, err_unsupported_primitive
+    call print_diag
+    jmp .fail
+.bad_type_generic:
     call set_diag_from_current
     mov rdi, src_path
     mov rsi, err_bad_param_type
@@ -679,7 +698,7 @@ parse_block:
     cmp rax, TOK_CONTINUE
     je .continue_stmt
     cmp rax, TOK_IDENT
-    je .ident_stmt
+    je .maybe_ident_stmt
     cmp rax, TOK_PRINT
     je .print_stmt
     cmp rax, TOK_UNSAFE
@@ -720,6 +739,11 @@ parse_block:
     test rax, rax
     jnz .fail
     jmp .loop
+.maybe_ident_stmt:
+    call current_is_unsupported_control_flow
+    test rax, rax
+    jnz .unsupported_control_flow
+    jmp .ident_stmt
 .ident_stmt:
     call current_is_io_write
     test rax, rax
@@ -758,6 +782,13 @@ parse_block:
     call print_unsupported_current
     mov rax, 1
     ret
+.unsupported_control_flow:
+    call set_diag_from_current
+    mov rdi, src_path
+    mov rsi, err_unsupported_control_flow
+    call print_diag
+    mov rax, 1
+    ret
 .fail:
     ret
 
@@ -790,7 +821,7 @@ parse_block_inner:
     cmp rax, TOK_CONTINUE
     je .continue_stmt
     cmp rax, TOK_IDENT
-    je .ident_stmt
+    je .maybe_ident_stmt
     cmp rax, TOK_PRINT
     je .print_stmt
     cmp rax, TOK_UNSAFE
@@ -831,6 +862,11 @@ parse_block_inner:
     test rax, rax
     jnz .fail
     jmp .loop
+.maybe_ident_stmt:
+    call current_is_unsupported_control_flow
+    test rax, rax
+    jnz .unsupported_control_flow
+    jmp .ident_stmt
 .ident_stmt:
     call current_is_io_write
     test rax, rax
@@ -866,6 +902,13 @@ parse_block_inner:
     ret
 .unsupported:
     call print_unsupported_current
+    mov rax, 1
+    ret
+.unsupported_control_flow:
+    call set_diag_from_current
+    mov rdi, src_path
+    mov rsi, err_unsupported_control_flow
+    call print_diag
     mov rax, 1
     ret
 .fail:

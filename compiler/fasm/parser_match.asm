@@ -232,6 +232,268 @@ parse_type_keyword:
     xor rax, rax
     ret
 
+current_is_unsupported_primitive_type:
+    call current_token_kind
+    cmp rax, TOK_IDENT
+    jne .no
+    call current_token_addr
+    mov r8, [rax + TOKEN_START]
+    mov r9, [rax + TOKEN_LEN]
+    cmp r9, 3
+    je .len3
+    cmp r9, 4
+    je .len4
+    jmp .no
+.len3:
+    mov al, byte [src_buf + r8]
+    cmp al, 'f'
+    jne .no
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, '3'
+    je .type_f32
+    cmp al, '6'
+    je .type_f64
+    jmp .no
+.type_f32:
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, '2'
+    je .yes
+    jmp .no
+.type_f64:
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, '4'
+    je .yes
+    jmp .no
+.len4:
+    mov al, byte [src_buf + r8]
+    cmp al, 'i'
+    je .type_i128
+    cmp al, 'u'
+    je .type_u_len4
+    cmp al, 'c'
+    je .type_char
+    cmp al, 'v'
+    je .type_void
+    jmp .no
+.type_i128:
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, '1'
+    jne .no
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, '2'
+    jne .no
+    mov al, byte [src_buf + r8 + 3]
+    cmp al, '8'
+    je .yes
+    jmp .no
+.type_u_len4:
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, '1'
+    je .type_u128_tail
+    cmp al, 'n'
+    je .type_unit_tail
+    jmp .no
+.type_u128_tail:
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, '2'
+    jne .no
+    mov al, byte [src_buf + r8 + 3]
+    cmp al, '8'
+    je .yes
+    jmp .no
+.type_unit_tail:
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, 'i'
+    jne .no
+    mov al, byte [src_buf + r8 + 3]
+    cmp al, 't'
+    je .yes
+    jmp .no
+.type_char:
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, 'h'
+    jne .no
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, 'a'
+    jne .no
+    mov al, byte [src_buf + r8 + 3]
+    cmp al, 'r'
+    je .yes
+    jmp .no
+.type_void:
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, 'o'
+    jne .no
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, 'i'
+    jne .no
+    mov al, byte [src_buf + r8 + 3]
+    cmp al, 'd'
+    je .yes
+    jmp .no
+.yes:
+    mov rax, 1
+    ret
+.no:
+    xor rax, rax
+    ret
+
+current_is_unsupported_control_flow:
+    call current_token_kind
+    cmp rax, TOK_IDENT
+    jne .no
+    call current_token_addr
+    mov r8, [rax + TOKEN_START]
+    mov r9, [rax + TOKEN_LEN]
+    cmp r9, 2
+    je .len2
+    cmp r9, 3
+    je .len3
+    cmp r9, 4
+    je .len4
+    cmp r9, 5
+    je .len5
+    cmp r9, 6
+    je .len6
+    jmp .no
+.len2:
+    mov al, byte [src_buf + r8]
+    cmp al, 'd'
+    jne .no
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, 'o'
+    je .yes
+    jmp .no
+.len3:
+    mov al, byte [src_buf + r8]
+    cmp al, 'f'
+    je .type_for
+    cmp al, 't'
+    je .type_try
+    jmp .no
+.type_for:
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, 'o'
+    jne .no
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, 'r'
+    je .yes
+    jmp .no
+.type_try:
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, 'r'
+    jne .no
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, 'y'
+    je .yes
+    jmp .no
+.len4:
+    mov al, byte [src_buf + r8]
+    cmp al, 'g'
+    jne .no
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, 'o'
+    jne .no
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, 't'
+    jne .no
+    mov al, byte [src_buf + r8 + 3]
+    cmp al, 'o'
+    je .yes
+    jmp .no
+.len5:
+    mov al, byte [src_buf + r8]
+    cmp al, 'm'
+    je .type_match
+    cmp al, 'a'
+    je .type_async_or_await
+    cmp al, 'c'
+    je .type_catch
+    jmp .no
+.type_match:
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, 'a'
+    jne .no
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, 't'
+    jne .no
+    mov al, byte [src_buf + r8 + 3]
+    cmp al, 'c'
+    jne .no
+    mov al, byte [src_buf + r8 + 4]
+    cmp al, 'h'
+    je .yes
+    jmp .no
+.type_async_or_await:
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, 's'
+    je .type_async_tail
+    cmp al, 'w'
+    je .type_await_tail
+    jmp .no
+.type_async_tail:
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, 'y'
+    jne .no
+    mov al, byte [src_buf + r8 + 3]
+    cmp al, 'n'
+    jne .no
+    mov al, byte [src_buf + r8 + 4]
+    cmp al, 'c'
+    je .yes
+    jmp .no
+.type_await_tail:
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, 'a'
+    jne .no
+    mov al, byte [src_buf + r8 + 3]
+    cmp al, 'i'
+    jne .no
+    mov al, byte [src_buf + r8 + 4]
+    cmp al, 't'
+    je .yes
+    jmp .no
+.type_catch:
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, 'a'
+    jne .no
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, 't'
+    jne .no
+    mov al, byte [src_buf + r8 + 3]
+    cmp al, 'c'
+    jne .no
+    mov al, byte [src_buf + r8 + 4]
+    cmp al, 'h'
+    je .yes
+    jmp .no
+.len6:
+    mov al, byte [src_buf + r8]
+    cmp al, 's'
+    jne .no
+    mov al, byte [src_buf + r8 + 1]
+    cmp al, 'w'
+    jne .no
+    mov al, byte [src_buf + r8 + 2]
+    cmp al, 'i'
+    jne .no
+    mov al, byte [src_buf + r8 + 3]
+    cmp al, 't'
+    jne .no
+    mov al, byte [src_buf + r8 + 4]
+    cmp al, 'c'
+    jne .no
+    mov al, byte [src_buf + r8 + 5]
+    cmp al, 'h'
+    je .yes
+    jmp .no
+.yes:
+    mov rax, 1
+    ret
+.no:
+    xor rax, rax
+    ret
+
 ; parse_pointer_type: Parse pointer type syntax (*i32, *u64, etc.)
 ; Input: current token should be * (TOK_STAR)
 ; Output: rax = TYPE_* constant for pointer type, or 0 if invalid

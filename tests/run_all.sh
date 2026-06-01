@@ -100,9 +100,12 @@ run_exit let_integer 10
 run_exit mut_arithmetic 16
 run_exit precedence 7
 run_exit paren_expr 9
+run_exit binary_sub_var 7
 run_exit div_mod 8
 run_exit unary_minus 2
 run_exit function_call 42
+run_exit function_recursion 120
+run_exit function_mutual_recursion 11
 run_exit main_after_helper 0
 run_exit elif_chain 2
 run_exit print_builtin 0
@@ -113,6 +116,7 @@ run_exit loop_break 7
 run_exit scoping 10
 run_exit const_folding_simple 14
 run_exit arithmetic_pow 32
+run_exit math_builtins 8
 run_exit bitwise_not 15
 run_exit bitwise_and 8
 run_exit bitwise_or 15
@@ -122,7 +126,12 @@ run_exit bitwise_shr 10
 run_exit bitwise_rol 1
 run_exit bitwise_ror 16
 run_exit pointer_deref 100
+run_exit pointer_to_pointer 77
 run_exit array_index_basic 0
+run_exit array_index_usize 0
+run_exit array_index_expr_preserves_base 0
+run_exit array_index_runtime_oob 101
+run_exit array_index_runtime_negative 101
 run_exit primitive_i64 0
 run_exit primitive_pointer_sized 0
 run_exit typed_int_literal_compare 0
@@ -134,6 +143,20 @@ run_exit integer_width_return 0
 run_exit integer_unsigned_ordering 0
 run_exit integer_width_expr 0
 run_exit integer_unsigned_div_mod 0
+run_exit runtime_division_by_zero 102
+run_exit runtime_modulo_by_zero 102
+run_exit runtime_division_overflow 103
+run_exit runtime_modulo_overflow 103
+run_exit runtime_add_overflow 104
+run_exit runtime_sub_no_overflow 0
+run_exit runtime_sub_overflow 105
+run_exit runtime_mul_no_overflow 0
+run_exit runtime_mul_overflow 106
+run_exit runtime_pow_no_overflow 0
+run_exit runtime_pow_overflow 107
+run_exit constant_add_overflow 104
+run_exit constant_mul_overflow 106
+run_exit constant_pow_overflow 107
 run_exit struct_field_access 0
 
 run_fail() {
@@ -169,6 +192,8 @@ run_fail continue_outside_loop
 run_fail extra_top_level_end
 run_fail conditional_return_missing
 run_fail primitive_mismatch
+run_fail array_index_literal_oob
+run_fail array_index_negative_literal
 run_fail integer_literal_range
 run_fail integer_literal_overflow
 run_fail negative_integer_literal_range
@@ -178,6 +203,18 @@ run_fail division_by_zero_const_expr
 run_fail modulo_by_zero_const_expr
 run_fail division_by_zero_nested_const_expr
 run_fail modulo_by_zero_nested_const_expr
+run_fail unsupported_i128_type
+run_fail unsupported_u128_type
+run_fail unsupported_f32_type
+run_fail unsupported_f64_type
+run_fail unsupported_char_type
+run_fail unsupported_unit_type
+run_fail unsupported_param_i128_type
+run_fail unsupported_return_f32_type
+run_fail unsupported_for_loop
+run_fail unsupported_goto
+run_fail unsupported_match
+run_fail unsupported_switch
 run_fail fn_arg_type_mismatch
 run_fail fn_struct_arg_mismatch
 

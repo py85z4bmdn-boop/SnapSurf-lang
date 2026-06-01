@@ -1,0 +1,6 @@
+fn main -> i32
+    let min i64 = -9223372036854775808
+    let one i64 = 1
+    let x i64 = min - one
+    ret 0
+end
