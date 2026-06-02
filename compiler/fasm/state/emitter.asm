@@ -6,3 +6,8 @@ break_label_stack: rq SCOPE_CAP
 continue_label_stack: rq SCOPE_CAP
 loop_depth: rq 1
 needs_print_int_helper: rb 1
+needs_eprint_int_helper: rb 1
+needs_print_uint_helper: rb 1
+needs_eprint_uint_helper: rb 1
+needs_gcd_u64_helper: rb 1
+needs_lcm_u64_helper: rb 1

@@ -1,0 +1,21 @@
+fn main -> i32
+    let one8 u8 = 1
+    let zero8 u8 = 0
+    let neg8 i8 = -1
+    let one16 u16 = 1
+    let zero16 u16 = 0
+    let neg16 i16 = -1
+    let one32 u32 = 1
+    let zero32 u32 = 0
+    let neg32 i32 = -1
+    let a i32 = leading_zeros(one8)
+    let b i32 = trailing_zeros(zero8)
+    let c i32 = popcount(neg8)
+    let d i32 = leading_zeros(one16)
+    let e i32 = trailing_zeros(zero16)
+    let f i32 = popcount(neg16)
+    let g i32 = leading_zeros(one32)
+    let h i32 = trailing_zeros(zero32)
+    let i i32 = popcount(neg32)
+    ret a + b + c + d + e + f + g + h + i
+end

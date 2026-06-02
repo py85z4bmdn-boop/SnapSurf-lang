@@ -40,12 +40,51 @@ emit_main_asm:
     test rbx, rbx
     jnz .fn_loop
 
-    ; Emit __snapsurf_print_int helper if print was used
     cmp byte [needs_print_int_helper], 0
-    je .rodata_emit
+    je .maybe_print_uint_helper
     mov rdi, [out_fd]
     mov rsi, asm_print_int_helper
     mov rdx, asm_print_int_helper_len
+    call write_all
+
+.maybe_print_uint_helper:
+    cmp byte [needs_print_uint_helper], 0
+    je .maybe_eprint_helper
+    mov rdi, [out_fd]
+    mov rsi, asm_print_uint_helper
+    mov rdx, asm_print_uint_helper_len
+    call write_all
+
+.maybe_eprint_helper:
+    cmp byte [needs_eprint_int_helper], 0
+    je .maybe_eprint_uint_helper
+    mov rdi, [out_fd]
+    mov rsi, asm_eprint_int_helper
+    mov rdx, asm_eprint_int_helper_len
+    call write_all
+
+.maybe_eprint_uint_helper:
+    cmp byte [needs_eprint_uint_helper], 0
+    je .maybe_gcd_u64_helper
+    mov rdi, [out_fd]
+    mov rsi, asm_eprint_uint_helper
+    mov rdx, asm_eprint_uint_helper_len
+    call write_all
+
+.maybe_gcd_u64_helper:
+    cmp byte [needs_gcd_u64_helper], 0
+    je .maybe_lcm_u64_helper
+    mov rdi, [out_fd]
+    mov rsi, asm_gcd_u64_helper
+    mov rdx, asm_gcd_u64_helper_len
+    call write_all
+
+.maybe_lcm_u64_helper:
+    cmp byte [needs_lcm_u64_helper], 0
+    je .rodata_emit
+    mov rdi, [out_fd]
+    mov rsi, asm_lcm_u64_helper
+    mov rdx, asm_lcm_u64_helper_len
     call write_all
 
 .rodata_emit:
@@ -55,12 +94,9 @@ emit_main_asm:
     mov rsi, asm_rodata_pre
     mov rdx, asm_rodata_pre_len
     call write_all
-    mov rdi, [out_fd]
-    call write_db_string
-    mov rdi, [out_fd]
-    mov rsi, asm_final_newline
-    mov rdx, 1
-    call write_all
+    call emit_io_write_rodata
+    test rax, rax
+    jnz .fail_close
 
 .close:
     mov rdi, [out_fd]
@@ -321,11 +357,14 @@ emit_stmt:
     je .continue_stmt
     cmp r13, AST_PRINT_STMT
     je .print_stmt
+    cmp r13, AST_EPRINT_STMT
+    je .eprint_stmt
     xor rax, rax
     pop r13
     pop r12
     ret
 .call:
+    mov rdi, r12
     call emit_io_write
     pop r13
     pop r12
@@ -386,6 +425,12 @@ emit_stmt:
 .print_stmt:
     mov rdi, r12
     call emit_print_stmt
+    pop r13
+    pop r12
+    ret
+.eprint_stmt:
+    mov rdi, r12
+    call emit_eprint_stmt
     pop r13
     pop r12
     ret

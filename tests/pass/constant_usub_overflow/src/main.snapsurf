@@ -1,0 +1,4 @@
+fn main -> i32
+    let x u64 = 0 - 1
+    ret 0
+end

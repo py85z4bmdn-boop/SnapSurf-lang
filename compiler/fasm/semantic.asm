@@ -665,10 +665,167 @@ semantic_builtin_math_call_type:
     call token_text_eq
     test rax, rax
     jnz .three_arg_builtin
+    mov rdi, r14
+    mov rsi, text_popcount
+    mov rdx, 8
+    call token_text_eq
+    test rax, rax
+    jnz .bitcount_builtin
+    mov rdi, r14
+    mov rsi, text_leading_zeros
+    mov rdx, 13
+    call token_text_eq
+    test rax, rax
+    jnz .bitcount_builtin
+    mov rdi, r14
+    mov rsi, text_trailing_zeros
+    mov rdx, 14
+    call token_text_eq
+    test rax, rax
+    jnz .bitcount_builtin
+    mov rdi, r14
+    mov rsi, text_gcd
+    mov rdx, 3
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_unsigned_builtin
+    mov rdi, r14
+    mov rsi, text_lcm
+    mov rdx, 3
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_unsigned_builtin
+    mov rdi, r14
+    mov rsi, text_wrapping_add
+    mov rdx, 12
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_builtin
+    mov rdi, r14
+    mov rsi, text_wrapping_sub
+    mov rdx, 12
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_builtin
+    mov rdi, r14
+    mov rsi, text_wrapping_mul
+    mov rdx, 12
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_builtin
+    mov rdi, r14
+    mov rsi, text_saturating_add
+    mov rdx, 14
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_word_builtin
+    mov rdi, r14
+    mov rsi, text_saturating_sub
+    mov rdx, 14
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_word_builtin
+    mov rdi, r14
+    mov rsi, text_saturating_mul
+    mov rdx, 14
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_word_builtin
 .not_builtin:
     xor rax, rax
     xor rdx, rdx
     jmp .out
+.bitcount_builtin:
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, 1
+    jne .arity_bad
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax
+    mov r15, [expected_expr_type]
+    mov qword [expected_expr_type], 0
+    mov rdi, rbx
+    call semantic_expr_type
+    mov [expected_expr_type], r15
+    test rax, rax
+    jz .handled_error
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .arg1_type_bad
+    mov rax, TYPE_I32
+    jmp .handled_type
+.two_arg_unsigned_builtin:
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, 2
+    jne .arity_bad
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax
+    mov rdi, rbx
+    call ast_next
+    mov r14, rax
+    mov r15, [expected_expr_type]
+    mov rdi, rbx
+    call semantic_expr_type
+    test rax, rax
+    jz .restore_handled_error
+    mov [tmp_type_id], rax
+    mov rdi, rax
+    call semantic_type_is_unsigned_integer
+    test rax, rax
+    jz .restore_arg1_type_bad
+    mov rax, [tmp_type_id]
+    mov [expected_expr_type], rax
+    mov rdi, r14
+    call semantic_expr_type
+    mov [expected_expr_type], r15
+    test rax, rax
+    jz .handled_error
+    cmp rax, [tmp_type_id]
+    jne .arg2_type_bad
+    mov rax, [tmp_type_id]
+    jmp .handled_type
+.two_arg_word_builtin:
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, 2
+    jne .arity_bad
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax
+    mov rdi, rbx
+    call ast_next
+    mov r14, rax
+    mov r15, [expected_expr_type]
+    mov rdi, rbx
+    call semantic_expr_type
+    test rax, rax
+    jz .restore_handled_error
+    mov [tmp_type_id], rax
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .restore_arg1_type_bad
+    mov rax, [tmp_type_id]
+    mov [expected_expr_type], rax
+    mov rdi, r14
+    call semantic_expr_type
+    mov [expected_expr_type], r15
+    test rax, rax
+    jz .handled_error
+    cmp rax, [tmp_type_id]
+    jne .arg2_type_bad
+    mov rax, [tmp_type_id]
+    jmp .handled_type
 .abs_builtin:
     mov rdi, r12
     call semantic_call_arg_count
@@ -687,7 +844,7 @@ semantic_builtin_math_call_type:
     jz .handled_error
     mov [tmp_type_id], rax
     mov rdi, rax
-    call semantic_type_is_signed_integer
+    call type_is_integer
     test rax, rax
     jz .arg1_type_bad
     mov rax, [tmp_type_id]
@@ -712,7 +869,7 @@ semantic_builtin_math_call_type:
     jz .restore_handled_error
     mov [tmp_type_id], rax
     mov rdi, rax
-    call semantic_type_is_signed_integer
+    call type_is_integer
     test rax, rax
     jz .restore_arg1_type_bad
     mov rax, [tmp_type_id]
@@ -749,7 +906,7 @@ semantic_builtin_math_call_type:
     jz .restore_handled_error
     mov [tmp_type_id], rax
     mov rdi, rax
-    call semantic_type_is_signed_integer
+    call type_is_integer
     test rax, rax
     jz .restore_arg1_type_bad
     mov rax, [tmp_type_id]
@@ -1039,6 +1196,8 @@ semantic_stmt:
     cmp r13, AST_CONTINUE_STMT
     je .continue_stmt
     cmp r13, AST_PRINT_STMT
+    je .print_stmt
+    cmp r13, AST_EPRINT_STMT
     je .print_stmt
     mov rdi, src_path
     mov rsi, err_unsup_ast
@@ -1674,7 +1833,7 @@ semantic_loop_stmt:
     pop r12
     ret
 
-; semantic_print_stmt: Validate that 'print expr' has an i32 expression.
+; semantic_print_stmt: Validate that 'print expr' has an integer expression.
 ; rdi = print_stmt node index.
 semantic_print_stmt:
     push r12
@@ -1687,8 +1846,10 @@ semantic_print_stmt:
     call semantic_expr_type
     test rax, rax
     jz .fail
-    cmp rax, TYPE_I32
-    jne .bad
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .bad
     xor rax, rax
     pop r12
     ret

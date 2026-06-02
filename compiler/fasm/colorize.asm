@@ -135,6 +135,8 @@ colorize_source:
     je .color_keyword
     cmp r13, TOK_PRINT
     je .color_keyword
+    cmp r13, TOK_EPRINT
+    je .color_keyword
 
     cmp r13, TOK_TRUE
     je .color_bool

@@ -701,6 +701,8 @@ parse_block:
     je .maybe_ident_stmt
     cmp rax, TOK_PRINT
     je .print_stmt
+    cmp rax, TOK_EPRINT
+    je .eprint_stmt
     cmp rax, TOK_UNSAFE
     je .unsafe_block_parse
     jmp .unsupported
@@ -759,6 +761,11 @@ parse_block:
     jmp .loop
 .print_stmt:
     call parse_print_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.eprint_stmt:
+    call parse_eprint_stmt
     test rax, rax
     jnz .fail
     jmp .loop
@@ -824,6 +831,8 @@ parse_block_inner:
     je .maybe_ident_stmt
     cmp rax, TOK_PRINT
     je .print_stmt
+    cmp rax, TOK_EPRINT
+    je .eprint_stmt
     cmp rax, TOK_UNSAFE
     je .unsafe_block
     jmp .unsupported
@@ -882,6 +891,11 @@ parse_block_inner:
     jmp .loop
 .print_stmt:
     call parse_print_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.eprint_stmt:
+    call parse_eprint_stmt
     test rax, rax
     jnz .fail
     jmp .loop

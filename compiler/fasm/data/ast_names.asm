@@ -45,4 +45,6 @@ ast_name_fn_param: db "AstFnParam", 10, 0
 ast_name_fn_call: db "AstFnCallExpr", 10, 0
 ast_name_unsafe_fn: db "AstUnsafeFn", 10, 0
 ast_name_unsafe_block: db "AstUnsafeBlock", 10, 0
+ast_name_print: db "AstPrintStmt", 10, 0
+ast_name_eprint: db "AstEprintStmt", 10, 0
 ast_name_unknown: db "AstUnknown", 10, 0

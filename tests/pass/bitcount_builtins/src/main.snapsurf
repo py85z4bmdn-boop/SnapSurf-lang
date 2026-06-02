@@ -1,0 +1,10 @@
+fn main -> i32
+    let hi u64 = 9223372036854775808
+    let zero u64 = 0
+    let pc i32 = popcount(hi)
+    let lz_hi i32 = leading_zeros(hi)
+    let tz_hi i32 = trailing_zeros(hi)
+    let lz_zero i32 = leading_zeros(zero)
+    let tz_zero i32 = trailing_zeros(zero)
+    ret pc + lz_hi + tz_hi + lz_zero + tz_zero
+end

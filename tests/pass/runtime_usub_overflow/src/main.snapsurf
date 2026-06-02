@@ -1,0 +1,11 @@
+fn main -> i32
+    let zero u64 = 0
+    let one u64 = 1
+    let max u64 = 18446744073709551615
+    let value u64 = zero - one
+    if value == max ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

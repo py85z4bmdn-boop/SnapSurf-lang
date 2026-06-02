@@ -96,6 +96,24 @@ run_exit() {
     fi
 }
 
+run_stderr() {
+    name="$1"
+    expected="$2"
+    ./build/surf build "tests/pass/$name" > "build/test-output/$name.build"
+    ./build/hello > "build/test-output/$name.stdout" 2> "build/test-output/$name.stderr"
+    test ! -s "build/test-output/$name.stdout"
+    diff -u "$expected" "build/test-output/$name.stderr"
+}
+
+run_stdout() {
+    name="$1"
+    expected="$2"
+    ./build/surf build "tests/pass/$name" > "build/test-output/$name.build"
+    ./build/hello > "build/test-output/$name.stdout" 2> "build/test-output/$name.stderr"
+    test ! -s "build/test-output/$name.stderr"
+    diff -u "$expected" "build/test-output/$name.stdout"
+}
+
 run_exit let_integer 10
 run_exit mut_arithmetic 16
 run_exit precedence 7
@@ -108,7 +126,9 @@ run_exit function_recursion 120
 run_exit function_mutual_recursion 11
 run_exit main_after_helper 0
 run_exit elif_chain 2
-run_exit print_builtin 0
+run_stdout print_builtin tests/expected/print.out
+run_stdout print_i64 tests/expected/print_i64.out
+run_stdout print_u64 tests/expected/print_u64.out
 run_exit while_simple 10
 run_exit while_break 5
 run_exit while_continue 45
@@ -117,6 +137,16 @@ run_exit scoping 10
 run_exit const_folding_simple 14
 run_exit arithmetic_pow 32
 run_exit math_builtins 8
+run_exit math_unsigned_builtins 0
+run_exit bitcount_builtins 192
+run_exit bitcount_widths 165
+run_exit gcd_lcm_builtins 6
+run_exit runtime_lcm_overflow 108
+run_stderr eprint_builtin tests/expected/eprint.out
+run_stderr eprint_i64 tests/expected/eprint_i64.out
+run_stderr eprint_u64 tests/expected/eprint_u64.out
+run_stderr io_write_stderr_fd tests/expected/io_write_stderr.out
+run_stdout io_write_multiple_strings tests/expected/io_write_multiple.out
 run_exit bitwise_not 15
 run_exit bitwise_and 8
 run_exit bitwise_or 15
@@ -154,9 +184,25 @@ run_exit runtime_mul_no_overflow 0
 run_exit runtime_mul_overflow 106
 run_exit runtime_pow_no_overflow 0
 run_exit runtime_pow_overflow 107
+run_exit runtime_upow_no_overflow 0
+run_exit runtime_upow_overflow 113
+run_exit runtime_abs_overflow 109
+run_exit runtime_unsigned_arith_no_overflow 0
+run_exit runtime_uadd_overflow 110
+run_exit runtime_usub_overflow 111
+run_exit runtime_umul_overflow 112
 run_exit constant_add_overflow 104
 run_exit constant_mul_overflow 106
 run_exit constant_pow_overflow 107
+run_exit constant_unsigned_no_overflow 0
+run_exit constant_uadd_overflow 110
+run_exit constant_usub_overflow 111
+run_exit constant_umul_overflow 112
+run_exit constant_upow_overflow 113
+run_exit wrapping_arithmetic 0
+run_exit saturating_arithmetic 0
+run_exit saturating_signed_arithmetic 0
+run_exit saturating_narrow_arithmetic 0
 run_exit struct_field_access 0
 
 run_fail() {

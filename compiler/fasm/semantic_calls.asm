@@ -15,6 +15,7 @@ semantic_load_call:
     call ast_child_at
     test rax, rax
     jz .bad
+    mov [tmp_ast_a], rax
     mov rdi, r12
     mov rsi, 2
     call ast_child_at
@@ -27,6 +28,17 @@ semantic_load_call:
     test rax, rax
     jz .bad
     mov [tmp_ast_c], rax
+
+    mov rdi, [tmp_ast_a]
+    call ast_kind
+    cmp rax, AST_INT_LIT
+    jne .bad
+    mov rdi, [tmp_ast_a]
+    call ast_child
+    mov rdi, rax
+    call token_addr
+    cmp qword [rax + TOKEN_TYPE], TOK_INT
+    jne .bad
 
     mov rdi, [tmp_ast_b]
     call ast_kind

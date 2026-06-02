@@ -1,0 +1,10 @@
+fn main -> i32
+    let high u64 = 9223372036854775808
+    let two u64 = 2
+    let value u64 = high pow two
+    if value == 0 ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

@@ -1,0 +1,6 @@
+fn main -> i32
+    let big u64 = 18446744073709551615
+    let two u64 = 2
+    let value u64 = lcm(big, two)
+    ret 0
+end

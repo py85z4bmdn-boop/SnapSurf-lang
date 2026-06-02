@@ -1,0 +1,22 @@
+fn main -> i32
+    let max u64 = 18446744073709551615
+    let zero u64 = 0
+    let one u64 = 1
+    let two u64 = 2
+    let three u64 = 3
+    let five u64 = 5
+    let seven u64 = 7
+    let ten u64 = 10
+    let high u64 = 9223372036854775808
+    let add_sat u64 = saturating_add(max, one)
+    let sub_sat u64 = saturating_sub(zero, one)
+    let mul_sat u64 = saturating_mul(high, two)
+    let add_ok u64 = saturating_add(five, two)
+    let sub_ok u64 = saturating_sub(five, two)
+    let mul_ok u64 = saturating_mul(five, two)
+    if add_sat == max and sub_sat == zero and mul_sat == max and add_ok == seven and sub_ok == three and mul_ok == ten ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

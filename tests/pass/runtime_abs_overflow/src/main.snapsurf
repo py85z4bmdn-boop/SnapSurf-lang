@@ -1,0 +1,27 @@
+fn abs_i8 -> i32
+    let min i8 = -128
+    let value i8 = abs(min)
+    ret 0
+end
+
+fn abs_i16 -> i32
+    let min i16 = -32768
+    let value i16 = abs(min)
+    ret 0
+end
+
+fn abs_i32 -> i32
+    let min i32 = -2147483648
+    let value i32 = abs(min)
+    ret 0
+end
+
+fn main -> i32
+    let min i64 = -9223372036854775808
+    let value i64 = abs(min)
+    if value == min ->
+        ret 1
+    else ->
+        ret 0
+    end
+end

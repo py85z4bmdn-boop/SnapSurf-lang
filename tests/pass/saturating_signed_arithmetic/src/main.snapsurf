@@ -1,0 +1,26 @@
+fn main -> i32
+    let max i64 = 9223372036854775807
+    let min i64 = -9223372036854775808
+    let neg_one i64 = -1
+    let one i64 = 1
+    let two i64 = 2
+    let three i64 = 3
+    let five i64 = 5
+    let seven i64 = 7
+    let ten i64 = 10
+    let high i64 = 4611686018427387904
+    let add_max i64 = saturating_add(max, one)
+    let add_min i64 = saturating_add(min, neg_one)
+    let sub_max i64 = saturating_sub(max, neg_one)
+    let sub_min i64 = saturating_sub(min, one)
+    let mul_max i64 = saturating_mul(high, two)
+    let mul_min i64 = saturating_mul(min, two)
+    let add_ok i64 = saturating_add(five, two)
+    let sub_ok i64 = saturating_sub(five, two)
+    let mul_ok i64 = saturating_mul(five, two)
+    if add_max == max and add_min == min and sub_max == max and sub_min == min and mul_max == max and mul_min == min and add_ok == seven and sub_ok == three and mul_ok == ten ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

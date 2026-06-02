@@ -1,0 +1,11 @@
+fn main -> i32
+    let sum u64 = 10 + 5
+    let diff u64 = sum - 3
+    let product u64 = diff * 2
+    let power u64 = 2 pow 6
+    if product == 24 and power == 64 ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

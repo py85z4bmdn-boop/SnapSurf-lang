@@ -1,0 +1,5 @@
+fn main -> i32
+    let x u64 = 18446744073709551615
+    eprint x
+    ret 0
+end

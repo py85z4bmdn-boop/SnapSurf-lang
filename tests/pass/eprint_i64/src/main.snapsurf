@@ -1,0 +1,5 @@
+fn main -> i32
+    let x i64 = -1234567890123
+    eprint x
+    ret 0
+end

@@ -1024,3 +1024,20 @@ semantic_type_is_signed_integer:
 .yes:
     mov rax, 1
     ret
+
+semantic_type_is_unsigned_integer:
+    cmp rdi, TYPE_U8
+    je .yes
+    cmp rdi, TYPE_U16
+    je .yes
+    cmp rdi, TYPE_U32
+    je .yes
+    cmp rdi, TYPE_U64
+    je .yes
+    cmp rdi, TYPE_USIZE
+    je .yes
+    xor rax, rax
+    ret
+.yes:
+    mov rax, 1
+    ret

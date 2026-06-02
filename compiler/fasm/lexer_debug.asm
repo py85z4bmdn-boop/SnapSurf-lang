@@ -128,6 +128,8 @@ token_name_ptr:
     je .const
     cmp rdi, TOK_PRINT
     je .print
+    cmp rdi, TOK_EPRINT
+    je .eprint
     cmp rdi, TOK_STRUCT
     je .struct
     cmp rdi, TOK_LBRACE
@@ -300,6 +302,9 @@ token_name_ptr:
     ret
 .print:
     mov rax, tok_name_print
+    ret
+.eprint:
+    mov rax, tok_name_eprint
     ret
 .struct:
     mov rax, tok_name_struct

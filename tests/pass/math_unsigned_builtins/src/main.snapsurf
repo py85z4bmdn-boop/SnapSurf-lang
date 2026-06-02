@@ -1,0 +1,14 @@
+fn main -> i32
+    let high u64 = 9223372036854775808
+    let low u64 = 5
+    let ceiling u64 = 10
+    let same u64 = abs(high)
+    let mn u64 = min(high, low)
+    let mx u64 = max(low, high)
+    let clamped u64 = clamp(high, low, ceiling)
+    if same == high and mn == low and mx == high and clamped == ceiling ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

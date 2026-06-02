@@ -274,11 +274,26 @@ keyword_kind:
     mov rax, TOK_PRINT
     ret
 .len6:
+    cmp byte [rdi], 'e'
+    je .check_eprint
     cmp byte [rdi], 'u'
     je .check_unsafe
     cmp byte [rdi], 's'
     je .check_struct
     jmp .ident
+.check_eprint:
+    cmp byte [rdi + 1], 'p'
+    jne .ident
+    cmp byte [rdi + 2], 'r'
+    jne .ident
+    cmp byte [rdi + 3], 'i'
+    jne .ident
+    cmp byte [rdi + 4], 'n'
+    jne .ident
+    cmp byte [rdi + 5], 't'
+    jne .ident
+    mov rax, TOK_EPRINT
+    ret
 .check_unsafe:
     cmp byte [rdi + 1], 'n'
     jne .ident

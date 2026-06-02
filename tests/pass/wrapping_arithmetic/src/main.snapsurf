@@ -1,0 +1,15 @@
+fn main -> i32
+    let max u64 = 18446744073709551615
+    let zero u64 = 0
+    let one u64 = 1
+    let high u64 = 9223372036854775808
+    let two u64 = 2
+    let sum u64 = wrapping_add(max, one)
+    let diff u64 = wrapping_sub(zero, one)
+    let product u64 = wrapping_mul(high, two)
+    if sum == zero and diff == max and product == zero ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

@@ -54,6 +54,7 @@ tok_name_call: db "TokCall", 10, 0
 tok_name_elif: db "TokElif", 10, 0
 tok_name_const: db "TokConst", 10, 0
 tok_name_print: db "TokPrint", 10, 0
+tok_name_eprint: db "TokEprint", 10, 0
 tok_name_struct: db "TokStruct", 10, 0
 tok_name_lbrace: db "TokLBrace", 10, 0
 tok_name_rbrace: db "TokRBrace", 10, 0

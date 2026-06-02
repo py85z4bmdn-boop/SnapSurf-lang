@@ -12,7 +12,7 @@ fn_main:
     mov rbp, rsp
     mov rax, 1
     mov rdi, 1
-    lea rsi, [.Lstr0]
+    lea rsi, [str_11]
     mov rdx, 15
     syscall
     mov rax, 0
@@ -22,5 +22,5 @@ fn_main:
     ret
 
 segment readable
-.Lstr0:
+str_11:
     db 72, 101, 108, 108, 111, 32, 83, 110, 97, 112, 83, 117, 114, 102, 10

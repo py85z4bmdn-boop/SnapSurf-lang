@@ -135,3 +135,29 @@ parse_print_stmt:
 .fail:
     mov rax, 1
     ret
+
+parse_eprint_stmt:
+    call current_token_addr
+    mov r12, [rax + TOKEN_START]
+    call advance_token
+
+    xor rdi, rdi
+    call parse_expr_min
+    test rax, rax
+    jz .fail
+    mov r14, rax
+
+    mov rdi, AST_EPRINT_STMT
+    mov rsi, r12
+    mov rdx, r12
+    mov rcx, r14
+    xor r8, r8
+    call ast_new
+    mov rdi, [ast_block_node]
+    mov rsi, rax
+    call ast_append_child
+    xor rax, rax
+    ret
+.fail:
+    mov rax, 1
+    ret

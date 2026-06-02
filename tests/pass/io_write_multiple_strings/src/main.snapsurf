@@ -1,0 +1,7 @@
+use core/io
+
+fn main -> i32
+    io.write 1 "one\n" 4
+    io.write 1 "two\n" 4
+    ret 0
+end

@@ -1,0 +1,41 @@
+fn main -> i32
+    let u8_max u8 = 255
+    let u8_zero u8 = 0
+    let u8_one u8 = 1
+    let u8_four u8 = 4
+    let u8_five u8 = 5
+    let u8_sixteen u8 = 16
+    let u16_max u16 = 65535
+    let u16_zero u16 = 0
+    let u16_one u16 = 1
+    let u16_high u16 = 40000
+    let u16_two u16 = 2
+    let u32_max u32 = 4294967295
+    let u32_zero u32 = 0
+    let u32_one u32 = 1
+    let u32_high u32 = 3000000000
+    let u32_two u32 = 2
+    let i8_max i8 = 127
+    let i8_min i8 = -128
+    let i8_neg_one i8 = -1
+    let i8_one i8 = 1
+    let i8_two i8 = 2
+    let i8_high i8 = 64
+    let i16_max i16 = 32767
+    let i16_min i16 = -32768
+    let i16_neg_one i16 = -1
+    let i16_one i16 = 1
+    let i16_two i16 = 2
+    let i16_high i16 = 20000
+    let i32_max i32 = 2147483647
+    let i32_min i32 = -2147483648
+    let i32_neg_one i32 = -1
+    let i32_one i32 = 1
+    let i32_two i32 = 2
+    let i32_high i32 = 1073741824
+    if saturating_add(u8_max, u8_one) == u8_max and saturating_sub(u8_zero, u8_one) == u8_zero and saturating_mul(u8_sixteen, u8_sixteen) == u8_max and saturating_add(u8_four, u8_one) == u8_five and saturating_add(u16_max, u16_one) == u16_max and saturating_sub(u16_zero, u16_one) == u16_zero and saturating_mul(u16_high, u16_two) == u16_max and saturating_add(u32_max, u32_one) == u32_max and saturating_sub(u32_zero, u32_one) == u32_zero and saturating_mul(u32_high, u32_two) == u32_max and saturating_add(i8_max, i8_one) == i8_max and saturating_add(i8_min, i8_neg_one) == i8_min and saturating_sub(i8_max, i8_neg_one) == i8_max and saturating_sub(i8_min, i8_one) == i8_min and saturating_mul(i8_high, i8_two) == i8_max and saturating_mul(i8_min, i8_two) == i8_min and saturating_add(i16_max, i16_one) == i16_max and saturating_add(i16_min, i16_neg_one) == i16_min and saturating_mul(i16_high, i16_two) == i16_max and saturating_add(i32_max, i32_one) == i32_max and saturating_add(i32_min, i32_neg_one) == i32_min and saturating_mul(i32_high, i32_two) == i32_max ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

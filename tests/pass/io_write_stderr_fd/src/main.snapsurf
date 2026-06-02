@@ -1,0 +1,6 @@
+use core/io
+
+fn main -> i32
+    io.write 2 "fd2\n" 4
+    ret 0
+end

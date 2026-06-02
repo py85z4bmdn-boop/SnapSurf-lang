@@ -1,0 +1,13 @@
+fn main -> i32
+    let a u64 = 84
+    let b u64 = 30
+    let c u64 = 0
+    let g u64 = gcd(a, b)
+    let l u64 = lcm(a, b)
+    let gz u64 = gcd(a, c)
+    let lz u64 = lcm(a, c)
+    if g == 6 and l == 420 and gz == 84 and lz == 0 ->
+        ret 6
+    end
+    ret 1
+end
