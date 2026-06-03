@@ -1,0 +1,24 @@
+fn main -> i32
+    let zero u8 = 0
+    let one u8 = 1
+    let two u8 = 2
+    let max8 u8 = 255
+    let max16 u16 = 65535
+    let max32 u32 = 4294967295
+    let max64 u64 = 18446744073709551615
+    let maxusize usize = 18446744073709551615
+    let root_zero u8 = sqrt(zero)
+    let root_one u8 = sqrt(one)
+    let root_two u8 = sqrt(two)
+    let root_max8 u8 = sqrt(max8)
+    let root_max16 u16 = sqrt(max16)
+    let root_max32 u32 = sqrt(max32)
+    let root_max64 u64 = sqrt(max64)
+    let root_usize usize = sqrt(maxusize)
+    let expected_max64 u64 = 4294967295
+    let expected_usize usize = 4294967295
+    if root_zero == 0 and root_one == 1 and root_two == 1 and root_max8 == 15 and root_max16 == 255 and root_max32 == 65535 and root_max64 == expected_max64 and root_usize == expected_usize ->
+        ret 0
+    end
+    ret 1
+end

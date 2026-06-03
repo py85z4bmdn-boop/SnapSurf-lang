@@ -1,0 +1,22 @@
+fn main -> i32
+    let min64 i64 = -9223372036854775808
+    let neg_one64 i64 = -1
+    let zero64 i64 = 0
+    let neg_seven i64 = -7
+    let three i64 = 3
+    let neg_two i64 = -2
+    let neg_one_rem i64 = -1
+    let high u64 = 9223372036854775809
+    let two u64 = 2
+    let half u64 = 4611686018427387904
+    let one u64 = 1
+    let u8_two_hundred u8 = 200
+    let u8_three u8 = 3
+    let u8_quot u8 = 66
+    let u8_rem u8 = 2
+    if wrapping_div(min64, neg_one64) == min64 and wrapping_mod(min64, neg_one64) == zero64 and wrapping_div(neg_seven, three) == neg_two and wrapping_mod(neg_seven, three) == neg_one_rem and wrapping_div(high, two) == half and wrapping_mod(high, two) == one and wrapping_div(u8_two_hundred, u8_three) == u8_quot and wrapping_mod(u8_two_hundred, u8_three) == u8_rem ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

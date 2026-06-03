@@ -1,0 +1,15 @@
+fn main -> i32
+    let one8 u8 = 1
+    let left8 u8 = 128
+    let one16 u16 = 1
+    let left16 u16 = 32768
+    let one32 u32 = 1
+    let left32 u32 = 2147483648
+    let count u8 = 1
+    let count16 u16 = 1
+    let count32 u32 = 1
+    if left8 rol count == one8 and one8 ror count == left8 and left16 rol count16 == one16 and one16 ror count16 == left16 and left32 rol count32 == one32 and one32 ror count32 == left32 ->
+        ret 0
+    end
+    ret 1
+end

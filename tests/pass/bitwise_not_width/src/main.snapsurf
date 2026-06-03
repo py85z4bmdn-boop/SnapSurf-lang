@@ -1,0 +1,18 @@
+fn main -> i32
+    let a u8 = 240
+    let b u16 = 65280
+    let c u32 = 4294967040
+    let da i8 = 127
+    let db i16 = 32767
+    let dc i32 = 2147483647
+    let ea u8 = 15
+    let eb u16 = 255
+    let ec u32 = 255
+    let eda i8 = -128
+    let edb i16 = -32768
+    let edc i32 = -2147483648
+    if not a == ea and not b == eb and not c == ec and not da == eda and not db == edb and not dc == edc ->
+        ret 0
+    end
+    ret 1
+end

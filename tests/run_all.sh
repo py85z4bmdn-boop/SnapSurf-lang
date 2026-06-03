@@ -141,6 +141,8 @@ run_exit math_unsigned_builtins 0
 run_exit bitcount_builtins 192
 run_exit bitcount_widths 165
 run_exit gcd_lcm_builtins 6
+run_exit integer_sqrt_builtin 0
+run_exit integer_cbrt_builtin 0
 run_exit runtime_lcm_overflow 108
 run_stderr eprint_builtin tests/expected/eprint.out
 run_stderr eprint_i64 tests/expected/eprint_i64.out
@@ -148,6 +150,7 @@ run_stderr eprint_u64 tests/expected/eprint_u64.out
 run_stderr io_write_stderr_fd tests/expected/io_write_stderr.out
 run_stdout io_write_multiple_strings tests/expected/io_write_multiple.out
 run_exit bitwise_not 15
+run_exit bitwise_not_width 0
 run_exit bitwise_and 8
 run_exit bitwise_or 15
 run_exit bitwise_xor 9
@@ -155,6 +158,7 @@ run_exit bitwise_shl 16
 run_exit bitwise_shr 10
 run_exit bitwise_rol 1
 run_exit bitwise_ror 16
+run_exit bitwise_rotate_width 0
 run_exit pointer_deref 100
 run_exit pointer_to_pointer 77
 run_exit array_index_basic 0
@@ -200,9 +204,13 @@ run_exit constant_usub_overflow 111
 run_exit constant_umul_overflow 112
 run_exit constant_upow_overflow 113
 run_exit wrapping_arithmetic 0
+run_exit wrapping_pow_arithmetic 0
+run_exit wrapping_div_mod_arithmetic 0
 run_exit saturating_arithmetic 0
 run_exit saturating_signed_arithmetic 0
 run_exit saturating_narrow_arithmetic 0
+run_exit saturating_pow_arithmetic 0
+run_exit saturating_div_mod_arithmetic 0
 run_exit struct_field_access 0
 
 run_fail() {

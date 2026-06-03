@@ -21,6 +21,8 @@ ast_reset:
     mov byte [needs_eprint_uint_helper], 0
     mov byte [needs_gcd_u64_helper], 0
     mov byte [needs_lcm_u64_helper], 0
+    mov byte [needs_sqrt_u64_helper], 0
+    mov byte [needs_cbrt_u64_helper], 0
     mov qword [field_registry_count], 0
     mov qword [field_name_buf_pos], 0
     ret

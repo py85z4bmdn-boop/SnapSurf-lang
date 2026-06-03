@@ -1,0 +1,29 @@
+fn main -> i32
+    let u8_two u8 = 2
+    let u8_four u8 = 4
+    let u8_sixteen u8 = 16
+    let u8_zero u8 = 0
+    let u16_three_hundred u16 = 300
+    let u16_three u16 = 3
+    let u16_wrapped u16 = 64704
+    let u32_base u32 = 65536
+    let u32_two u32 = 2
+    let u32_zero u32 = 0
+    let u64_high u64 = 9223372036854775808
+    let u64_two u64 = 2
+    let u64_zero u64 = 0
+    let i8_neg_two i8 = -2
+    let i8_seven i8 = 7
+    let i8_min i8 = -128
+    let i16_two_hundred i16 = 200
+    let i16_two i16 = 2
+    let i16_wrapped i16 = -25536
+    let i32_base i32 = 50000
+    let i32_two i32 = 2
+    let i32_wrapped i32 = -1794967296
+    if wrapping_pow(u8_two, u8_four) == u8_sixteen and wrapping_pow(u8_sixteen, u8_two) == u8_zero and wrapping_pow(u16_three_hundred, u16_three) == u16_wrapped and wrapping_pow(u32_base, u32_two) == u32_zero and wrapping_pow(u64_high, u64_two) == u64_zero and wrapping_pow(i8_neg_two, i8_seven) == i8_min and wrapping_pow(i16_two_hundred, i16_two) == i16_wrapped and wrapping_pow(i32_base, i32_two) == i32_wrapped ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

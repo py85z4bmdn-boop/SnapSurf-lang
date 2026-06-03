@@ -8,6 +8,8 @@ text_abs: db "abs", 0
 text_min: db "min", 0
 text_max: db "max", 0
 text_clamp: db "clamp", 0
+text_sqrt: db "sqrt", 0
+text_cbrt: db "cbrt", 0
 text_popcount: db "popcount", 0
 text_leading_zeros: db "leading_zeros", 0
 text_trailing_zeros: db "trailing_zeros", 0
@@ -16,6 +18,12 @@ text_lcm: db "lcm", 0
 text_wrapping_add: db "wrapping_add", 0
 text_wrapping_sub: db "wrapping_sub", 0
 text_wrapping_mul: db "wrapping_mul", 0
+text_wrapping_pow: db "wrapping_pow", 0
+text_wrapping_div: db "wrapping_div", 0
+text_wrapping_mod: db "wrapping_mod", 0
 text_saturating_add: db "saturating_add", 0
 text_saturating_sub: db "saturating_sub", 0
 text_saturating_mul: db "saturating_mul", 0
+text_saturating_pow: db "saturating_pow", 0
+text_saturating_div: db "saturating_div", 0
+text_saturating_mod: db "saturating_mod", 0

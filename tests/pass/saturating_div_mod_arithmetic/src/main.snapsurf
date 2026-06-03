@@ -1,0 +1,32 @@
+fn main -> i32
+    let min64 i64 = -9223372036854775808
+    let max64 i64 = 9223372036854775807
+    let neg_one64 i64 = -1
+    let zero64 i64 = 0
+    let min32 i32 = -2147483648
+    let max32 i32 = 2147483647
+    let neg_one32 i32 = -1
+    let min16 i16 = -32768
+    let max16 i16 = 32767
+    let neg_one16 i16 = -1
+    let min8 i8 = -128
+    let max8 i8 = 127
+    let neg_one8 i8 = -1
+    let neg_seven i64 = -7
+    let three i64 = 3
+    let neg_two i64 = -2
+    let neg_one_rem i64 = -1
+    let high u64 = 9223372036854775809
+    let two u64 = 2
+    let half u64 = 4611686018427387904
+    let one u64 = 1
+    let u8_two_hundred u8 = 200
+    let u8_three u8 = 3
+    let u8_quot u8 = 66
+    let u8_rem u8 = 2
+    if saturating_div(min64, neg_one64) == max64 and saturating_mod(min64, neg_one64) == zero64 and saturating_div(min32, neg_one32) == max32 and saturating_div(min16, neg_one16) == max16 and saturating_div(min8, neg_one8) == max8 and saturating_div(neg_seven, three) == neg_two and saturating_mod(neg_seven, three) == neg_one_rem and saturating_div(high, two) == half and saturating_mod(high, two) == one and saturating_div(u8_two_hundred, u8_three) == u8_quot and saturating_mod(u8_two_hundred, u8_three) == u8_rem ->
+        ret 0
+    else ->
+        ret 1
+    end
+end

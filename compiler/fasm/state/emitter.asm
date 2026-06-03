@@ -11,3 +11,5 @@ needs_print_uint_helper: rb 1
 needs_eprint_uint_helper: rb 1
 needs_gcd_u64_helper: rb 1
 needs_lcm_u64_helper: rb 1
+needs_sqrt_u64_helper: rb 1
+needs_cbrt_u64_helper: rb 1

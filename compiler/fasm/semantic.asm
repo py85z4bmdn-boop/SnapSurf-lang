@@ -666,6 +666,18 @@ semantic_builtin_math_call_type:
     test rax, rax
     jnz .three_arg_builtin
     mov rdi, r14
+    mov rsi, text_sqrt
+    mov rdx, 4
+    call token_text_eq
+    test rax, rax
+    jnz .one_arg_unsigned_builtin
+    mov rdi, r14
+    mov rsi, text_cbrt
+    mov rdx, 4
+    call token_text_eq
+    test rax, rax
+    jnz .one_arg_unsigned_builtin
+    mov rdi, r14
     mov rsi, text_popcount
     mov rdx, 8
     call token_text_eq
@@ -714,6 +726,24 @@ semantic_builtin_math_call_type:
     test rax, rax
     jnz .two_arg_builtin
     mov rdi, r14
+    mov rsi, text_wrapping_pow
+    mov rdx, 12
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_builtin
+    mov rdi, r14
+    mov rsi, text_wrapping_div
+    mov rdx, 12
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_builtin
+    mov rdi, r14
+    mov rsi, text_wrapping_mod
+    mov rdx, 12
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_builtin
+    mov rdi, r14
     mov rsi, text_saturating_add
     mov rdx, 14
     call token_text_eq
@@ -727,6 +757,24 @@ semantic_builtin_math_call_type:
     jnz .two_arg_word_builtin
     mov rdi, r14
     mov rsi, text_saturating_mul
+    mov rdx, 14
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_word_builtin
+    mov rdi, r14
+    mov rsi, text_saturating_pow
+    mov rdx, 14
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_word_builtin
+    mov rdi, r14
+    mov rsi, text_saturating_div
+    mov rdx, 14
+    call token_text_eq
+    test rax, rax
+    jnz .two_arg_word_builtin
+    mov rdi, r14
+    mov rsi, text_saturating_mod
     mov rdx, 14
     call token_text_eq
     test rax, rax
@@ -757,6 +805,29 @@ semantic_builtin_math_call_type:
     test rax, rax
     jz .arg1_type_bad
     mov rax, TYPE_I32
+    jmp .handled_type
+.one_arg_unsigned_builtin:
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, 1
+    jne .arity_bad
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax
+    mov r15, [expected_expr_type]
+    mov rdi, rbx
+    call semantic_expr_type
+    mov [expected_expr_type], r15
+    test rax, rax
+    jz .handled_error
+    mov [tmp_type_id], rax
+    mov rdi, rax
+    call semantic_type_is_unsigned_integer
+    test rax, rax
+    jz .arg1_type_bad
+    mov rax, [tmp_type_id]
     jmp .handled_type
 .two_arg_unsigned_builtin:
     mov rdi, r12

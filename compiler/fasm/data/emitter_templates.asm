@@ -81,8 +81,28 @@ asm_sdiv_overflow_check_pre: db "    cmp rax, -1",10,"    jne .L"
 asm_sdiv_overflow_check_pre_len = $ - asm_sdiv_overflow_check_pre
 asm_sdiv_overflow_check_mid: db 10,"    mov rdx, 0x8000000000000000",10,"    cmp qword [rsp], rdx",10,"    jne .L"
 asm_sdiv_overflow_check_mid_len = $ - asm_sdiv_overflow_check_mid
+asm_sdiv_overflow_check_i8_mid: db 10,"    cmp qword [rsp], -128",10,"    jne .L"
+asm_sdiv_overflow_check_i8_mid_len = $ - asm_sdiv_overflow_check_i8_mid
+asm_sdiv_overflow_check_i16_mid: db 10,"    cmp qword [rsp], -32768",10,"    jne .L"
+asm_sdiv_overflow_check_i16_mid_len = $ - asm_sdiv_overflow_check_i16_mid
+asm_sdiv_overflow_check_i32_mid: db 10,"    cmp qword [rsp], -2147483648",10,"    jne .L"
+asm_sdiv_overflow_check_i32_mid_len = $ - asm_sdiv_overflow_check_i32_mid
 asm_sdiv_overflow_trap: db "    mov edi, 103",10,"    mov eax, 60",10,"    syscall",10
 asm_sdiv_overflow_trap_len = $ - asm_sdiv_overflow_trap
+asm_wrapping_div_overflow_value: db "    pop rax",10
+asm_wrapping_div_overflow_value_len = $ - asm_wrapping_div_overflow_value
+asm_wrapping_mod_overflow_value: db "    pop rcx",10,"    xor rax, rax",10
+asm_wrapping_mod_overflow_value_len = $ - asm_wrapping_mod_overflow_value
+asm_saturating_div_overflow_i8_value: db "    pop rcx",10,"    mov rax, 127",10
+asm_saturating_div_overflow_i8_value_len = $ - asm_saturating_div_overflow_i8_value
+asm_saturating_div_overflow_i16_value: db "    pop rcx",10,"    mov rax, 32767",10
+asm_saturating_div_overflow_i16_value_len = $ - asm_saturating_div_overflow_i16_value
+asm_saturating_div_overflow_i32_value: db "    pop rcx",10,"    mov rax, 2147483647",10
+asm_saturating_div_overflow_i32_value_len = $ - asm_saturating_div_overflow_i32_value
+asm_saturating_div_overflow_word_value: db "    pop rcx",10,"    mov rax, 0x7fffffffffffffff",10
+asm_saturating_div_overflow_word_value_len = $ - asm_saturating_div_overflow_word_value
+asm_saturating_mod_overflow_value: db "    pop rcx",10,"    xor rax, rax",10
+asm_saturating_mod_overflow_value_len = $ - asm_saturating_mod_overflow_value
 asm_sadd_overflow_check_pre: db "    pop rcx",10,"    add rax, rcx",10,"    jno .L"
 asm_sadd_overflow_check_pre_len = $ - asm_sadd_overflow_check_pre
 asm_sadd_overflow_trap: db "    mov edi, 104",10,"    mov eax, 60",10,"    syscall",10
@@ -203,6 +223,10 @@ asm_call_gcd_u64: db "    mov rsi, rax",10,"    pop rdi",10,"    call __snapsurf
 asm_call_gcd_u64_len = $ - asm_call_gcd_u64
 asm_call_lcm_u64: db "    mov rsi, rax",10,"    pop rdi",10,"    call __snapsurf_lcm_u64",10
 asm_call_lcm_u64_len = $ - asm_call_lcm_u64
+asm_call_sqrt_u64: db "    mov rdi, rax",10,"    call __snapsurf_isqrt_u64",10
+asm_call_sqrt_u64_len = $ - asm_call_sqrt_u64
+asm_call_cbrt_u64: db "    mov rdi, rax",10,"    call __snapsurf_icbrt_u64",10
+asm_call_cbrt_u64_len = $ - asm_call_cbrt_u64
 asm_not_rax: db "    test rax, rax",10,"    setz al",10,"    movzx rax, al",10
 asm_not_rax_len = $ - asm_not_rax
 asm_bit_not_rax: db "    not rax",10
@@ -237,8 +261,20 @@ asm_shl_rax: db "    mov rcx, rax",10,"    pop rax",10,"    shl rax, cl",10
 asm_shl_rax_len = $ - asm_shl_rax
 asm_shr_rax: db "    mov rcx, rax",10,"    pop rax",10,"    shr rax, cl",10
 asm_shr_rax_len = $ - asm_shr_rax
+asm_rol_al: db "    mov rcx, rax",10,"    pop rax",10,"    rol al, cl",10
+asm_rol_al_len = $ - asm_rol_al
+asm_rol_ax: db "    mov rcx, rax",10,"    pop rax",10,"    rol ax, cl",10
+asm_rol_ax_len = $ - asm_rol_ax
+asm_rol_eax: db "    mov rcx, rax",10,"    pop rax",10,"    rol eax, cl",10
+asm_rol_eax_len = $ - asm_rol_eax
 asm_rol_rax: db "    mov rcx, rax",10,"    pop rax",10,"    rol rax, cl",10
 asm_rol_rax_len = $ - asm_rol_rax
+asm_ror_al: db "    mov rcx, rax",10,"    pop rax",10,"    ror al, cl",10
+asm_ror_al_len = $ - asm_ror_al
+asm_ror_ax: db "    mov rcx, rax",10,"    pop rax",10,"    ror ax, cl",10
+asm_ror_ax_len = $ - asm_ror_ax
+asm_ror_eax: db "    mov rcx, rax",10,"    pop rax",10,"    ror eax, cl",10
+asm_ror_eax_len = $ - asm_ror_eax
 asm_ror_rax: db "    mov rcx, rax",10,"    pop rax",10,"    ror rax, cl",10
 asm_ror_rax_len = $ - asm_ror_rax
 asm_pow_init_pre: db "    pop rcx",10,"    mov r8, rax",10,"    mov rax, 1",10,"    test r8, r8",10,"    jle .L"
@@ -257,6 +293,14 @@ asm_upow_loop_body_checked_pre: db "    mul rcx",10,"    jo .L"
 asm_upow_loop_body_checked_pre_len = $ - asm_upow_loop_body_checked_pre
 asm_upow_overflow_trap: db "    mov edi, 113",10,"    mov eax, 60",10,"    syscall",10
 asm_upow_overflow_trap_len = $ - asm_upow_overflow_trap
+asm_saturating_pow_signed_init_pre: db "    pop r9",10,"    mov r10, rax",10,"    mov rax, 1",10,"    test r10, r10",10,"    jle .L"
+asm_saturating_pow_signed_init_pre_len = $ - asm_saturating_pow_signed_init_pre
+asm_saturating_pow_unsigned_init_pre: db "    pop r9",10,"    mov r10, rax",10,"    mov rax, 1",10,"    test r10, r10",10,"    jz .L"
+asm_saturating_pow_unsigned_init_pre_len = $ - asm_saturating_pow_unsigned_init_pre
+asm_saturating_pow_push_base: db "    push r9",10
+asm_saturating_pow_push_base_len = $ - asm_saturating_pow_push_base
+asm_saturating_pow_loop_mid: db "    dec r10",10,"    jnz .L"
+asm_saturating_pow_loop_mid_len = $ - asm_saturating_pow_loop_mid
 asm_jz_pre: db "    test rax, rax",10,"    jz .L"
 asm_jz_pre_len = $ - asm_jz_pre
 asm_jz_post: db 10
@@ -520,3 +564,63 @@ asm_lcm_u64_helper: db \
     "    xor rax, rax",10, \
     "    ret",10
 asm_lcm_u64_helper_len = $ - asm_lcm_u64_helper
+
+asm_sqrt_u64_helper: db \
+    "__snapsurf_isqrt_u64:",10, \
+    "    mov r8, rdi",10, \
+    "    xor rcx, rcx",10, \
+    "    mov rdx, 0x4000000000000000",10, \
+    ".isqrt_bit_down:",10, \
+    "    cmp rdx, r8",10, \
+    "    jbe .isqrt_loop",10, \
+    "    shr rdx, 2",10, \
+    "    jmp .isqrt_bit_down",10, \
+    ".isqrt_loop:",10, \
+    "    test rdx, rdx",10, \
+    "    jz .isqrt_done",10, \
+    "    mov r9, rcx",10, \
+    "    add r9, rdx",10, \
+    "    cmp r8, r9",10, \
+    "    jb .isqrt_skip",10, \
+    "    sub r8, r9",10, \
+    "    shr rcx, 1",10, \
+    "    add rcx, rdx",10, \
+    "    jmp .isqrt_next",10, \
+    ".isqrt_skip:",10, \
+    "    shr rcx, 1",10, \
+    ".isqrt_next:",10, \
+    "    shr rdx, 2",10, \
+    "    jmp .isqrt_loop",10, \
+    ".isqrt_done:",10, \
+    "    mov rax, rcx",10, \
+    "    ret",10
+asm_sqrt_u64_helper_len = $ - asm_sqrt_u64_helper
+
+asm_cbrt_u64_helper: db \
+    "__snapsurf_icbrt_u64:",10, \
+    "    xor r8, r8",10, \
+    "    mov r9, 2642245",10, \
+    ".icbrt_loop:",10, \
+    "    cmp r8, r9",10, \
+    "    jae .icbrt_done",10, \
+    "    mov r10, r8",10, \
+    "    add r10, r9",10, \
+    "    inc r10",10, \
+    "    shr r10, 1",10, \
+    "    mov rax, rdi",10, \
+    "    xor rdx, rdx",10, \
+    "    div r10",10, \
+    "    xor rdx, rdx",10, \
+    "    div r10",10, \
+    "    cmp rax, r10",10, \
+    "    jb .icbrt_too_high",10, \
+    "    mov r8, r10",10, \
+    "    jmp .icbrt_loop",10, \
+    ".icbrt_too_high:",10, \
+    "    mov r9, r10",10, \
+    "    dec r9",10, \
+    "    jmp .icbrt_loop",10, \
+    ".icbrt_done:",10, \
+    "    mov rax, r8",10, \
+    "    ret",10
+asm_cbrt_u64_helper_len = $ - asm_cbrt_u64_helper

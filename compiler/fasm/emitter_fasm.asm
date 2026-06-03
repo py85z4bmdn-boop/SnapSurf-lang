@@ -81,10 +81,26 @@ emit_main_asm:
 
 .maybe_lcm_u64_helper:
     cmp byte [needs_lcm_u64_helper], 0
-    je .rodata_emit
+    je .maybe_sqrt_u64_helper
     mov rdi, [out_fd]
     mov rsi, asm_lcm_u64_helper
     mov rdx, asm_lcm_u64_helper_len
+    call write_all
+
+.maybe_sqrt_u64_helper:
+    cmp byte [needs_sqrt_u64_helper], 0
+    je .maybe_cbrt_u64_helper
+    mov rdi, [out_fd]
+    mov rsi, asm_sqrt_u64_helper
+    mov rdx, asm_sqrt_u64_helper_len
+    call write_all
+
+.maybe_cbrt_u64_helper:
+    cmp byte [needs_cbrt_u64_helper], 0
+    je .rodata_emit
+    mov rdi, [out_fd]
+    mov rsi, asm_cbrt_u64_helper
+    mov rdx, asm_cbrt_u64_helper_len
     call write_all
 
 .rodata_emit:
