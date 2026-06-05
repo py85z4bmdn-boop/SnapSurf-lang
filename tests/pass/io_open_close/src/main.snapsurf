@@ -1,0 +1,5 @@
+fn main -> i32
+    let fd i32 = open("/tmp/snapsurf_test.txt", 577, 420)
+    let status i32 = close(fd)
+    ret status
+end

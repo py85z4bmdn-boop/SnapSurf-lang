@@ -1,0 +1,5 @@
+fn main -> i32
+    let buf [u8; 64]
+    let result i32 = read(3, &buf[0])
+    ret 0
+end

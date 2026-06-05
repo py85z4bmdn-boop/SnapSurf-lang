@@ -1,0 +1,6 @@
+fn main -> i32
+    let fd i32 = open("/tmp/snapsurf_test.txt", 577, 420)
+    let bytes_written i32 = write(fd, "hello", 5)
+    let close_result i32 = close(fd)
+    ret close_result
+end

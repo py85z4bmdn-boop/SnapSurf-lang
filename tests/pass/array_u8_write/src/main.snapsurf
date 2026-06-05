@@ -1,0 +1,6 @@
+fn main -> i32
+    let buf [u8; 64]
+    let ptr *u8 = &buf[0]
+    let bytes_written i32 = write(1, ptr, 5)
+    ret bytes_written
+end

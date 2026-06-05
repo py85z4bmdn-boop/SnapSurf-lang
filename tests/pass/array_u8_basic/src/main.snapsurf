@@ -1,0 +1,4 @@
+fn main -> i32
+    let buf [u8; 64]
+    ret 0
+end

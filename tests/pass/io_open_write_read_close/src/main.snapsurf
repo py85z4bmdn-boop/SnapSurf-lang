@@ -1,0 +1,11 @@
+fn main -> i32
+    let buf [u8; 64]
+    let fd_write i32 = open("/tmp/snapsurf_rw_test.txt", 577, 420)
+    let bytes_written i32 = write(fd_write, "hello", 5)
+    let close_w i32 = close(fd_write)
+    let fd_read i32 = open("/tmp/snapsurf_rw_test.txt", 0, 0)
+    let bytes_read i32 = read(fd_read, &buf[0], 5)
+    let close_r i32 = close(fd_read)
+    let written i32 = write(1, &buf[0], bytes_read)
+    ret 0
+end

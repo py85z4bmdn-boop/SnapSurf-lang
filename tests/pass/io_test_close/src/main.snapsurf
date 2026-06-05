@@ -1,0 +1,5 @@
+fn main -> i32
+    let fd i32 = 3
+    let result i32 = close(fd)
+    ret 0
+end

@@ -69,6 +69,8 @@ parse_prefix_expr:
     call current_token_kind
     cmp rax, TOK_INT
     je .int
+    cmp rax, TOK_STRING
+    je .string
     cmp rax, TOK_TRUE
     je .true
     cmp rax, TOK_FALSE
@@ -89,6 +91,13 @@ parse_prefix_expr:
 .int:
     mov rdi, [token_index]
     call parse_int_node_at
+    mov r12, rax
+    call advance_token
+    mov rax, r12
+    ret
+.string:
+    mov rdi, [token_index]
+    call parse_str_node_at
     mov r12, rax
     call advance_token
     mov rax, r12

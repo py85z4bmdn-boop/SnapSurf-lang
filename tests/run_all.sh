@@ -283,6 +283,14 @@ run_exit saturating_narrow_arithmetic 0
 run_exit saturating_pow_arithmetic 0
 run_exit saturating_div_mod_arithmetic 0
 run_exit struct_field_access 0
+run_exit array_u8_basic 0
+run_exit array_u8_address 0
+run_exit array_u8_write 5
+run_exit array_i32_address 0
+run_exit io_open_close 0
+run_exit io_open_write_close 0
+run_stdout io_open_read_close tests/expected/io_open_read_close.out
+run_stdout io_open_write_read_close tests/expected/io_open_write_read_close.out
 
 run_fail() {
     name="$1"
@@ -342,6 +350,8 @@ run_fail unsupported_match
 run_fail unsupported_switch
 run_fail fn_arg_type_mismatch
 run_fail fn_struct_arg_mismatch
+run_fail read_wrong_args
+run_fail read_into_string_literal
 
 run_struct_sample() {
     name="$1"

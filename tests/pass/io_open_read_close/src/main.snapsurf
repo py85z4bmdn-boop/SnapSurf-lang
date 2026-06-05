@@ -1,0 +1,8 @@
+fn main -> i32
+    let buf [u8; 64]
+    let fd i32 = open("/tmp/snapsurf_read_test.txt", 0, 0)
+    let bytes_read i32 = read(fd, &buf[0], 10)
+    let close_result i32 = close(fd)
+    let written i32 = write(1, &buf[0], bytes_read)
+    ret 0
+end

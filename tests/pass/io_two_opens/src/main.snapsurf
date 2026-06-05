@@ -1,0 +1,5 @@
+fn main -> i32
+    let fd1 i32 = open("/tmp/test1.txt", 577, 420)
+    let fd2 i32 = open("/tmp/test2.txt", 577, 420)
+    ret 0
+end

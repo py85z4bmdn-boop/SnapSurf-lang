@@ -1,0 +1,1 @@
+tests/compile_fail/read_wrong_args/src/main.snapsurf:3:22 E0404 function call argument count mismatch

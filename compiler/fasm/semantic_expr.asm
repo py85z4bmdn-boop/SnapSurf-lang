@@ -13,6 +13,8 @@ semantic_expr_type:
     mov r13, rax
     cmp r13, AST_INT_LIT
     je .i32
+    cmp r13, AST_STR_LIT
+    je .string
     cmp r13, AST_BOOL_LIT
     je .bool
     cmp r13, AST_VAR_REF
@@ -92,6 +94,12 @@ semantic_expr_type:
     call semantic_int_literal_fits_type
     test rax, rax
     jz .bad_type_current
+.string:
+    ; String literals don't have a proper type yet in the type system
+    ; For now, just return TYPE_I32 as a placeholder
+    ; (In reality, strings would need a pointer or slice type)
+    mov rax, TYPE_I32
+    jmp .done
     mov rax, TYPE_I32
     jmp .done
 .bool:

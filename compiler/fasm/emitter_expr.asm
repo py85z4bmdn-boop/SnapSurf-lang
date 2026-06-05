@@ -67,6 +67,8 @@ emit_expr:
     je .comparison
     cmp r13, AST_FN_CALL_EXPR
     je .fn_call
+    cmp r13, AST_STR_LIT
+    je .str_lit
     cmp r13, AST_ADDR_OF
     je .addr_of
     cmp r13, AST_DEREF
@@ -91,6 +93,21 @@ emit_expr:
     call ast_child
     mov rbx, rax
     call emit_mov_rax_imm
+    jmp .ok
+.str_lit:
+    ; String literal: emit lea rax, [str_<node_id>]
+    ; The string data will be emitted in rodata section
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_rax_str
+    mov rdx, asm_lea_rax_str_len
+    call write_all
+    mov rax, r12  ; Use AST node ID for string label
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_end
+    mov rdx, asm_lea_end_len
+    call write_all
     jmp .ok
 .var:
     mov rdi, r12
@@ -184,19 +201,23 @@ emit_expr:
     jnz .fail
     jmp .ok
 .addr_of:
-    ; &expr: compute address of variable
+    ; &expr: compute address of variable or array element
     mov rdi, r12
     call ast_child
-    mov rdi, rax
-    ; For now, only support &var syntax
+    mov r13, rax                ; r13 = child node
+    test r13, r13
+    jz .fail
+    mov rdi, r13
     call ast_kind
     cmp rax, AST_VAR_REF
-    jne .fail
-    
-    ; Get the variable slot
-    mov rdi, r12
-    call ast_child
-    mov rdi, rax
+    je .addr_of_var
+    cmp rax, AST_ARRAY_INDEX
+    je .addr_of_array_index
+    jmp .fail
+
+.addr_of_var:
+    ; &var: get address of simple variable
+    mov rdi, r13
     call ast_child
     mov rdi, rax
     call symbol_slot_for_token
@@ -216,6 +237,97 @@ emit_expr:
     mov rdi, [out_fd]
     mov rsi, asm_lea_rax_rbp_end
     mov rdx, asm_lea_rax_rbp_end_len
+    call write_all
+    jmp .ok
+
+.addr_of_array_index:
+    ; &arr[idx]: compute address of array element
+    ; Get array base node
+    mov rdi, r13
+    call ast_child
+    mov r14, rax
+    test r14, r14
+    jz .fail
+    
+    ; Get element size from array type
+    mov rdi, r14
+    call semantic_expr_type
+    test rax, rax
+    jz .fail
+    mov rdi, rax
+    call type_element_size
+    mov r15, rax                ; r15 = element_size
+    
+    ; Compute base address of array
+    mov rdi, r14
+    call ast_kind
+    cmp rax, AST_VAR_REF
+    jne .fail                   ; Only support &arr[idx] where arr is a variable
+    
+    mov rdi, r14
+    call ast_child
+    mov rdi, rax
+    call symbol_slot_for_token
+    test rax, rax
+    jz .fail
+    imul rax, 8
+    mov rbx, rax
+    
+    ; lea rax, [rbp - array_offset]
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_rax_rbp
+    mov rdx, asm_lea_rax_rbp_len
+    call write_all
+    mov rax, rbx
+    mov rdi, [out_fd]
+    call write_u64_fd
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_rax_rbp_end
+    mov rdx, asm_lea_rax_rbp_end_len
+    call write_all
+    
+    ; Save array base address
+    mov rdi, [out_fd]
+    mov rsi, asm_push_rax
+    mov rdx, asm_push_rax_len
+    call write_all
+    
+    ; Emit index expression
+    mov rdi, r13
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rdi, rax
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Pop array base to rcx
+    mov rdi, [out_fd]
+    mov rsi, asm_pop_rcx
+    mov rdx, asm_pop_rcx_len
+    call write_all
+    
+    ; Compute address: lea rax, [rcx + rax * element_size]
+    ; For element_size = 1 (u8): lea rax, [rcx + rax]
+    ; For element_size = 8 (i32/i64): lea rax, [rcx + rax*8]
+    cmp r15, 1
+    je .addr_of_array_elem_size_1
+    cmp r15, 8
+    je .addr_of_array_elem_size_8
+    jmp .fail                   ; Unsupported element size
+
+.addr_of_array_elem_size_1:
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_rax_rcx_rax
+    mov rdx, asm_lea_rax_rcx_rax_len
+    call write_all
+    jmp .ok
+
+.addr_of_array_elem_size_8:
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_rax_rcx_rax_8
+    mov rdx, asm_lea_rax_rcx_rax_8_len
     call write_all
     jmp .ok
 .deref:
@@ -1841,6 +1953,30 @@ emit_builtin_math_call_expr:
     call token_text_eq
     test rax, rax
     jnz .saturating_mod_builtin
+    mov rdi, r14
+    mov rsi, text_open
+    mov rdx, 4
+    call token_text_eq
+    test rax, rax
+    jnz .io_open_builtin
+    mov rdi, r14
+    mov rsi, text_close
+    mov rdx, 5
+    call token_text_eq
+    test rax, rax
+    jnz .io_close_builtin
+    mov rdi, r14
+    mov rsi, text_write
+    mov rdx, 5
+    call token_text_eq
+    test rax, rax
+    jnz .io_write_builtin
+    mov rdi, r14
+    mov rsi, text_read
+    mov rdx, 4
+    call token_text_eq
+    test rax, rax
+    jnz .io_read_builtin
 .not_builtin:
     xor rax, rax
     xor rdx, rdx
@@ -2055,6 +2191,30 @@ emit_builtin_math_call_expr:
     mov rdi, r12
     mov rsi, 1
     call emit_saturating_div_mod_builtin
+    test rax, rax
+    jnz .fail_handled
+    jmp .ok_handled
+.io_open_builtin:
+    mov rdi, r12
+    call emit_io_open_builtin
+    test rax, rax
+    jnz .fail_handled
+    jmp .ok_handled
+.io_close_builtin:
+    mov rdi, r12
+    call emit_io_close_builtin
+    test rax, rax
+    jnz .fail_handled
+    jmp .ok_handled
+.io_write_builtin:
+    mov rdi, r12
+    call emit_io_write_builtin
+    test rax, rax
+    jnz .fail_handled
+    jmp .ok_handled
+.io_read_builtin:
+    mov rdi, r12
+    call emit_io_read_builtin
     test rax, rax
     jnz .fail_handled
     jmp .ok_handled
@@ -3293,6 +3453,377 @@ emit_clamp_builtin:
     mov rdx, asm_uclamp_rax_len
 .write_template:
     call write_all
+    xor rax, rax
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+emit_io_open_builtin:
+    ; io.open(path: string, flags: i32, mode: i32) -> i32
+    ; Emits: syscall(SYS_OPEN, path_addr, flags, mode) -> fd in rax
+    push rbx
+    push r12
+    push r13
+    push r14
+    mov r14, rdi  ; Save AST node
+    
+    ; Get first argument (path string literal)
+    mov rdi, r14
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov r12, rax  ; r12 = path arg AST
+    
+    ; Validate it's a string literal
+    mov rdi, r12
+    call ast_kind
+    cmp rax, AST_STR_LIT
+    jne .fail
+    
+    ; Get second argument (flags)
+    mov rdi, r12
+    call ast_next
+    mov r13, rax  ; r13 = flags arg AST
+    
+    ; Get third argument (mode)
+    mov rdi, r13
+    call ast_next
+    mov rbx, rax  ; rbx = mode arg AST
+    
+    ; Emit code to evaluate flags -> rax
+    mov rdi, r13
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Push flags (will be in rsi)
+    mov rdi, [out_fd]
+    mov rsi, asm_push_rax
+    mov rdx, asm_push_rax_len
+    call write_all
+    
+    ; Emit code to evaluate mode -> rax
+    mov rdi, rbx
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Move mode to rdx
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_rdx_rax
+    mov rdx, asm_mov_rdx_rax_len
+    call write_all
+    
+    ; Pop flags to rsi
+    mov rdi, [out_fd]
+    mov rsi, asm_pop_rsi
+    mov rdx, asm_pop_rsi_len
+    call write_all
+    
+    ; Load path address to rdi: lea rdi, [str_<ast_id>]
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_rdi_str
+    mov rdx, asm_lea_rdi_str_len
+    call write_all
+    
+    mov rdi, [out_fd]
+    mov rax, r12  ; Use path AST node ID for string label
+    call write_u64_fd
+    
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_end
+    mov rdx, asm_lea_end_len
+    call write_all
+    
+    ; Set syscall number: mov rax, 2 (SYS_OPEN)
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_rax_2
+    mov rdx, asm_mov_rax_2_len
+    call write_all
+    
+    ; Emit syscall
+    mov rdi, [out_fd]
+    mov rsi, asm_syscall
+    mov rdx, asm_syscall_len
+    call write_all
+    
+    xor rax, rax
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+emit_io_close_builtin:
+    ; io.close(fd: i32) -> i32
+    ; Emits: syscall(SYS_CLOSE, fd) -> result in rax
+    push rbx
+    mov rbx, rdi  ; Save AST node
+    
+    ; Get first argument (fd)
+    mov rdi, rbx
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rdi, rax  ; Move argument node to rdi for emit_expr
+    
+    ; Emit code to evaluate fd -> rax
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Move fd to rdi
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_rdi_rax
+    mov rdx, asm_mov_rdi_rax_len
+    call write_all
+    
+    ; Set syscall number: mov rax, 3 (SYS_CLOSE)
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_rax_3
+    mov rdx, asm_mov_rax_3_len
+    call write_all
+    
+    ; Emit syscall
+    mov rdi, [out_fd]
+    mov rsi, asm_syscall
+    mov rdx, asm_syscall_len
+    call write_all
+    
+    xor rax, rax
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
+    pop rbx
+    ret
+
+emit_io_write_builtin:
+    ; write(fd: i32, buffer: *u8, len: i32) -> i32
+    ; Emits: syscall(SYS_WRITE, fd, buffer_addr, len) -> bytes_written in rax
+    push rbx
+    push r12
+    push r13
+    push r14
+    mov r14, rdi  ; Save AST node
+    
+    ; Get first argument (fd)
+    mov rdi, r14
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov r12, rax  ; r12 = fd arg AST
+    
+    ; Get second argument (buffer - string literal)
+    mov rdi, r12
+    call ast_next
+    mov r13, rax  ; r13 = buffer arg AST
+    
+    ; Get third argument (len)
+    mov rdi, r13
+    call ast_next
+    mov rbx, rax  ; rbx = len arg AST
+    
+    ; Emit code to evaluate len -> rax
+    mov rdi, rbx
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Push len (will be in rdx)
+    mov rdi, [out_fd]
+    mov rsi, asm_push_rax
+    mov rdx, asm_push_rax_len
+    call write_all
+    
+    ; Emit code to evaluate fd -> rax
+    mov rdi, r12
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Push fd (will be in rdi)
+    mov rdi, [out_fd]
+    mov rsi, asm_push_rax
+    mov rdx, asm_push_rax_len
+    call write_all
+    
+    ; Check if buffer is a string literal
+    mov rdi, r13
+    call ast_kind
+    cmp rax, AST_STR_LIT
+    je .buffer_is_string_lit
+    
+    ; Not a string literal - evaluate as expression
+    mov rdi, r13
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Move buffer address to rsi
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_rsi_rax
+    mov rdx, asm_mov_rsi_rax_len
+    call write_all
+    jmp .setup_syscall
+    
+.buffer_is_string_lit:
+    ; Load string literal address to rsi: lea rsi, [str_<ast_id>]
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_rsi_str
+    mov rdx, asm_lea_rsi_str_len
+    call write_all
+    
+    mov rdi, [out_fd]
+    mov rax, r13  ; Use buffer AST node ID for string label
+    call write_u64_fd
+    
+    mov rdi, [out_fd]
+    mov rsi, asm_lea_end
+    mov rdx, asm_lea_end_len
+    call write_all
+    
+.setup_syscall:
+    ; Pop fd to rdi
+    mov rdi, [out_fd]
+    mov rsi, asm_pop_rdi
+    mov rdx, asm_pop_rdi_len
+    call write_all
+    
+    ; Pop len to rdx
+    mov rdi, [out_fd]
+    mov rsi, asm_pop_rdx
+    mov rdx, asm_pop_rdx_len
+    call write_all
+    
+    ; Set syscall number: mov rax, 1 (SYS_WRITE)
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_rax_1
+    mov rdx, asm_mov_rax_1_len
+    call write_all
+    
+    ; Emit syscall
+    mov rdi, [out_fd]
+    mov rsi, asm_syscall
+    mov rdx, asm_syscall_len
+    call write_all
+    
+    xor rax, rax
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    ret
+
+emit_io_read_builtin:
+    ; read(fd: i32, buffer: *u8, len: i32) -> i32
+    ; Emits: syscall(SYS_READ, fd, buffer_addr, len) -> bytes_read in rax
+    push rbx
+    push r12
+    push r13
+    push r14
+    mov r14, rdi  ; Save AST node
+    
+    ; Get first argument (fd)
+    mov rdi, r14
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov r12, rax  ; r12 = fd arg AST
+    
+    ; Get second argument (buffer - must be pointer, not string literal)
+    mov rdi, r12
+    call ast_next
+    mov r13, rax  ; r13 = buffer arg AST
+    
+    ; Get third argument (len)
+    mov rdi, r13
+    call ast_next
+    mov rbx, rax  ; rbx = len arg AST
+    
+    ; Emit code to evaluate len -> rax
+    mov rdi, rbx
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Push len (will be in rdx)
+    mov rdi, [out_fd]
+    mov rsi, asm_push_rax
+    mov rdx, asm_push_rax_len
+    call write_all
+    
+    ; Emit code to evaluate fd -> rax
+    mov rdi, r12
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Push fd (will be in rdi)
+    mov rdi, [out_fd]
+    mov rsi, asm_push_rax
+    mov rdx, asm_push_rax_len
+    call write_all
+    
+    ; Emit code to evaluate buffer -> rax (must be pointer expression)
+    mov rdi, r13
+    call emit_expr
+    test rax, rax
+    jnz .fail
+    
+    ; Move buffer address to rsi
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_rsi_rax
+    mov rdx, asm_mov_rsi_rax_len
+    call write_all
+    
+    ; Pop fd to rdi
+    mov rdi, [out_fd]
+    mov rsi, asm_pop_rdi
+    mov rdx, asm_pop_rdi_len
+    call write_all
+    
+    ; Pop len to rdx
+    mov rdi, [out_fd]
+    mov rsi, asm_pop_rdx
+    mov rdx, asm_pop_rdx_len
+    call write_all
+    
+    ; Set syscall number: mov rax, 0 (SYS_READ)
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_rax_0
+    mov rdx, asm_mov_rax_0_len
+    call write_all
+    
+    ; Emit syscall
+    mov rdi, [out_fd]
+    mov rsi, asm_syscall
+    mov rdx, asm_syscall_len
+    call write_all
+    
     xor rax, rax
     pop r14
     pop r13

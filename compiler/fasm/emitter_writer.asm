@@ -66,6 +66,14 @@ write_db_string:
     inc rbx
     cmp rbx, r13
     jb .loop
+    ; Add null terminator after string bytes
+    mov rdi, r12
+    mov rsi, comma_space
+    mov rdx, 2
+    call write_all
+    mov rdi, r12
+    xor rax, rax
+    call write_u64_fd
 .done:
     pop r14
     pop r13

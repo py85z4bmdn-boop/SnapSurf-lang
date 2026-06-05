@@ -349,6 +349,30 @@ asm_pop_r8: db "    pop r8",10
 asm_pop_r8_len = $ - asm_pop_r8
 asm_pop_r9: db "    pop r9",10
 asm_pop_r9_len = $ - asm_pop_r9
+asm_mov_rsi_rax: db "    mov rsi, rax",10
+asm_mov_rsi_rax_len = $ - asm_mov_rsi_rax
+asm_mov_rdx_rax: db "    mov rdx, rax",10
+asm_mov_rdx_rax_len = $ - asm_mov_rdx_rax
+asm_mov_rdi_rax: db "    mov rdi, rax",10
+asm_mov_rdi_rax_len = $ - asm_mov_rdi_rax
+asm_lea_rdi_str: db "    lea rdi, [str_"
+asm_lea_rdi_str_len = $ - asm_lea_rdi_str
+asm_lea_rsi_str: db "    lea rsi, [str_"
+asm_lea_rsi_str_len = $ - asm_lea_rsi_str
+asm_lea_rax_str: db "    lea rax, [str_"
+asm_lea_rax_str_len = $ - asm_lea_rax_str
+asm_lea_end: db "]",10
+asm_lea_end_len = $ - asm_lea_end
+asm_mov_rax_0: db "    mov rax, 0",10
+asm_mov_rax_0_len = $ - asm_mov_rax_0
+asm_mov_rax_1: db "    mov rax, 1",10
+asm_mov_rax_1_len = $ - asm_mov_rax_1
+asm_mov_rax_2: db "    mov rax, 2",10
+asm_mov_rax_2_len = $ - asm_mov_rax_2
+asm_mov_rax_3: db "    mov rax, 3",10
+asm_mov_rax_3_len = $ - asm_mov_rax_3
+asm_syscall: db "    syscall",10
+asm_syscall_len = $ - asm_syscall
 asm_fn_prefix: db "fn_"
 asm_fn_prefix_len = $ - asm_fn_prefix
 asm_lea_rax_rbp: db "    lea rax, [rbp - "
@@ -369,6 +393,11 @@ asm_array_bounds_trap: db "    mov edi, 101",10,"    mov eax, 60",10,"    syscal
 asm_array_bounds_trap_len = $ - asm_array_bounds_trap
 asm_mov_rax_at_rcx_rax_8: db "    mov rax, [rcx + rax*8]",10
 asm_mov_rax_at_rcx_rax_8_len = $ - asm_mov_rax_at_rcx_rax_8
+asm_lea_rax_rcx_rax: db "    lea rax, [rcx + rax]",10
+asm_lea_rax_rcx_rax_len = $ - asm_lea_rax_rcx_rax
+asm_lea_rax_rcx_rax_8: db "    lea rax, [rcx + rax*8]",10
+asm_lea_rax_rcx_rax_8_len = $ - asm_lea_rax_rcx_rax_8
+
 
 ; print support templates
 asm_call_print_int: db "    mov rdi, rax",10,"    call __snapsurf_print_int",10

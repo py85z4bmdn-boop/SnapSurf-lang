@@ -1,0 +1,1 @@
+tests/compile_fail/read_into_string_literal/src/main.snapsurf:2:30 E0405 function call argument type mismatch

@@ -250,6 +250,36 @@ type_array_count:
 .not_array:
     xor rax, rax
     ret
+type_element_size:
+    ; Input: rdi = array type ID
+    ; Output: rax = element size in bytes (1 for u8, 8 for i32/i64/etc), or 0 if not array
+    push rbx
+    mov rbx, rdi
+    call type_get_element_of_array
+    test rax, rax
+    jz .fail
+    
+    ; Now rax = element type ID, determine size
+    cmp rax, TYPE_U8
+    je .size_1
+    cmp rax, TYPE_I8
+    je .size_1
+    
+    ; All other types are 8 bytes (i32, i64, u32, u64, isize, usize, pointers, etc.)
+    mov rax, 8
+    pop rbx
+    ret
+
+.size_1:
+    mov rax, 1
+    pop rbx
+    ret
+
+.fail:
+    xor rax, rax
+    pop rbx
+    ret
+
 
 type_slot_count:
     push rbx

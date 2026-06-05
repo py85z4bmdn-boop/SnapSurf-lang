@@ -1,0 +1,5 @@
+fn main -> i32
+    let fd i32 = open("/tmp/test.txt", 577, 420)
+    let x i32 = 99
+    ret 0
+end

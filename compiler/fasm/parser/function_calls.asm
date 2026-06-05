@@ -101,6 +101,8 @@ token_starts_expr:
     je .yes
     cmp rdi, TOK_LPAREN
     je .yes
+    cmp rdi, TOK_STRING
+    je .yes
     xor rax, rax
     ret
 .yes:

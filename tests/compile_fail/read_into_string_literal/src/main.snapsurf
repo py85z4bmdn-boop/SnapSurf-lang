@@ -1,0 +1,4 @@
+fn main -> i32
+    let result i32 = read(3, "rodata", 6)
+    ret 0
+end

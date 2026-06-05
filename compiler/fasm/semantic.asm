@@ -779,6 +779,30 @@ semantic_builtin_math_call_type:
     call token_text_eq
     test rax, rax
     jnz .two_arg_word_builtin
+    mov rdi, r14
+    mov rsi, text_open
+    mov rdx, 4
+    call token_text_eq
+    test rax, rax
+    jnz .io_open_builtin
+    mov rdi, r14
+    mov rsi, text_close
+    mov rdx, 5
+    call token_text_eq
+    test rax, rax
+    jnz .io_close_builtin
+    mov rdi, r14
+    mov rsi, text_write
+    mov rdx, 5
+    call token_text_eq
+    test rax, rax
+    jnz .io_write_builtin
+    mov rdi, r14
+    mov rsi, text_read
+    mov rdx, 4
+    call token_text_eq
+    test rax, rax
+    jnz .io_read_builtin
 .not_builtin:
     xor rax, rax
     xor rdx, rdx
@@ -998,6 +1022,201 @@ semantic_builtin_math_call_type:
     cmp rax, [tmp_type_id]
     jne .arg3_type_bad
     mov rax, [tmp_type_id]
+    jmp .handled_type
+.io_open_builtin:
+    ; open(path: string, flags: i32, mode: i32) -> i32
+    ; Arg count: 3
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, 3
+    jne .arity_bad
+    ; Get arguments
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax          ; rbx = arg1 (path string)
+    mov rdi, rbx
+    call ast_next
+    mov r14, rax          ; r14 = arg2 (flags)
+    mov rdi, r14
+    call ast_next
+    mov [tmp_ast_c], rax  ; tmp_ast_c = arg3 (mode)
+    
+    ; Validate arg1 is string
+    mov r15, [expected_expr_type]
+    mov rdi, rbx
+    call semantic_expr_type
+    test rax, rax
+    jz .restore_handled_error
+    ; String literals don't have a type check yet, just accept any type for arg1
+    
+    ; Validate arg2 (flags) is integer
+    mov rdi, r14
+    call semantic_expr_type
+    test rax, rax
+    jz .restore_handled_error
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .restore_arg2_type_bad
+    
+    ; Validate arg3 (mode) is integer
+    mov rdi, [tmp_ast_c]
+    call semantic_expr_type
+    mov [expected_expr_type], r15
+    test rax, rax
+    jz .handled_error
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .arg3_type_bad
+    
+    ; Set flag to emit rodata section for string literals
+    mov byte [has_io_write], 1
+    
+    ; Return type is i32
+    mov rax, TYPE_I32
+    jmp .handled_type
+.io_close_builtin:
+    ; close(fd: i32) -> i32
+    ; Arg count: 1
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, 1
+    jne .arity_bad
+    ; Get argument
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax          ; rbx = arg1 (fd)
+    
+    ; Validate arg1 (fd) is integer
+    mov r15, [expected_expr_type]
+    mov rdi, rbx
+    call semantic_expr_type
+    mov [expected_expr_type], r15
+    test rax, rax
+    jz .handled_error
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .arg1_type_bad
+    
+    ; Return type is i32
+    mov rax, TYPE_I32
+    jmp .handled_type
+.io_write_builtin:
+    ; write(fd: i32, buffer: *u8, len: i32) -> i32
+    ; Arg count: 3
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, 3
+    jne .arity_bad
+    ; Get arguments
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax          ; rbx = arg1 (fd)
+    mov rdi, rbx
+    call ast_next
+    mov r14, rax          ; r14 = arg2 (buffer)
+    mov rdi, r14
+    call ast_next
+    mov [tmp_ast_c], rax  ; tmp_ast_c = arg3 (len)
+    
+    ; Validate arg1 (fd) is integer
+    mov r15, [expected_expr_type]
+    mov rdi, rbx
+    call semantic_expr_type
+    test rax, rax
+    jz .restore_handled_error
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .restore_arg1_type_bad
+    
+    ; Validate arg2 (buffer) - accept any type for now (string literal)
+    mov rdi, r14
+    call semantic_expr_type
+    test rax, rax
+    jz .restore_handled_error
+    
+    ; Validate arg3 (len) is integer
+    mov rdi, [tmp_ast_c]
+    call semantic_expr_type
+    mov [expected_expr_type], r15
+    test rax, rax
+    jz .handled_error
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .arg3_type_bad
+    
+    ; Set flag to emit rodata section for string literals
+    mov byte [has_io_write], 1
+    
+    ; Return type is i32
+    mov rax, TYPE_I32
+    jmp .handled_type
+.io_read_builtin:
+    ; read(fd: i32, buffer: *u8, len: i32) -> i32
+    ; Arg count: 3
+    mov rdi, r12
+    call semantic_call_arg_count
+    cmp rax, 3
+    jne .arity_bad
+    ; Get arguments
+    mov rdi, r12
+    call ast_child
+    mov rdi, rax
+    call ast_next
+    mov rbx, rax          ; rbx = arg1 (fd)
+    mov rdi, rbx
+    call ast_next
+    mov r14, rax          ; r14 = arg2 (buffer)
+    mov rdi, r14
+    call ast_next
+    mov [tmp_ast_c], rax  ; tmp_ast_c = arg3 (len)
+    
+    ; Validate arg1 (fd) is integer
+    mov r15, [expected_expr_type]
+    mov rdi, rbx
+    call semantic_expr_type
+    test rax, rax
+    jz .restore_handled_error
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .restore_arg1_type_bad
+    
+    ; Validate arg2 (buffer) - must NOT be string literal (rodata is not writable)
+    mov rdi, r14
+    call ast_kind
+    cmp rax, AST_STR_LIT
+    je .restore_arg2_type_bad
+    
+    ; Validate buffer expression type
+    mov rdi, r14
+    call semantic_expr_type
+    test rax, rax
+    jz .restore_handled_error
+    
+    ; Validate arg3 (len) is integer
+    mov rdi, [tmp_ast_c]
+    call semantic_expr_type
+    mov [expected_expr_type], r15
+    test rax, rax
+    jz .handled_error
+    mov rdi, rax
+    call type_is_integer
+    test rax, rax
+    jz .arg3_type_bad
+    
+    ; Return type is i32
+    mov rax, TYPE_I32
     jmp .handled_type
 .restore_handled_error:
     mov [expected_expr_type], r15
