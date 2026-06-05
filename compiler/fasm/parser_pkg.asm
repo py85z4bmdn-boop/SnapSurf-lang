@@ -31,7 +31,15 @@ parse_surf_pkg:
     mov rcx, 19
     call contains
     test rax, rax
+    jnz .target_ok
+    mov rdi, pkg_buf
+    mov rsi, [pkg_len]
+    mov rdx, needle_target_win64
+    mov rcx, 12
+    call contains
+    test rax, rax
     jz .bad_target
+.target_ok:
 
     mov rdi, pkg_buf
     mov rsi, [pkg_len]

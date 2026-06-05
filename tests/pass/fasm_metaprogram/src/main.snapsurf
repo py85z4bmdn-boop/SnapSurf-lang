@@ -1,0 +1,4 @@
+fn main -> i32
+    asm "format binary\ninclude 'tests/pass/fasm_metaprogram/src/meta.inc'\nanswer = 6 * 7\nemit_byte answer\npair_value pair 0x53, 0x46\nrepeat 2\n db %\nend repeat\nrept 2 n {\n db n + 2\n}\nirp v, 5, 6 {\n db v\n}\nmatch any, 7 {\n db any\n}"
+    ret 0
+end

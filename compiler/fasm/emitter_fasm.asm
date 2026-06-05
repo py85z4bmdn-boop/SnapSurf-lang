@@ -131,6 +131,139 @@ emit_main_asm:
     mov rax, 1
     ret
 
+emit_fasm_direct_asm:
+    call mkdir_build
+    mov rax, SYS_OPEN
+    mov rdi, fasm_asm_path
+    mov rsi, O_WRONLY + O_CREAT + O_TRUNC
+    mov rdx, 644o
+    syscall
+    test rax, rax
+    js .fail
+    mov [out_fd], rax
+
+    mov rdi, [ast_main_fn]
+    call semantic_fn_block
+    test rax, rax
+    jz .fail_close
+    mov rdi, rax
+    call emit_raw_block_asm
+    test rax, rax
+    jnz .fail_close
+
+    mov rdi, [out_fd]
+    mov rax, SYS_CLOSE
+    syscall
+    xor rax, rax
+    ret
+.fail_close:
+    mov rdi, [out_fd]
+    mov rax, SYS_CLOSE
+    syscall
+.fail:
+    mov rdi, fasm_asm_path
+    mov rsi, err_emit_failed
+    call print_diag
+    mov rax, 1
+    ret
+
+emit_raw_binary_asm:
+    call mkdir_build
+    mov rax, SYS_OPEN
+    mov rdi, raw_asm_path
+    mov rsi, O_WRONLY + O_CREAT + O_TRUNC
+    mov rdx, 644o
+    syscall
+    test rax, rax
+    js .fail
+    mov [out_fd], rax
+
+    mov rdi, [out_fd]
+    mov rsi, asm_raw_pre
+    mov rdx, asm_raw_pre_len
+    call write_all
+
+    mov rdi, [ast_main_fn]
+    call semantic_fn_block
+    test rax, rax
+    jz .fail_close
+    mov rdi, rax
+    call emit_raw_block_asm
+    test rax, rax
+    jnz .fail_close
+
+    mov rdi, [out_fd]
+    mov rax, SYS_CLOSE
+    syscall
+    xor rax, rax
+    ret
+.fail_close:
+    mov rdi, [out_fd]
+    mov rax, SYS_CLOSE
+    syscall
+.fail:
+    mov rdi, raw_asm_path
+    mov rsi, err_emit_failed
+    call print_diag
+    mov rax, 1
+    ret
+
+emit_raw_block_asm:
+    push rbx
+    call ast_child
+    mov rbx, rax
+.loop:
+    test rbx, rbx
+    jz .done
+    mov rdi, rbx
+    call ast_kind
+    cmp rax, AST_ASM_STMT
+    jne .next
+    mov rdi, rbx
+    call emit_raw_asm_stmt
+    test rax, rax
+    jnz .fail
+.next:
+    mov rdi, rbx
+    call ast_next
+    mov rbx, rax
+    jmp .loop
+.done:
+    xor rax, rax
+    pop rbx
+    ret
+.fail:
+    mov rax, 1
+    pop rbx
+    ret
+
+emit_raw_asm_stmt:
+    push r12
+    mov r12, rdi
+    mov rdi, r12
+    call ast_child
+    test rax, rax
+    jz .fail
+    mov rdi, rax
+    call ast_child
+    mov rdi, rax
+    call token_addr
+    mov rsi, [rax + TOKEN_PAYLOAD]
+    mov rdx, [rax + TOKEN_LEN]
+    mov rdi, [out_fd]
+    call write_raw_string
+    mov rdi, [out_fd]
+    mov rsi, asm_final_newline
+    mov rdx, 1
+    call write_all
+    xor rax, rax
+    pop r12
+    ret
+.fail:
+    mov rax, 1
+    pop r12
+    ret
+
 emit_function:
     push rbx
     push r12
@@ -375,6 +508,8 @@ emit_stmt:
     je .print_stmt
     cmp r13, AST_EPRINT_STMT
     je .eprint_stmt
+    cmp r13, AST_ASM_STMT
+    je .asm_stmt
     xor rax, rax
     pop r13
     pop r12
@@ -447,6 +582,12 @@ emit_stmt:
 .eprint_stmt:
     mov rdi, r12
     call emit_eprint_stmt
+    pop r13
+    pop r12
+    ret
+.asm_stmt:
+    mov rdi, r12
+    call emit_asm_stmt
     pop r13
     pop r12
     ret

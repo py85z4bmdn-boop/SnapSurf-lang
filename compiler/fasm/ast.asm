@@ -255,6 +255,8 @@ ast_name_ptr:
     je .print
     cmp rdi, AST_EPRINT_STMT
     je .eprint
+    cmp rdi, AST_ASM_STMT
+    je .asm
     mov rax, ast_name_unknown
     ret
 .source:
@@ -400,4 +402,7 @@ ast_name_ptr:
     ret
 .eprint:
     mov rax, ast_name_eprint
+    ret
+.asm:
+    mov rax, ast_name_asm
     ret

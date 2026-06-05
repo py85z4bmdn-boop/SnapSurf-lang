@@ -161,3 +161,37 @@ parse_eprint_stmt:
 .fail:
     mov rax, 1
     ret
+
+parse_asm_stmt:
+    call current_token_addr
+    mov r12, [rax + TOKEN_START]
+    call advance_token
+
+    call current_token_kind
+    cmp rax, TOK_STRING
+    jne .bad
+    mov rdi, [token_index]
+    call parse_str_node_at
+    test rax, rax
+    jz .fail
+    mov r14, rax
+    call advance_token
+
+    mov rdi, AST_ASM_STMT
+    mov rsi, r12
+    mov rdx, r12
+    mov rcx, r14
+    xor r8, r8
+    call ast_new
+    test rax, rax
+    jz .fail
+    mov rdi, [ast_block_node]
+    mov rsi, rax
+    call ast_append_child
+    xor rax, rax
+    ret
+.bad:
+    call print_unsupported_current
+.fail:
+    mov rax, 1
+    ret

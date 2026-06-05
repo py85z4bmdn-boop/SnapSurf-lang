@@ -245,3 +245,36 @@ emit_eprint_stmt:
     pop r12
     pop rbx
     ret
+
+; emit_asm_stmt: Emit decoded inline FASM text.
+; rdi = AST_ASM_STMT node.
+emit_asm_stmt:
+    push r12
+    push r13
+    mov r12, rdi
+    mov rdi, r12
+    call ast_child
+    test rax, rax
+    jz .fail
+    mov r13, rax
+    mov rdi, r13
+    call ast_child
+    mov rdi, rax
+    call token_addr
+    mov rsi, [rax + TOKEN_PAYLOAD]
+    mov rdx, [rax + TOKEN_LEN]
+    mov rdi, [out_fd]
+    call write_raw_string
+    mov rdi, [out_fd]
+    mov rsi, asm_final_newline
+    mov rdx, 1
+    call write_all
+    xor rax, rax
+    pop r13
+    pop r12
+    ret
+.fail:
+    mov rax, 1
+    pop r13
+    pop r12
+    ret

@@ -73,6 +73,13 @@ write_db_string:
     pop rbx
     ret
 
+; write_raw_string: rdi = fd, rsi = str_buf offset, rdx = byte length.
+write_raw_string:
+    add rsi, str_buf
+    mov rax, SYS_WRITE
+    syscall
+    ret
+
 ; write_function_name: Write function name from source pointer
 ; Input: rdi = file descriptor, rsi = name pointer
 ; Writes until whitespace or null terminator

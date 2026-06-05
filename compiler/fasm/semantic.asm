@@ -1270,10 +1270,17 @@ semantic_stmt:
     je .print_stmt
     cmp r13, AST_EPRINT_STMT
     je .print_stmt
+    cmp r13, AST_ASM_STMT
+    je .ok_stmt
     mov rdi, src_path
     mov rsi, err_unsup_ast
     call print_diag
     mov rax, 1
+    pop r13
+    pop r12
+    ret
+.ok_stmt:
+    xor rax, rax
     pop r13
     pop r12
     ret

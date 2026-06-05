@@ -1,0 +1,4 @@
+fn main -> i32
+    asm "use32\nmov eax, 0x11223344\ndd 0x55667788\nalign 16\nuse64\nmov rax, 0x1122334455667788\ndq 0x0102030405060708"
+    ret 0
+end

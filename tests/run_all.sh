@@ -114,7 +114,78 @@ run_stdout() {
     diff -u "$expected" "build/test-output/$name.stdout"
 }
 
+run_raw_binary() {
+    name="$1"
+    expected_hex="$2"
+    ./build/surf build-raw "tests/pass/$name" > "build/test-output/$name.build"
+    actual_hex="$(od -An -tx1 -v build/raw.bin)"
+    if [ "$actual_hex" != "$expected_hex" ]; then
+        echo "unexpected raw bytes for $name: $actual_hex"
+        exit 1
+    fi
+}
+
+run_raw_hex_compact() {
+    name="$1"
+    expected_hex="$2"
+    ./build/surf build-raw "tests/pass/$name" > "build/test-output/$name.build"
+    actual_hex="$(od -An -tx1 -v build/raw.bin | tr -d ' \n')"
+    if [ "$actual_hex" != "$expected_hex" ]; then
+        echo "unexpected compact raw bytes for $name: $actual_hex"
+        exit 1
+    fi
+}
+
+run_fasm_hex_compact() {
+    name="$1"
+    expected_hex="$2"
+    ./build/surf build-fasm "tests/pass/$name" > "build/test-output/$name.build"
+    actual_hex="$(od -An -tx1 -v build/fasm.bin | tr -d ' \n')"
+    if [ "$actual_hex" != "$expected_hex" ]; then
+        echo "unexpected compact build-fasm bytes for $name: $actual_hex"
+        exit 1
+    fi
+}
+
+run_boot_sector() {
+    name="$1"
+    ./build/surf build-raw "tests/pass/$name" > "build/test-output/$name.build"
+    size="$(wc -c < build/raw.bin)"
+    first_bytes="$(od -An -tx1 -N2 build/raw.bin)"
+    signature="$(od -An -tx1 -j510 -N2 build/raw.bin)"
+    if [ "$size" != "512" ] || [ "$first_bytes" != " fa f4" ] || [ "$signature" != " 55 aa" ]; then
+        echo "unexpected boot sector for $name: size=$size first=$first_bytes sig=$signature"
+        exit 1
+    fi
+}
+
+run_pe64_import() {
+    name="$1"
+    ./build/surf build-fasm "tests/pass/$name" > "build/test-output/$name.build"
+    mz="$(od -An -tx1 -N2 build/fasm.bin)"
+    pe_off="$(od -An -tu4 -j60 -N4 build/fasm.bin | tr -d ' ')"
+    pe_sig="$(od -An -tx1 -j "$pe_off" -N4 build/fasm.bin)"
+    machine_off=$((pe_off + 4))
+    optional_off=$((pe_off + 24))
+    machine="$(od -An -tx1 -j "$machine_off" -N2 build/fasm.bin)"
+    optional_magic="$(od -An -tx1 -j "$optional_off" -N2 build/fasm.bin)"
+    if [ "$mz" != " 4d 5a" ] || [ "$pe_sig" != " 50 45 00 00" ] || [ "$machine" != " 64 86" ] || [ "$optional_magic" != " 0b 02" ]; then
+        echo "unexpected PE64 header for $name: mz=$mz pe=$pe_sig machine=$machine magic=$optional_magic"
+        exit 1
+    fi
+    strings -a build/fasm.bin | grep "KERNEL32.DLL" > /dev/null
+    strings -a build/fasm.bin | grep "ExitProcess" > /dev/null
+    strings -a build/fasm.bin | grep ".idata" > /dev/null
+}
+
 run_exit let_integer 10
+run_exit inline_asm_exit 37
+run_exit inline_asm_data_calc 42
+run_raw_binary raw_binary_format " 7f 53 53 00"
+run_raw_hex_compact raw_mode_layout "b844332211887766559090909090909048b888776655443322110807060504030201"
+run_boot_sector raw_boot_sector
+run_pe64_import fasm_pe64_import
+run_fasm_hex_compact fasm_metaprogram "2a534601020304050607"
 run_exit mut_arithmetic 16
 run_exit precedence 7
 run_exit paren_expr 9

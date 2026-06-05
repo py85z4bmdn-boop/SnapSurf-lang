@@ -1,0 +1,9 @@
+package fasm_pe64_import
+version 0.1.0
+type executable
+target win64
+runtime tiny
+entry main
+
+requires none
+end

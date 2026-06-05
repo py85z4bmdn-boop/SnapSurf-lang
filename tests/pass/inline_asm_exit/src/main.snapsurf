@@ -1,0 +1,5 @@
+fn main -> i32
+    let code i32 = 0
+    asm "mov qword [rbp - 8], 37"
+    ret code
+end

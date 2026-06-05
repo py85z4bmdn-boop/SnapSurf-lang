@@ -1,0 +1,5 @@
+fn main -> i32
+    let code i32 = 0
+    asm "snap_value = 6 * 7\njmp .after_bytes\n.bytes: db snap_value, 99\n.after_bytes:\nmovzx eax, byte [.bytes]\nmov qword [rbp - 8], rax"
+    ret code
+end

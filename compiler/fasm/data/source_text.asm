@@ -4,6 +4,7 @@ text_io: db "io", 0
 text_main: db "main", 0
 text_i32: db "i32", 0
 text_write: db "write", 0
+text_asm: db "asm", 0
 text_abs: db "abs", 0
 text_min: db "min", 0
 text_max: db "max", 0

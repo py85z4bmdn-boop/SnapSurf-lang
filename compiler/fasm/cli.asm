@@ -30,6 +30,20 @@ cli_known_command:
 
     pop rdi
     push rdi
+    mov rsi, cmd_build_raw
+    call streq
+    test rax, rax
+    jnz .yes_pop
+
+    pop rdi
+    push rdi
+    mov rsi, cmd_build_fasm
+    call streq
+    test rax, rax
+    jnz .yes_pop
+
+    pop rdi
+    push rdi
     mov rsi, cmd_clean
     call streq
     test rax, rax

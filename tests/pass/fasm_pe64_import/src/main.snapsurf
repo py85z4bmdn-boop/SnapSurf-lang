@@ -1,0 +1,4 @@
+fn main -> i32
+    asm "format PE64 console\nentry start\nsection '.text' code readable executable\nstart:\nsub rsp, 40\nxor ecx, ecx\ncall qword [kernel_table]\nsection '.idata' import data readable writeable\ndd 0, 0, 0, RVA kernel_name, RVA kernel_table\ndd 0, 0, 0, 0, 0\nkernel_table:\ndq RVA exit_name\ndq 0\nkernel_name db 'KERNEL32.DLL', 0\nexit_name dw 0\n db 'ExitProcess', 0"
+    ret 0
+end

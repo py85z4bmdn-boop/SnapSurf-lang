@@ -1,0 +1,4 @@
+fn main -> i32
+    asm "use16\norg 0x7c00\nstart:\ncli\nhlt\nrb 510 - ($ - $$)\ndw 0xaa55"
+    ret 0
+end

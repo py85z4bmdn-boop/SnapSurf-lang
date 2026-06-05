@@ -1,0 +1,4 @@
+fn main -> i32
+    asm "db 0x7f, 'S', 'S', 0"
+    ret 0
+end

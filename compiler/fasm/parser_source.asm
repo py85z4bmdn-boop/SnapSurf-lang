@@ -747,6 +747,9 @@ parse_block:
     jnz .unsupported_control_flow
     jmp .ident_stmt
 .ident_stmt:
+    call current_is_asm_stmt
+    test rax, rax
+    jnz .asm_stmt
     call current_is_io_write
     test rax, rax
     jnz .call
@@ -756,6 +759,11 @@ parse_block:
     jmp .loop
 .call:
     call parse_call_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.asm_stmt:
+    call parse_asm_stmt
     test rax, rax
     jnz .fail
     jmp .loop
@@ -877,6 +885,9 @@ parse_block_inner:
     jnz .unsupported_control_flow
     jmp .ident_stmt
 .ident_stmt:
+    call current_is_asm_stmt
+    test rax, rax
+    jnz .asm_stmt
     call current_is_io_write
     test rax, rax
     jnz .call
@@ -886,6 +897,11 @@ parse_block_inner:
     jmp .loop
 .call:
     call parse_call_stmt
+    test rax, rax
+    jnz .fail
+    jmp .loop
+.asm_stmt:
+    call parse_asm_stmt
     test rax, rax
     jnz .fail
     jmp .loop

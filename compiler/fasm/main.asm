@@ -55,6 +55,18 @@ _start:
     jnz .build
 
     mov rdi, [r13 + 8]
+    mov rsi, cmd_build_raw
+    call streq
+    test rax, rax
+    jnz .build_raw
+
+    mov rdi, [r13 + 8]
+    mov rsi, cmd_build_fasm
+    call streq
+    test rax, rax
+    jnz .build_fasm
+
+    mov rdi, [r13 + 8]
     mov rsi, cmd_dump_tokens
     call streq
     test rax, rax
@@ -128,6 +140,40 @@ _start:
     test rax, rax
     jnz .err
     mov rdi, build_ok_msg
+    call print_stdout_z
+    xor rdi, rdi
+    jmp exit_process
+
+.build_raw:
+    mov byte [emit_requested], 1
+    mov rdi, [r13 + 16]
+    call compile_package
+    test rax, rax
+    jnz .err
+    call emit_raw_binary_asm
+    test rax, rax
+    jnz .err
+    call run_fasm_raw_build
+    test rax, rax
+    jnz .err
+    mov rdi, build_raw_ok_msg
+    call print_stdout_z
+    xor rdi, rdi
+    jmp exit_process
+
+.build_fasm:
+    mov byte [emit_requested], 1
+    mov rdi, [r13 + 16]
+    call compile_package
+    test rax, rax
+    jnz .err
+    call emit_fasm_direct_asm
+    test rax, rax
+    jnz .err
+    call run_fasm_direct_build
+    test rax, rax
+    jnz .err
+    mov rdi, build_fasm_ok_msg
     call print_stdout_z
     xor rdi, rdi
     jmp exit_process

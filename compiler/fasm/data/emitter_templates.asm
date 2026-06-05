@@ -1,4 +1,6 @@
 segment readable writeable
+asm_raw_pre: db "format binary",10
+asm_raw_pre_len = $ - asm_raw_pre
 asm_pre: db "format ELF64 executable 3",10,"entry _start",10,"segment readable executable",10,"_start:",10,"    call fn_main",10,"    mov edi, eax",10,"    mov eax, 60",10,"    syscall",10,10
 asm_pre_len = $ - asm_pre
 asm_stack_pre: db "    sub rsp, "

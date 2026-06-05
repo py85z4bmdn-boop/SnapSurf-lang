@@ -14,6 +14,10 @@ current_is_io_write:
     xor rax, rax
     ret
 
+current_is_asm_stmt:
+    call expect_ident_text_asm
+    ret
+
 next_token_kind:
     mov rdi, [token_index]
     inc rdi
@@ -45,6 +49,10 @@ expect_ident_text_i32:
 expect_ident_text_write:
     mov rsi, text_write
     mov rdx, 5
+    jmp current_ident_text_eq
+expect_ident_text_asm:
+    mov rsi, text_asm
+    mov rdx, 3
     jmp current_ident_text_eq
 
 ; parse_type_keyword: Parse type identifier and return type ID
