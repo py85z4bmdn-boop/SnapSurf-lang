@@ -95,12 +95,8 @@ semantic_expr_type:
     test rax, rax
     jz .bad_type_current
 .string:
-    ; String literals don't have a proper type yet in the type system
-    ; For now, just return TYPE_I32 as a placeholder
-    ; (In reality, strings would need a pointer or slice type)
-    mov rax, TYPE_I32
-    jmp .done
-    mov rax, TYPE_I32
+    ; String literals have TYPE_STR in the type system
+    mov rax, TYPE_STR
     jmp .done
 .bool:
     mov rax, TYPE_BOOL
@@ -465,6 +461,13 @@ semantic_expr_type:
     mov rdi, rax
     test rdi, rdi
     jz .bad
+    ; Check if deref is in unsafe block
+    push rdi
+    mov rdi, r12
+    call semantic_check_unsafe_deref
+    pop rdi
+    test rax, rax
+    jnz .done
     call semantic_expr_type
     test rax, rax
     jz .done

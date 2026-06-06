@@ -1,0 +1,4 @@
+fn main -> i32
+    io.write 1 "String type test\n" 17
+    ret 0
+end

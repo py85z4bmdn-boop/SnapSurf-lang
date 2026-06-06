@@ -1,0 +1,1 @@
+tests/compile_fail/io_close_no_syscall/src/main.snapsurf:2:22 E0802 syscall used without requires syscall

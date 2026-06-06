@@ -356,9 +356,12 @@ emit_expr:
     call semantic_expr_type
     test rax, rax
     jz .fail
+    push rax                        ; Save array type ID for later use
     mov rdi, rax
     call type_array_count
     mov r15, rax
+    pop rax                         ; Restore array type ID
+    push rax                        ; Save it again for element load logic
     mov rdi, r14
     call ast_kind
     cmp rax, AST_VAR_REF
@@ -475,10 +478,87 @@ emit_expr:
     mov rdx, asm_label_post_len
     call write_all
     
-    ; Load value at [rcx + rax*8] (assuming 64-bit values)
+    ; Load value based on element size and signedness
+    ; Get array type from stack (saved earlier)
+    pop rax                         ; rax = array type ID
+    push rax                        ; Keep it on stack
+    mov rdi, rax
+    call type_get_element_of_array
+    test rax, rax
+    jz .fail
+    mov rbx, rax                    ; rbx = element type ID
+    
+    ; Get element size
+    pop rax                         ; rax = array type
+    mov rdi, rax
+    call type_element_size
+    mov r15, rax                    ; r15 = element size (1, 2, 4, or 8)
+    
+    ; Branch based on element size
+    cmp r15, 1
+    je .array_load_1byte
+    cmp r15, 2
+    je .array_load_2byte
+    cmp r15, 4
+    je .array_load_4byte
+    ; Default: 8 bytes
     mov rdi, [out_fd]
     mov rsi, asm_mov_rax_at_rcx_rax_8
     mov rdx, asm_mov_rax_at_rcx_rax_8_len
+    call write_all
+    jmp .ok
+
+.array_load_1byte:
+    ; Check if signed (i8) or unsigned (u8)
+    cmp rbx, TYPE_I8
+    je .array_load_1byte_signed
+    ; Unsigned: movzx rax, byte [rcx + rax]
+    mov rdi, [out_fd]
+    mov rsi, asm_movzx_rax_byte_at_rcx_rax
+    mov rdx, asm_movzx_rax_byte_at_rcx_rax_len
+    call write_all
+    jmp .ok
+.array_load_1byte_signed:
+    ; Signed: movsx rax, byte [rcx + rax]
+    mov rdi, [out_fd]
+    mov rsi, asm_movsx_rax_byte_at_rcx_rax
+    mov rdx, asm_movsx_rax_byte_at_rcx_rax_len
+    call write_all
+    jmp .ok
+
+.array_load_2byte:
+    ; Check if signed (i16) or unsigned (u16)
+    cmp rbx, TYPE_I16
+    je .array_load_2byte_signed
+    ; Unsigned: movzx rax, word [rcx + rax*2]
+    mov rdi, [out_fd]
+    mov rsi, asm_movzx_rax_word_at_rcx_rax_2
+    mov rdx, asm_movzx_rax_word_at_rcx_rax_2_len
+    call write_all
+    jmp .ok
+.array_load_2byte_signed:
+    ; Signed: movsx rax, word [rcx + rax*2]
+    mov rdi, [out_fd]
+    mov rsi, asm_movsx_rax_word_at_rcx_rax_2
+    mov rdx, asm_movsx_rax_word_at_rcx_rax_2_len
+    call write_all
+    jmp .ok
+
+.array_load_4byte:
+    ; Check if signed (i32) or unsigned (u32)
+    cmp rbx, TYPE_I32
+    je .array_load_4byte_signed
+    ; Unsigned: mov eax, [rcx + rax*4] (zero-extends to rax)
+    mov rdi, [out_fd]
+    mov rsi, asm_mov_eax_at_rcx_rax_4
+    mov rdx, asm_mov_eax_at_rcx_rax_4_len
+    call write_all
+    jmp .ok
+.array_load_4byte_signed:
+    ; Signed: movsxd rax, dword [rcx + rax*4]
+    mov rdi, [out_fd]
+    mov rsi, asm_movsxd_rax_at_rcx_rax_4
+    mov rdx, asm_movsxd_rax_at_rcx_rax_4_len
     call write_all
     jmp .ok
 .field_access:

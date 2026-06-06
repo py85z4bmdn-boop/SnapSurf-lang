@@ -1,0 +1,6 @@
+/home/danggiaminh_dev/SnapSurf-lang/CMakeFiles/surf.dir
+/home/danggiaminh_dev/SnapSurf-lang/CMakeFiles/fasm-smoke.dir
+/home/danggiaminh_dev/SnapSurf-lang/CMakeFiles/check-discovery.dir
+/home/danggiaminh_dev/SnapSurf-lang/CMakeFiles/full-regression.dir
+/home/danggiaminh_dev/SnapSurf-lang/CMakeFiles/edit_cache.dir
+/home/danggiaminh_dev/SnapSurf-lang/CMakeFiles/rebuild_cache.dir

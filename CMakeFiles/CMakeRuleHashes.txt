@@ -1,0 +1,6 @@
+# Hashes of file build rules.
+26338639c556214e7f7b358862eecc61 CMakeFiles/check-discovery
+c87fa715b18d0c0b4f9da950024c7fd4 CMakeFiles/fasm-smoke
+f91bc3d7ea98b0dec87d70054429937c CMakeFiles/full-regression
+0ce12e21e04ef811547fe6b624490f2d CMakeFiles/surf
+59d1ace5c652a7ab6b4447d87ebae55b build/surf

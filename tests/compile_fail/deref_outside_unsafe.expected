@@ -1,0 +1,1 @@
+tests/compile_fail/deref_outside_unsafe/src/main.snapsurf:1:1 E0508 unsafe operation outside unsafe block

@@ -1025,6 +1025,9 @@ semantic_builtin_math_call_type:
     jmp .handled_type
 .io_open_builtin:
     ; open(path: string, flags: i32, mode: i32) -> i32
+    ; Check syscall capability
+    cmp byte [has_syscall], 1
+    jne .syscall_cap_error
     ; Arg count: 3
     mov rdi, r12
     call semantic_call_arg_count
@@ -1080,6 +1083,9 @@ semantic_builtin_math_call_type:
     jmp .handled_type
 .io_close_builtin:
     ; close(fd: i32) -> i32
+    ; Check syscall capability
+    cmp byte [has_syscall], 1
+    jne .syscall_cap_error
     ; Arg count: 1
     mov rdi, r12
     call semantic_call_arg_count
@@ -1109,6 +1115,9 @@ semantic_builtin_math_call_type:
     jmp .handled_type
 .io_write_builtin:
     ; write(fd: i32, buffer: *u8, len: i32) -> i32
+    ; Check syscall capability
+    cmp byte [has_syscall], 1
+    jne .syscall_cap_error
     ; Arg count: 3
     mov rdi, r12
     call semantic_call_arg_count
@@ -1163,6 +1172,9 @@ semantic_builtin_math_call_type:
     jmp .handled_type
 .io_read_builtin:
     ; read(fd: i32, buffer: *u8, len: i32) -> i32
+    ; Check syscall capability
+    cmp byte [has_syscall], 1
+    jne .syscall_cap_error
     ; Arg count: 3
     mov rdi, r12
     call semantic_call_arg_count
@@ -1246,6 +1258,13 @@ semantic_builtin_math_call_type:
     call set_diag_from_expr_node
     mov rdi, src_path
     mov rsi, err_fn_arg_type
+    call print_diag
+    jmp .handled_error
+.syscall_cap_error:
+    mov rdi, r12
+    call set_diag_from_expr_node
+    mov rdi, src_path
+    mov rsi, err_syscall_cap
     call print_diag
     jmp .handled_error
 .handled_error:

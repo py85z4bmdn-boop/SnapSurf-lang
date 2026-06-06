@@ -1,0 +1,5 @@
+fn main -> i32
+    let arr [u16; 3]
+    let val u16 = arr[0]
+    ret 0
+end

@@ -2,6 +2,8 @@ fn main -> i32
     let x i32 = 77
     let px *i32 = &x
     let ppx **i32 = &px
-    let y i32 = **ppx
-    ret y
+    unsafe
+        let y i32 = **ppx
+        ret y
+    end
 end

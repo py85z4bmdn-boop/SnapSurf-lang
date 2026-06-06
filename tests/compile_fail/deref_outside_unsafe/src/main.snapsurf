@@ -1,0 +1,5 @@
+fn main -> i32
+    let ptr *i32 = &42
+    let val i32 = *ptr
+    ret val
+end

@@ -1,0 +1,4 @@
+fn main -> i32
+    let n i32 = read(0, 0, 10)
+    ret 0
+end

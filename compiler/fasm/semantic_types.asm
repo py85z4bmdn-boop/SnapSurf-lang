@@ -252,7 +252,7 @@ type_array_count:
     ret
 type_element_size:
     ; Input: rdi = array type ID
-    ; Output: rax = element size in bytes (1 for u8, 8 for i32/i64/etc), or 0 if not array
+    ; Output: rax = element size in bytes (1, 2, 4, or 8), or 0 if not array
     push rbx
     mov rbx, rdi
     call type_get_element_of_array
@@ -265,13 +265,33 @@ type_element_size:
     cmp rax, TYPE_I8
     je .size_1
     
-    ; All other types are 8 bytes (i32, i64, u32, u64, isize, usize, pointers, etc.)
+    cmp rax, TYPE_U16
+    je .size_2
+    cmp rax, TYPE_I16
+    je .size_2
+    
+    cmp rax, TYPE_U32
+    je .size_4
+    cmp rax, TYPE_I32
+    je .size_4
+    
+    ; All other types are 8 bytes (i64, u64, isize, usize, pointers, etc.)
     mov rax, 8
     pop rbx
     ret
 
 .size_1:
     mov rax, 1
+    pop rbx
+    ret
+
+.size_2:
+    mov rax, 2
+    pop rbx
+    ret
+
+.size_4:
+    mov rax, 4
     pop rbx
     ret
 

@@ -1,0 +1,4 @@
+fn main -> i32
+    let fd i32 = open("/tmp/test.txt", 0, 0)
+    ret 0
+end

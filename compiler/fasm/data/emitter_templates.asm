@@ -393,6 +393,18 @@ asm_array_bounds_trap: db "    mov edi, 101",10,"    mov eax, 60",10,"    syscal
 asm_array_bounds_trap_len = $ - asm_array_bounds_trap
 asm_mov_rax_at_rcx_rax_8: db "    mov rax, [rcx + rax*8]",10
 asm_mov_rax_at_rcx_rax_8_len = $ - asm_mov_rax_at_rcx_rax_8
+asm_movzx_rax_byte_at_rcx_rax: db "    movzx rax, byte [rcx + rax]",10
+asm_movzx_rax_byte_at_rcx_rax_len = $ - asm_movzx_rax_byte_at_rcx_rax
+asm_movsx_rax_byte_at_rcx_rax: db "    movsx rax, byte [rcx + rax]",10
+asm_movsx_rax_byte_at_rcx_rax_len = $ - asm_movsx_rax_byte_at_rcx_rax
+asm_movzx_rax_word_at_rcx_rax_2: db "    movzx rax, word [rcx + rax*2]",10
+asm_movzx_rax_word_at_rcx_rax_2_len = $ - asm_movzx_rax_word_at_rcx_rax_2
+asm_movsx_rax_word_at_rcx_rax_2: db "    movsx rax, word [rcx + rax*2]",10
+asm_movsx_rax_word_at_rcx_rax_2_len = $ - asm_movsx_rax_word_at_rcx_rax_2
+asm_mov_eax_at_rcx_rax_4: db "    mov eax, [rcx + rax*4]",10
+asm_mov_eax_at_rcx_rax_4_len = $ - asm_mov_eax_at_rcx_rax_4
+asm_movsxd_rax_at_rcx_rax_4: db "    movsxd rax, dword [rcx + rax*4]",10
+asm_movsxd_rax_at_rcx_rax_4_len = $ - asm_movsxd_rax_at_rcx_rax_4
 asm_lea_rax_rcx_rax: db "    lea rax, [rcx + rax]",10
 asm_lea_rax_rcx_rax_len = $ - asm_lea_rax_rcx_rax
 asm_lea_rax_rcx_rax_8: db "    lea rax, [rcx + rax*8]",10

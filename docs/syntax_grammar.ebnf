@@ -1,11 +1,28 @@
 SourceFile
-    = (Newline | Comment)* UseDecl* MainFn (Newline | Comment)* EOF ;
+    = (Newline | Comment)* UseDecl* (FnDecl | StructDecl)* (Newline | Comment)* EOF ;
 
 UseDecl
     = "use" "core" "/" "io" Newline* ;
 
-MainFn
-    = "fn" "main" "->" "i32" Newline* Block "end" ;
+FnDecl
+    = "fn" Ident Param* "->" Type Newline* Block "end" ;
+
+Param
+    = Ident Type ;
+
+StructDecl
+    = "struct" Ident Newline* StructField* "end" ;
+
+StructField
+    = Ident Type ";" Newline* ;
+
+Type
+    = "i8" | "i16" | "i32" | "i64" | "isize"
+    | "u8" | "u16" | "u32" | "u64" | "usize"
+    | "bool"
+    | "*" Type
+    | "[" Type ";" IntLit "]"
+    | Ident ;
 
 Block
     = Statement* ;
@@ -15,38 +32,114 @@ Statement
     | MutDecl
     | AssignStmt
     | RetStmt
-    | IoWriteStmt ;
+    | IfStmt
+    | WhileStmt
+    | LoopStmt
+    | BreakStmt
+    | ContinueStmt
+    | CallStmt
+    | UnsafeBlock ;
 
 LetDecl
-    = "let" Ident "i32" "=" Expr Newline* ;
+    = "let" Ident Type "=" Expr Newline* ;
 
 MutDecl
-    = "mut" Ident "i32" "=" Expr Newline* ;
+    = "mut" Ident Type "=" Expr Newline* ;
 
 AssignStmt
-    = Ident "=" Expr Newline* ;
+    = LValue "=" Expr Newline* ;
+
+LValue
+    = Ident
+    | "*" Expr
+    | Expr "[" Expr "]"
+    | Expr "." Ident ;
 
 RetStmt
     = "ret" Expr Newline* ;
 
-IoWriteStmt
-    = "io" "." "write" IntLit StrLit IntLit Newline* ;
+IfStmt
+    = "if" Expr "->" Newline* Block ("elif" Expr "->" Newline* Block)* ("else" "->" Newline* Block)? "end" ;
+
+WhileStmt
+    = "while" Expr Newline* Block "end" ;
+
+LoopStmt
+    = "loop" Newline* Block "end" ;
+
+BreakStmt
+    = "break" Newline* ;
+
+ContinueStmt
+    = "continue" Newline* ;
+
+CallStmt
+    = Ident "(" (Expr ("," Expr)*)? ")" Newline* ;
+
+UnsafeBlock
+    = "unsafe" Newline* InlineAsm* "end" ;
+
+InlineAsm
+    = "asm" StringLit Newline* ;
+
 
 Expr
     = PrattExpression ;
 
 Pratt precedence, high to low:
 
-1. unary `-`
+1. unary `-`, `!`, `*` (deref), `&` (address-of)
 2. `*`, `/`, `%`
 3. `+`, `-`
+4. `<<`, `>>`
+5. `&` (bitwise and)
+6. `^` (bitwise xor)
+7. `|` (bitwise or)
+8. `==`, `!=`, `<`, `<=`, `>`, `>=`
+9. `&&` (logical and)
+10. `||` (logical or)
 
 Primary
     = IntLit
+    | BoolLit
+    | StringLit
     | Ident
-    | "true"
-    | "false"
+    | FunctionCall
+    | BuiltinCall
+    | ArrayIndex
+    | FieldAccess
+    | StructLiteral
     | "(" Expr ")" ;
+
+BoolLit
+    = "true" | "false" ;
+
+FunctionCall
+    = Ident "(" (Expr ("," Expr)*)? ")" ;
+
+BuiltinCall
+    = BuiltinName "(" (Expr ("," Expr)*)? ")" ;
+
+BuiltinName
+    = "print" | "eprint" | "pow" | "gcd" | "lcm" | "sqrt" | "cbrt"
+    | "bitcount" | "wrapping_add" | "wrapping_sub" | "wrapping_mul"
+    | "wrapping_pow" | "wrapping_div" | "wrapping_mod"
+    | "saturating_add" | "saturating_sub" | "saturating_mul" | "saturating_pow"
+    | "saturating_div" | "saturating_mod"
+    | "open" | "close" | "read" | "write"
+    | ... ;
+
+ArrayIndex
+    = Expr "[" Expr "]" ;
+
+FieldAccess
+    = Expr "." Ident ;
+
+StructLiteral
+    = Ident "{" (FieldInit ("," FieldInit)*)? "}" ;
+
+FieldInit
+    = Ident ":" Expr ;
 
 PackageFile
     = PackageField VersionField TypeField TargetField RuntimeField PackageLine* "end" ;
@@ -69,10 +162,33 @@ TargetField
 RuntimeField
     = "runtime" "tiny" ;
 
-Implemented limits:
+Implemented features (foundation subset):
 
-- only one `fn main -> i32`
-- only single-function `i32` locals
-- mutable declarations use `mut x i32 = expr`; `let mut x ...` is rejected
-- no nested scopes, if/loop/while, parameters, user functions, user types, MIR,
-  borrow checking, traits, macros, or stdlib
+- Multiple functions with parameters and return values
+- Integer types: i8, i16, i32, i64, isize, u8, u16, u32, u64, usize
+- Bool type
+- Pointer types and dereferencing
+- Array types with indexing
+- Struct types (semantic level)
+- Control flow: if/elif/else, while, loop, break, continue
+- Nested scopes
+- File I/O builtins: open, close, read, write
+- Print/eprint builtins
+- Math builtins: pow, gcd, lcm, sqrt, cbrt, bitcount, etc.
+- Bitwise operations: and, or, xor, shl, shr, rol, ror, not
+- Wrapping and saturating arithmetic
+- Runtime overflow/underflow checks
+- Unsafe blocks with inline assembly
+- Function recursion and mutual recursion
+- Mutable declarations use `mut x i32 = expr`; `let mut x ...` is rejected
+
+Not yet implemented:
+
+- MIR optimization passes
+- Advanced register allocation
+- Borrow checking
+- Traits and generics
+- Macros
+- Standard library beyond builtins
+- Module system beyond single-file programs
+- Self-hosting compiler
